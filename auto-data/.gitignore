@@ -1,0 +1,6 @@
+*.dbg
+*.ld
+*.h
+*.cpp
+*.v
+rtl.make.inc
