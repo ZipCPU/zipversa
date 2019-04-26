@@ -1,0 +1,10 @@
+LOCATE COMP "i_clk" SITE "P3";
+IOBUF PORT "i_clk" IO_TYPE=LVDS;
+
+# i_rx = C11
+# o_tx = A11
+
+LOCATE COMP "o_uart_tx" SITE "A11";
+IOBUF PORT "o_uart_tx" IO_TYPE=LVCMOS33;
+
+
