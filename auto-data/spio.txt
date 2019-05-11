@@ -44,9 +44,9 @@
 @ACCESS=@$(DEVID)_ACCESS
 @INT.SPIO.WIRE=@$(PREFIX)_int
 @INT.SPIO.PIC=buspic
-@NLED=4
-@NBTN=4
-@NSW=4
+@NLED=8
+@NBTN=1
+@NSW=8
 @MAIN.PORTLIST=
 		// SPIO interface
 		i_sw, i_btn, o_led

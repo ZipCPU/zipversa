@@ -66,7 +66,7 @@ INCS	:= -I. -I../../sw/host -I$(RTLD) $(VINC)
 SOURCES := automaster_tb.cpp main_tb.cpp enetctrlsim.cpp zipelf.cpp	\
 	byteswap.cpp memsim.cpp dbluartsim.cpp flashsim.cpp
 
-HEADERS := ddrsdramsim.h enetctrlsim.h memsim.h			\
+HEADERS := enetctrlsim.h memsim.h			\
 	port.h testb.h dbluartsim.h zipelf.h  flashsim.h
 VOBJDR	:= $(RTLD)/obj_dir
 VOBJS   := $(OBJDIR)/verilated.o $(OBJDIR)/verilated_vcd_c.o

@@ -1,0 +1,273 @@
+##
+##
+LOCATE COMP "i_clk" SITE "P3";
+IOBUF PORT "i_clk" IO_TYPE=LVDS;
+
+LOCATE COMP "i_btn" SITE "T1";
+IOBUF PORT "i_btn" IO_TYPE=LVCMOS33;
+
+LOCATE COMP "o_led[0]" SITE "E16";
+LOCATE COMP "o_led[1]" SITE "D17";
+LOCATE COMP "o_led[2]" SITE "D18";
+LOCATE COMP "o_led[3]" SITE "E18";
+LOCATE COMP "o_led[4]" SITE "F17";
+LOCATE COMP "o_led[5]" SITE "F18";
+LOCATE COMP "o_led[6]" SITE "E17";
+LOCATE COMP "o_led[7]" SITE "F16";
+
+IOBUF PORT "o_led[0]" IO_TYPE=LVCMOS25;
+IOBUF PORT "o_led[1]" IO_TYPE=LVCMOS25;
+IOBUF PORT "o_led[2]" IO_TYPE=LVCMOS25;
+IOBUF PORT "o_led[3]" IO_TYPE=LVCMOS25;
+IOBUF PORT "o_led[4]" IO_TYPE=LVCMOS25;
+IOBUF PORT "o_led[5]" IO_TYPE=LVCMOS25;
+IOBUF PORT "o_led[6]" IO_TYPE=LVCMOS25;
+IOBUF PORT "o_led[7]" IO_TYPE=LVCMOS25;
+
+## The switches have two types of I/O signaling.  The first four
+## are 1.5V, the second 2.5V.
+LOCATE COMP "i_sw[0]" SITE "H2";
+LOCATE COMP "i_sw[1]" SITE "K3";
+LOCATE COMP "i_sw[2]" SITE "G3";
+LOCATE COMP "i_sw[3]" SITE "F2";
+LOCATE COMP "i_sw[4]" SITE "J18";
+LOCATE COMP "i_sw[5]" SITE "K18";
+LOCATE COMP "i_sw[6]" SITE "J19"; ## Or K19?
+LOCATE COMP "i_sw[7]" SITE "K20";
+
+IOBUF PORT "i_sw[0]" IO_TYPE=LVCMOS15;
+IOBUF PORT "i_sw[1]" IO_TYPE=LVCMOS15;
+IOBUF PORT "i_sw[2]" IO_TYPE=LVCMOS15;
+IOBUF PORT "i_sw[3]" IO_TYPE=LVCMOS15;
+IOBUF PORT "i_sw[4]" IO_TYPE=LVCMOS25;
+IOBUF PORT "i_sw[5]" IO_TYPE=LVCMOS25;
+IOBUF PORT "i_sw[6]" IO_TYPE=LVCMOS25;
+IOBUF PORT "i_sw[7]" IO_TYPE=LVCMOS25;
+
+##
+## Serial port
+##
+LOCATE COMP "o_wbu_uart_tx" SITE "A11";
+LOCATE COMP "i_wbu_uart_rx" SITE "C11";
+
+# IOBUF PORT "o_uart_tx" IO_TYPE=LVCMOS33;
+# IOBUF PORT "i_uart_rx" IO_TYPE=LVCMOS33;
+
+##
+## 14-segment display
+##
+
+# LOCATE COMP "o_disp[0]"  SITE "M20";
+# LOCATE COMP "o_disp[1]"  SITE "L18";
+# LOCATE COMP "o_disp[2]"  SITE "M19";
+# LOCATE COMP "o_disp[3]"  SITE "L16";
+# LOCATE COMP "o_disp[4]"  SITE "L17";
+# LOCATE COMP "o_disp[5]"  SITE "M18";
+# LOCATE COMP "o_disp[6]"  SITE "N16";
+# LOCATE COMP "o_disp[7]"  SITE "M17";
+# LOCATE COMP "o_disp[8]"  SITE "N18";
+# LOCATE COMP "o_disp[9]"  SITE "P17";
+# LOCATE COMP "o_disp[10]" SITE "N17";
+# LOCATE COMP "o_disp[11]" SITE "P16";
+# LOCATE COMP "o_disp[12]" SITE "R16";
+# LOCATE COMP "o_disp[13]" SITE "R17";
+
+# IOBUF PORT "o_disp[0]"  IO_TYPE=LVCMOS25;
+# IOBUF PORT "o_disp[1]"  IO_TYPE=LVCMOS25;
+# IOBUF PORT "o_disp[2]"  IO_TYPE=LVCMOS25;
+# IOBUF PORT "o_disp[3]"  IO_TYPE=LVCMOS25;
+# IOBUF PORT "o_disp[4]"  IO_TYPE=LVCMOS25;
+# IOBUF PORT "o_disp[5]"  IO_TYPE=LVCMOS25;
+# IOBUF PORT "o_disp[6]"  IO_TYPE=LVCMOS25;
+# IOBUF PORT "o_disp[7]"  IO_TYPE=LVCMOS25;
+# IOBUF PORT "o_disp[8]"  IO_TYPE=LVCMOS25;
+# IOBUF PORT "o_disp[9]"  IO_TYPE=LVCMOS25;
+# IOBUF PORT "o_disp[10]" IO_TYPE=LVCMOS25;
+# IOBUF PORT "o_disp[11]" IO_TYPE=LVCMOS25;
+# IOBUF PORT "o_disp[12]" IO_TYPE=LVCMOS25;
+# IOBUF PORT "o_disp[13]" IO_TYPE=LVCMOS25;
+
+##
+## DDR3 Memory
+##
+
+# LOCATE COMP "o_ddr_reset_n" SITE "N4";
+# LOCATE COMP "o_ddr_ck_p" SITE "P3";
+# LOCATE COMP "o_ddr_ck_n" SITE "P4";
+
+# IOBUF PORT "o_ddr_reset_n" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF PORT "o_ddr_ck_p"    IO_TYPE=SSTL135D_I SLEWRATE=FAST;
+# IOBUF PORT "o_ddr_ck_n"    IO_TYPE=SSTL135D_I SLEWRATE=FAST;
+
+# LOCATE COMP "o_ddr_cs_n"  SITE "K1";
+# LOCATE COMP "o_ddr_ce"    SITE "G5";
+# LOCATE COMP "o_ddr_ras_n" SITE "G5";
+# LOCATE COMP "o_ddr_cas_n" SITE "L1";
+# LOCATE COMP "o_ddr_we_n"  SITE "M1";
+
+# IOBUF GROUP "o_ddr_cs_n"  IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_ce"    IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_ras_n" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_cas_n" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_we_n"  IO_TYPE=SSTL135_I SLEWRATE=FAST;
+
+# LOCATE COMP "o_ddr_a[0]"  SITE "P2";
+# LOCATE COMP "o_ddr_a[1]"  SITE "C4";
+# LOCATE COMP "o_ddr_a[2]"  SITE "E5";
+# LOCATE COMP "o_ddr_a[3]"  SITE "F5";
+# LOCATE COMP "o_ddr_a[4]"  SITE "B3";
+# LOCATE COMP "o_ddr_a[5]"  SITE "F4";
+# LOCATE COMP "o_ddr_a[6]"  SITE "B5";
+# LOCATE COMP "o_ddr_a[7]"  SITE "E4";
+# LOCATE COMP "o_ddr_a[8]"  SITE "C5";
+# LOCATE COMP "o_ddr_a[9]"  SITE "E3";
+# LOCATE COMP "o_ddr_a[10]" SITE "D5";
+# LOCATE COMP "o_ddr_a[11]" SITE "B4";
+# LOCATE COMP "o_ddr_a[12]" SITE "C3";
+
+# IOBUF GROUP "o_ddr_a[0]"  IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_a[1]"  IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_a[2]"  IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_a[3]"  IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_a[4]"  IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_a[5]"  IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_a[6]"  IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_a[7]"  IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_a[8]"  IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_a[9]"  IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_a[10]" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_a[11]" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_a[12]" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+
+# LOCATE COMP "o_ddr_ba[0]" SITE "P5";
+# LOCATE COMP "o_ddr_ba[1]" SITE "N3";
+# LOCATE COMP "o_ddr_ba[2]" SITE "M3";
+
+# IOBUF GROUP "o_ddr_ba[0]"  IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_ba[1]"  IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_ba[2]"  IO_TYPE=SSTL135_I SLEWRATE=FAST;
+
+# LOCATE COMP "io_ddr_dq[0]"  SITE "L5";
+# LOCATE COMP "io_ddr_dq[1]"  SITE "F1";
+# LOCATE COMP "io_ddr_dq[2]"  SITE "K4";
+# LOCATE COMP "io_ddr_dq[3]"  SITE "G1";
+# LOCATE COMP "io_ddr_dq[4]"  SITE "L4";
+# LOCATE COMP "io_ddr_dq[5]"  SITE "H1";
+# LOCATE COMP "io_ddr_dq[6]"  SITE "G2";
+# LOCATE COMP "io_ddr_dq[7]"  SITE "J3";
+# LOCATE COMP "io_ddr_dq[8]"  SITE "D1";
+# LOCATE COMP "io_ddr_dq[9]"  SITE "C1";
+# LOCATE COMP "io_ddr_dq[10]" SITE "E2";
+# LOCATE COMP "io_ddr_dq[11]" SITE "C2";
+# LOCATE COMP "io_ddr_dq[12]" SITE "F3";
+# LOCATE COMP "io_ddr_dq[13]" SITE "A2";
+# LOCATE COMP "io_ddr_dq[14]" SITE "E1";
+# LOCATE COMP "io_ddr_dq[15]" SITE "B1";
+##
+# LOCATE COMP "o_ddr_dqs_p[0]" SITE "K2";
+# LOCATE COMP "o_ddr_dqs_n[0]" SITE "J1";
+# LOCATE COMP "o_ddr_dqs_p[1]" SITE "H4";
+# LOCATE COMP "o_ddr_dqs_n[1]" SITE "G5";
+
+# IOBUF GROUP "o_ddr_dqs_p[0]" IO_TYPE=SSTL135D_I DIFFRESISTOR=100 TERMINATION=OFF SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_dqs_n[0]" IO_TYPE=SSTL135D_I DIFFRESISTOR=100 TERMINATION=OFF SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_dqs_p[1]" IO_TYPE=SSTL135D_I DIFFRESISTOR=100 TERMINATION=OFF SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_dqs_n[1]" IO_TYPE=SSTL135D_I DIFFRESISTOR=100 TERMINATION=OFF SLEWRATE=FAST;
+
+##
+# LOCATE COMP "o_ddr_dm[0]" SITE "J4";
+# LOCATE COMP "o_ddr_dm[1]" SITE "H5";
+
+# IOBUF GROUP "o_ddr_dm[0]" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_dm[1]" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+
+# LOCATE COMP "o_ddr_odt"  SITE "L2";
+# LOCATE COMP "o_ddr_vref" SITE "K5";
+# LOCATE COMP "o_ddr_k_p"  SITE "M4";
+# LOCATE COMP "o_ddr_k_n"  SITE "N5";
+
+# IOBUF GROUP "o_ddr_odt"  IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF GROUP "o_ddr_cke"  IO_TYPE=SSTL135_I SLEWRATE=FAST;
+
+# IOBUF PORT "io_ddr_dq[0]"  VREF="BANK_6_VREF" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF PORT "io_ddr_dq[1]"  VREF="BANK_6_VREF" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF PORT "io_ddr_dq[2]"  VREF="BANK_6_VREF" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF PORT "io_ddr_dq[3]"  VREF="BANK_6_VREF" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF PORT "io_ddr_dq[4]"  VREF="BANK_6_VREF" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF PORT "io_ddr_dq[5]"  VREF="BANK_6_VREF" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF PORT "io_ddr_dq[6]"  VREF="BANK_6_VREF" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF PORT "io_ddr_dq[7]"  VREF="BANK_6_VREF" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF PORT "io_ddr_dq[8]"  VREF="BANK_7_VREF" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF PORT "io_ddr_dq[9]"  VREF="BANK_7_VREF" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF PORT "io_ddr_dq[10]" VREF="BANK_7_VREF" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF PORT "io_ddr_dq[11]" VREF="BANK_7_VREF" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF PORT "io_ddr_dq[12]" VREF="BANK_7_VREF" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF PORT "io_ddr_dq[13]" VREF="BANK_7_VREF" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF PORT "io_ddr_dq[14]" VREF="BANK_7_VREF" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+# IOBUF PORT "io_ddr_dq[15]" VREF="BANK_7_VREF" IO_TYPE=SSTL135_I SLEWRATE=FAST;
+
+##
+## RGMII Network port
+##
+
+# LOCATE COMP "o_net_ck125[0]"  SITE "L19";
+# LOCATE COMP "o_net_ck125[1]"  SITE "J20";
+### ?? # LOCATE COMP "o_net_ck125pii[0]"  SITE "U16";
+### ?? # LOCATE COMP "o_net_ck125pii[1]"  SITE "C18";
+
+## First network port
+# LOCATE COMP "o_neta_config"  SITE "T17";
+# LOCATE COMP "o_neta_reset_n" SITE "U17";
+# LOCATE COMP "o_neta_txclk"   SITE "P19";
+# LOCATE COMP "o_neta_txd[0]"  SITE "N19";
+# LOCATE COMP "o_neta_txd[1]"  SITE "N20";
+# LOCATE COMP "o_neta_txd[2]"  SITE "P18";
+# LOCATE COMP "o_neta_txd[3]"  SITE "P20";
+# LOCATE COMP "o_neta_txctrl"  SITE "R20";
+
+# LOCATE COMP "o_neta_rxclk"   SITE "L20";
+# LOCATE COMP "o_neta_rxd[0]"  SITE "T20";
+# LOCATE COMP "o_neta_rxd[1]"  SITE "U20";
+# LOCATE COMP "o_neta_rxd[2]"  SITE "T19";
+# LOCATE COMP "o_neta_rxd[3]"  SITE "R18";
+# LOCATE COMP "o_neta_rxctrl"  SITE "U19";
+
+# LOCATE COMP "o_neta_mdio"  SITE "U18";
+# LOCATE COMP "o_neta_mdc"   SITE "T18;
+
+## Second network port
+
+# LOCATE COMP "o_netb_config"   SITE "G20";
+# LOCATE COMP "o_netb_reset_n"  SITE "F20";
+# LOCATE COMP "o_netb_txclk"    SITE "C20";
+# LOCATE COMP "o_netb_txdb[0]"  SITE "J17";
+# LOCATE COMP "o_netb_txdb[1]"  SITE "J16";
+# LOCATE COMP "o_netb_txdb[2]"  SITE "D19";
+# LOCATE COMP "o_netb_txdb[3]"  SITE "D20";
+# LOCATE COMP "o_netb_txctrl"   SITE "E19";
+
+# LOCATE COMP "o_netb_rxclk"   SITE "J19";
+# LOCATE COMP "o_netb_rxd[0]"  SITE "G18";
+# LOCATE COMP "o_netb_rxd[1]"  SITE "G16";
+# LOCATE COMP "o_netb_rxd[2]"  SITE "H18";
+# LOCATE COMP "o_netb_rxd[3]"  SITE "H17";
+# LOCATE COMP "o_netb_rxctrl"  SITE "F19";
+
+
+# LOCATE COMP "o_netb_mdio"  SITE "H20";
+# LOCATE COMP "o_netb_mdc"   SITE "G19;
+
+
+
+##
+## PCIe
+##
+
+# LOCATE COMP "PET_p[0]"   SITE "Y5;
+# LOCATE COMP "PET_n[0]"   SITE "Y6;
+# LOCATE COMP "PET_p[1]"   SITE "W4;
+# LOCATE COMP "PET_n[1]"   SITE "W5;
+
+
+## Adding in any LPF_INSERT tags
+

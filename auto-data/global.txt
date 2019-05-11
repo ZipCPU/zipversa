@@ -41,6 +41,7 @@
 # spaces removed from either side) before being used
 # @KEYS.INTLIST is a list of all things that need to be converted to integers
 @KEYS.INTLIST= BUS_ADDRESS_WIDTH NADDR NPIC NSCOPES PIC.MAX REGS.N ID
+@LPF.FILE=../master.lpf
 @DEFAULT.BUS=wb
 @REGISTER.BUS=wbu
 @VERILATOR_PREFIX=v

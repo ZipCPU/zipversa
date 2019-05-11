@@ -57,7 +57,7 @@
 @INT.ZIP.WIRE=zip_cpu_int
 @INT.ZIP.BUS=buspic
 @CACHABLE.FILE=iscachable.v
-@LGICACHE=10
+@LGICACHE=0
 @LGDCACHE=0
 @TOP.PORTLIST=
 # 		// A reset wire for the ZipCPU
@@ -420,7 +420,7 @@
 @RTL.MAKE.FILES= zipcpu.v cpuops.v pfcache.v pipemem.v idecode.v dcache.v
 		zipsystem.v zipcounter.v zipjiffies.v ziptimer.v div.v mpyop.v
 		wbdmac.v icontrol.v wbwatchdog.v cpudefs.v wbdblpriarb.v
-		iscachable.v
+		iscachable.v memops.v dblfetch.v
 @RTL.MAKE.SUBD= cpu
 #
 #

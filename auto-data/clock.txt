@@ -38,14 +38,17 @@
 ##
 @PREFIX=clock
 @CLOCK.NAME=clk
-@CLOCK.TOP=sys_clk_i
-@$CLOCK.FREQUENCY=100000000
+@CLOCK.TOP=i_clk
+@$CLOCK.FREQUENCY=50000000
 @CLOCK.WIRE=i_clk
 @TOP.DEFNS=
 	wire	s_clk, s_reset;
 @TOP.INSERT=
-	assign	s_clk = sys_clk_i;
 	assign	s_reset = 1'b0;
+
+	// Divide our incoming clock by two to get down to 50MHz
+	CLKDIVF clock_divider(.CLKI(i_clk),
+		.RST(0), .ALIGNWD(1'b0), .CDIVX(s_clk));
 @REGDEFS.H.DEFNS=
 #define	CLKFREQHZ	@$(CLOCK.FREQUENCY)
 @BDEF.DEFN=

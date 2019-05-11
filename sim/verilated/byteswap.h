@@ -4,9 +4,10 @@
 //
 // Project:	ZipVersa, Versa Brd implementation using ZipCPU infrastructure
 //
-// Purpose:	To convert between little endian and big endian byte orders,
-//		and to handle conversions between character strings and
-//	bit-endian words made from those characters.
+// Purpose:	Defines prototypes for the functions that can be used to convert
+//		between little endian and big endian byte orders, and to handle
+//	conversions between character strings and bit-endian words made from
+//	those characters.
 //
 //
 // Creator:	Dan Gisselquist, Ph.D.

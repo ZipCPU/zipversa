@@ -17,7 +17,7 @@
 ## Copyright (C) 2015-2019, Gisselquist Technology, LLC
 ##
 ## This program is free software (firmware): you can redistribute it and/or
-## modify it under the terms of  the GNU General Public License as published
+## modify it under the terms of the GNU General Public License as published
 ## by the Free Software Foundation, either version 3 of the License, or (at
 ## your option) any later version.
 ##
@@ -38,7 +38,14 @@
 ################################################################################
 ##
 ##
-all:	test cpudefs.h design.h
+.PHONY: all
+all:
+#
+# Our tools
+YOSYS := yosys
+NEXTPNR:= nextpnr-ecp5
+ECPPACK:= ecppack
+# Our files
 YYMMDD=`date +%Y%m%d`
 CXX   := g++
 FBDIR := .
@@ -46,14 +53,20 @@ VDIRFB:= $(FBDIR)/obj_dir
 VOBJ := obj_dir
 CPUDR := cpu
 BASE  := main
-YLOG  := zipversa.yslog
-JSON  := zipversa.json
-ASCII := zipversa.asc
-BIN   := zipversa.bin
+YLOG  :=  zipversa.yslog
+PNRLOG:=  zipversa.pnrlog
+JSON  :=  zipversa.json
+CONSTRAINTS:=zipversa.lpf
+TEXTCFG:= zipversa.cfg
+SVFILE := zipversa.svf
+BINFIL := zipversa.bin
+#
+#
+all:	sim cpudefs.h design.h $(SVFILE)
 
 .DELETE_ON_ERROR:
-.PHONY: test
-test: $(VOBJ)/V$(BASE)__ALL.a
+.PHONY: sim
+sim: $(VOBJ)/V$(BASE)__ALL.a
 SUBMAKE := $(MAKE) --no-print-directory -C $(VOBJ) -f
 ifeq ($(VERILATOR_ROOT),)
 VERILATOR := verilator
@@ -81,7 +94,18 @@ $(VOBJ)/V%.h: $(FBDIR)/%.v
 .PHONY: yosys
 yosys: $(JSON)
 $(JSON): toplevel.v $(VFLIST)
-	yosys -ql $(YLOG) -p 'synth_ecp5 -top toplevel -json $(JSON)' toplevel.v $(VFLIST)
+	$(YOSYS) -ql $(YLOG) -p 'synth_ecp5 -top toplevel -json $(JSON)' toplevel.v $(VFLIST)
+
+.PHONY: nextpnr
+CHIP := --um-45k --speed 8 --package CABGA381
+$(TEXTCFG): $(JSON)
+	$(NEXTPNR) -q --json $(JSON) $(CHIP) --lpf $(CONSTRAINTS) --freq 50 --textcfg $(TEXTCFG) -l $(PNRLOG)
+nextpnr: $(TEXTCFG)
+
+.PHONY: bin
+$(SVFILE): $(TEXTCFG)
+	$(ECPPACK) --svf-rowsize 100000 --svf $(SVFILE) $(TEXTCFG) $(BINFILE)
+bin: $(SVFILE)
 
 cpudefs.h: cpu/cpudefs.v
 	@echo "Building cpudefs.h"
@@ -120,6 +144,7 @@ archive:
 .PHONY: clean
 clean:
 	rm -rf $(VOBJ)/ design.h cpudefs.h
+	rm -rf $(YLOG) $(PNRLOG) $(JSON) $(TEXTCFG) $(SVFILE) $(BINFILE)
 
 #
 # Note Verilator's dependency created information, and include it here if we

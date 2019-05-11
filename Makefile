@@ -58,6 +58,8 @@ AUTODATA := `find auto-data -name "*.txt"`
 CONSTRAINTS := #
 YYMMDD:=`date +%Y%m%d`
 SUBMAKE:= $(MAKE) --no-print-directory -C
+OCD := openocd
+VERSACFG := ecp5-versa.cfg
 
 #
 #
@@ -131,7 +133,7 @@ autodata: check-autofpga
 	$(call copyif-changed,auto-data/rtl.make.inc,rtl/make.inc)
 	$(call copyif-changed,auto-data/testb.h,sim/verilated/testb.h)
 	$(call copyif-changed,auto-data/main_tb.cpp,sim/verilated/main_tb.cpp)
-	# $(call copyif-changed,auto-data/build.xdc,artix.xdc)
+	$(call copyif-changed,auto-data/build.lpf,rtl/zipversa.lpf)
 	$(call copyif-changed,auto-data/iscachable.v,rtl/cpu/iscachable.v)
 
 #
@@ -184,6 +186,13 @@ sw-zlib: check-zip-gcc
 .PHONY: sw-board
 sw-board: sw-zlib check-zip-gcc
 	+@$(SUBMAKE) sw/board
+
+#
+# Load the design onto the board
+#
+.PHONY: load
+load: rtl
+	$(OCD) -f $(VERSACFG) -c "transport select jtag; init; svf rtl/zipversa.svf; exit"
 
 
 #

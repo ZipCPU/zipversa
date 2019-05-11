@@ -1,3 +1,5 @@
 design.h
+*.json
 *.yslog
+*.pnrlog
 obj_dir
