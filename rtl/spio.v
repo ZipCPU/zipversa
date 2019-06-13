@@ -116,14 +116,14 @@ module	spio(i_clk, i_wb_cyc, i_wb_stb, i_wb_we, i_wb_data, i_wb_sel,
 		o_int <= sw_int || (|((o_btn[(NBTN-1):0])&(~last_btn)));
 
 	wire	[(NLEDS-1):0]	bounced;
-	ledbouncer	#(NLEDS, 25)
+	ledbouncer	#(NLEDS, 24)
 		knightrider(i_clk, bounced);
 
 	always @(posedge i_clk)
 	if (led_demo)
-		o_led <= bounced;
+		o_led <= ~bounced;
 	else
-		o_led <= r_led[NLEDS-1:0];
+		o_led <= ~r_led[NLEDS-1:0];
 
 	assign	o_wb_stall = 1'b0;
 	always @(posedge i_clk)
