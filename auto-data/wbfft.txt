@@ -1,0 +1,64 @@
+################################################################################
+##
+## Filename: 	wbfft.txt
+##
+## Project:	ZipVersa, Versa Brd implementation using ZipCPU infrastructure
+##
+## Purpose:	Describes an FFT peripheral.
+##
+## Creator:	Dan Gisselquist, Ph.D.
+##		Gisselquist Technology, LLC
+##
+################################################################################
+##
+## Copyright (C) 2019, Gisselquist Technology, LLC
+##
+## This program is free software (firmware): you can redistribute it and/or
+## modify it under the terms of  the GNU General Public License as published
+## by the Free Software Foundation, either version 3 of the License, or (at
+## your option) any later version.
+##
+## This program is distributed in the hope that it will be useful, but WITHOUT
+## ANY WARRANTY; without even the implied warranty of MERCHANTIBILITY or
+## FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+## for more details.
+##
+## You should have received a copy of the GNU General Public License along
+## with this program.  (It's in the $(ROOT)/doc directory.  Run make with no
+## target there if the PDF file isn't present.)  If not, see
+## <http://www.gnu.org/licenses/> for a copy.
+##
+## License:	GPL, v3, as defined and found on www.gnu.org,
+##		http://www.gnu.org/licenses/gpl.html
+##
+##
+################################################################################
+##
+##
+@PREFIX=wbfft
+@DEVID=WBFFT
+@DEPENDS=VERILATOR
+@ACCESS=@$(DEVID)_ACCESS
+@$LGFFT=10
+@$NADDR=(1<<(@$(LGFFT)+1))
+@$DATA=@$(NADDR)/2
+@SLAVE.TYPE=OTHER
+@SLAVE.BUS=wb
+@MAIN.DEFNS=
+	wire	@$(PREFIX)_int;
+@MAIN.INSERT=
+	wbfft fft(i_clk, i_reset, wb_cyc, (wb_stb)&&(@$(PREFIX)_sel), wb_we,
+			wb_addr[@$LGFFT:0], wb_data, @$(PREFIX)_stall,
+			@$(PREFIX)_ack, @$(PREFIX)_data, @$(PREFIX)_int);
+@REGDEFS.H.DEFNS=
+#define	@$(DEVID)BASE	@$[0x%08x](REGBASE)
+//
+@REGS.0= 0 R_@$(DEVID) @$(DEVID)
+@REGS.1= @$(DATA) R_@$(DEVID) @$(DEVID)
+@BDEF.OSDEF=_BOARD_HAS_@$(DEVID)
+@BDEF.OSVAL=extern int _@$(PREFIX)[1];
+##
+@RTL.MAKE.GROUP= FFT
+@RTL.MAKE.SUBD=  fft
+@RTL.MAKE.FILES= wbfft.v bimpy.v butterfly.v convround.v fftmain.v fftstage.v
+	hwbfly.v laststage.v longbimpy.v qtrstage.v shiftaddmpy.v

@@ -67,7 +67,7 @@ VERSACFG := ecp5-versa.cfg
 #
 #
 .PHONY: check-install
-check-install: check-perl check-verilator check-zip-gcc check-gpp
+check-install: check-perl check-autofpga check-verilator check-zip-gcc check-gpp
 
 .PHONY: check-perl
 	$(call checkif-installed,perl,)
@@ -120,10 +120,12 @@ archive:
 # Build our main (and toplevel) Verilog files via autofpga
 #
 .PHONY: autodata
-autodata: check-autofpga
+autodata: datestamp check-autofpga
 	$(SUBMAKE) auto-data
 	$(call copyif-changed,auto-data/toplevel.v,rtl/toplevel.v)
 	$(call copyif-changed,auto-data/main.v,rtl/main.v)
+	$(call copyif-changed,auto-data/iscachable.v,rtl/iscachable.v)
+	$(call copyif-changed,auto-data/build.lpf,rtl/zipversa.lpf)
 	$(call copyif-changed,auto-data/regdefs.h,sw/host/regdefs.h)
 	$(call copyif-changed,auto-data/regdefs.cpp,sw/host/regdefs.cpp)
 	$(call copyif-changed,auto-data/board.h,sw/zlib/board.h)
@@ -133,8 +135,6 @@ autodata: check-autofpga
 	$(call copyif-changed,auto-data/rtl.make.inc,rtl/make.inc)
 	$(call copyif-changed,auto-data/testb.h,sim/verilated/testb.h)
 	$(call copyif-changed,auto-data/main_tb.cpp,sim/verilated/main_tb.cpp)
-	$(call copyif-changed,auto-data/build.lpf,rtl/zipversa.lpf)
-	$(call copyif-changed,auto-data/iscachable.v,rtl/cpu/iscachable.v)
 
 #
 #
@@ -142,7 +142,7 @@ autodata: check-autofpga
 # simulation class library that we can then use for simulation
 #
 .PHONY: verilated
-verilated: datestamp check-verilator
+verilated: check-verilator
 	+@$(SUBMAKE) rtl
 
 .PHONY: rtl
@@ -168,8 +168,9 @@ sw: sw-host sw-zlib sw-board
 # Build the host support software
 #
 .PHONY: sw-host
-sw-host:
-	$(SUBMAKE) sw/host
+sw-host: check-gpp
+	+@$(SUBMAKE) sw/host
+
 
 #
 #
@@ -184,7 +185,7 @@ sw-zlib: check-zip-gcc
 # Build the board software.  This may (or may not) use the software library
 #
 .PHONY: sw-board
-sw-board: sw-zlib check-zip-gcc
+sw-board: check-zip-gcc sw-zlib
 	+@$(SUBMAKE) sw/board
 
 #

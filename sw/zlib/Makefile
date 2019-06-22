@@ -2,7 +2,7 @@
 ##
 ## Filename:	Makefile
 ##
-## Project:	OpenArty, an entirely open SoC based upon the Arty platform
+## Project:	ZipVersa, Versa Brd implementation using ZipCPU infrastructure
 ##
 ## Purpose:	To guide/direct the build of the board-specific portion of
 ##		newlib.
@@ -14,7 +14,7 @@
 ##
 ################################################################################
 ##
-## Copyright (C) 2017-2019, Gisselquist Technology, LLC
+## Copyright (C) 2019, Gisselquist Technology, LLC
 ##
 ## This program is free software (firmware): you can redistribute it and/or
 ## modify it under the terms of  the GNU General Public License as published

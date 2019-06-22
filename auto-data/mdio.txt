@@ -39,114 +39,130 @@
 ##
 @PREFIX=mdio
 @NADDR=32
+@DEVID=MDIO
+@DEVCLASS=MDIO
 @ACCESS=NETCTRL_ACCESS
 @SLAVE.TYPE=OTHER
 @SLAVE.BUS=wb
+@MDCLK=o_eth_mdclk
+@MDDAT=io_eth_mdclk
 @TOP.PORTLIST=
-		// Toplevel ethernet MDIO ports
-		o_eth_mdclk, io_eth_mdio
+		// Toplevel ethernet @$(DEVID) ports
+		@$(MDCLK), @$(MDDAT)
 @TOP.IODECL=
-	// Ethernet control (MDIO)
-	output	wire		o_eth_mdclk;
-	inout	wire		io_eth_mdio;
+	// Ethernet control (@$(DEVID))
+	output	wire		@$(MDCLK);
+	inout	wire		@$(MDDAT);
 @TOP.DEFNS=
-	// Ethernet control (MDIO)
-	wire		w_mdio, w_mdwe;
+	// Ethernet control (@$(DEVID))
+	wire		w_@$(PREFIX)_dat, w_@$(PREFIX)_we;
+	wire		i_@$(PREFIX);
 @TOP.MAIN=
-		o_eth_mdclk, w_mdio, w_mdwe, io_eth_mdio
+		@$(MDCLK), w_@$(PREFIX)_dat, w_@$(PREFIX)_we, i_@$(PREFIX)
 @TOP.INSERT=
-	assign	io_eth_mdio = (w_mdwe)?w_mdio : 1'bz;
+	// What I want ...
+	// assign	@$(MDDAT) = (w_@$(PREFIX)_we) ? w_@$(PREFIX)_dat : 1'bz;
+	// assign	i_@$(PREFIX) = @$(MDDAT)
+	//
+	// Trellis bi-directional I/O primitive: BB
+	BB @$(PREFIX)dati(.I(w_@$(PREFIX)_dat), .T(!w_@$(PREFIX)_we),
+			.O(i_@$(PREFIX)), .B(@$(MDDAT)));
 @MAIN.PORTLIST=
-		// The ethernet MDIO wires
-		o_mdclk, o_mdio, o_mdwe, i_mdio
+		// The ethernet @$(DEVID) wires
+		@$(MDCLK), o_@$(PREFIX), o_@$(PREFIX)_we, i_@$(PREFIX)
 @MAIN.IODECL=
-	// Ethernet control (MDIO)
-	output	wire		o_mdclk, o_mdio, o_mdwe;
-	input	wire		i_mdio;
+	// Ethernet control (@$(DEVID))
+	output	wire		@$(MDCLK), o_@$(PREFIX), o_@$(PREFIX)_we;
+	input	wire		i_@$(PREFIX);
 @MAIN.INSERT=
-	wire[31:0]	mdio_debug;
+	wire[31:0]	@$(PREFIX)_debug;
 	enetctrl #(2)
-		mdio(i_clk, i_reset, wb_cyc, (wb_stb)&&(mdio_sel), wb_we,
+		@$(PREFIX)i(i_clk, i_reset, wb_cyc, (wb_stb)&&(@$(PREFIX)_sel), wb_we,
 				wb_addr[4:0], wb_data[15:0],
-			mdio_ack, mdio_stall, mdio_data,
-			o_mdclk, o_mdio, i_mdio, o_mdwe, mdio_debug);
+			@$(PREFIX)_ack, @$(PREFIX)_stall, @$(PREFIX)_data,
+			@$(MDCLK), o_@$(PREFIX), i_@$(PREFIX), o_@$(PREFIX)_we, @$(PREFIX)_debug);
 @MAIN.ALT=
-	assign	o_mdclk = 1'b1;
-	assign	o_mdio  = 1'b1;
-	assign	o_mdwe  = 1'b0;;
-@REGS.NOTE= // Ethernet configuration (MDIO) port
+	assign	@$(MDCLK) = 1'b1;
+	assign	o_@$(PREFIX)  = 1'b1;
+	assign	o_@$(PREFIX)_we  = 1'b0;
+@REGS.NOTE= // Ethernet configuration @$(DEVID) port
 @REGS.N=18
-@REGS.0=  0 R_MDIO_BMCR  	BMCR
-@REGS.1=  1 R_MDIO_BMSR 	BMSR
-@REGS.2=  2 R_MDIO_PHYIDR1	PHYIDR1
-@REGS.3=  3 R_MDIO_PHYIDR2	PHYIDR2
-@REGS.4=  4 R_MDIO_ANAR		ANAR
-@REGS.5=  5 R_MDIO_ANLPAR	ANLPAR
+@REGS.0=  0 R_@$(DEVID)_BMCR  	BMCR
+@REGS.1=  1 R_@$(DEVID)_BMSR 	BMSR
+@REGS.2=  2 R_@$(DEVID)_PHYIDR1	PHYIDR1
+@REGS.3=  3 R_@$(DEVID)_PHYIDR2	PHYIDR2
+@REGS.4=  4 R_@$(DEVID)_ANAR		ANAR
+@REGS.5=  5 R_@$(DEVID)_ANLPAR	ANLPAR
 # // 5 is also the ANLPARNP register
-@REGS.6=  6 R_MDIO_ANER		ANER
-@REGS.7=  7 R_MDIO_ANNPTR	ANNPTR
+@REGS.6=  6 R_@$(DEVID)_ANER		ANER
+@REGS.7=  7 R_@$(DEVID)_ANNPTR	ANNPTR
 # // Registers 8-15 are reserved, and so not defined here
-@REGS.8= 16 R_MDIO_PHYSTS	PHYSYTS
+@REGS.8= 16 R_@$(DEVID)_PHYSTS	PHYSYTS
 # // Registers 17-19 are reserved
-@REGS.9= 20 R_MDIO_FCSCR	FCSCR
-@REGS.10=21 R_MDIO_RECR		RECR
-@REGS.11=22 R_MDIO_PCSR		PCSR
-@REGS.12=23 R_MDIO_RBR		RBR
-@REGS.13=24 R_MDIO_LEDCR	LEDCR
-@REGS.14=25 R_MDIO_PHYCR	PHYCR
-@REGS.15=26 R_MDIO_BTSCR	BTSCR
-@REGS.16=27 R_MDIO_CDCTRL	CDCTRL
+@REGS.9= 20 R_@$(DEVID)_FCSCR	FCSCR
+@REGS.10=21 R_@$(DEVID)_RECR		RECR
+@REGS.11=22 R_@$(DEVID)_PCSR		PCSR
+@REGS.12=23 R_@$(DEVID)_RBR		RBR
+@REGS.13=24 R_@$(DEVID)_LEDCR	LEDCR
+@REGS.14=25 R_@$(DEVID)_PHYCR	PHYCR
+@REGS.15=26 R_@$(DEVID)_BTSCR	BTSCR
+@REGS.16=27 R_@$(DEVID)_CDCTRL	CDCTRL
 # // 28 is reserved
-@REGS.17=29 R_MDIO_EDCR		EDCR
+@REGS.17=29 R_@$(DEVID)_EDCR		EDCR
 @BDEF.DEFN=
 //
-// The Ethernet MDIO interface
+// The Ethernet @$(DEVID) interface
 //
-#define MDIO_BMCR	0x00
-#define MDIO_BMSR	0x01
-#define MDIO_PHYIDR1	0x02
-#define MDIO_PHYIDR2	0x03
-#define MDIO_ANAR	0x04
-#define MDIO_ANLPAR	0x05
-#define MDIO_ANLPARNP	0x05	// Duplicate register address
-#define MDIO_ANER	0x06
-#define MDIO_ANNPTR	0x07
-#define MDIO_PHYSTS	0x10
-#define MDIO_FCSCR	0x14
-#define MDIO_RECR	0x15
-#define MDIO_PCSR	0x16
-#define MDIO_RBR	0x17
-#define MDIO_LEDCR	0x18
-#define MDIO_PHYCR	0x19
-#define MDIO_BTSCR	0x1a
-#define MDIO_CDCTRL	0x1b
-#define MDIO_EDCR	0x1d
+#define @$(DEVID)_BMCR	0x00
+#define @$(DEVID)_BMSR	0x01
+#define @$(DEVID)_PHYIDR1	0x02
+#define @$(DEVID)_PHYIDR2	0x03
+#define @$(DEVID)_ANAR	0x04
+#define @$(DEVID)_ANLPAR	0x05
+#define @$(DEVID)_ANLPARNP	0x05	// Duplicate register address
+#define @$(DEVID)_ANER	0x06
+#define @$(DEVID)_ANNPTR	0x07
+#define @$(DEVID)_PHYSTS	0x10
+#define @$(DEVID)_FCSCR	0x14
+#define @$(DEVID)_RECR	0x15
+#define @$(DEVID)_PCSR	0x16
+#define @$(DEVID)_RBR	0x17
+#define @$(DEVID)_LEDCR	0x18
+#define @$(DEVID)_PHYCR	0x19
+#define @$(DEVID)_BTSCR	0x1a
+#define @$(DEVID)_CDCTRL	0x1b
+#define @$(DEVID)_EDCR	0x1d
 
-typedef struct ENETMDIO_S {
+#ifndef	@$(DEVCLASS)_H
+#define	@$(DEVCLASS)_H
+
+typedef struct ENET@$(DEVCLASS)_S {
 	unsigned	e_v[32];
-} ENETMDIO;
+} ENET@$(DEVCLASS);
 
-@BDEF.IOTYPE= ENETMDIO
-@BDEF.IONAME= io_netmdio
-@BDEF.OSDEF= _BOARD_HAS_NETMDIO
-@BDEF.OSVAL= static volatile @$THIS.BDEF.IOTYPE *const _mdio = ((@$THIS.BDEF.IOTYPE *)@$THIS.BASE);
+#endif // @$(DEVCLASS)_H
+
+@BDEF.IOTYPE= ENET@$(DEVCLASS)
+@BDEF.IONAME= _net@$(PREFIX)
+@BDEF.OSDEF= _BOARD_HAS_NET@$(DEVID)
+@BDEF.OSVAL= static volatile @$THIS.BDEF.IOTYPE *const _@$(PREFIX) = ((@$THIS.BDEF.IOTYPE *)@$THIS.BASE);
 @SIM.CLOCK=clk
 @SIM.INCLUDE=
 #include "enetctrlsim.h"
 @SIM.DEFNS=
 #ifdef	@$(ACCESS)
-	ENETCTRLSIM	*m_mdio;
+	ENETCTRLSIM	*m_@$(PREFIX);
 #endif // @$(ACCESS)
 @SIM.INIT=
 #ifdef	@$(ACCESS)
-		m_mdio = new ENETCTRLSIM;
+		m_@$(PREFIX) = new ENETCTRLSIM;
 #endif // @$(ACCESS)
 @SIM.TICK=
 #ifdef	@$(ACCESS)
-		m_core->i_mdio = (*m_mdio)(0, m_core->o_mdclk,
-				((m_core->o_mdwe)&&(!m_core->o_mdio))?0:1);
+		m_core->i_@$(PREFIX) = (*m_@$(PREFIX))(0, m_core->@$(MDCLK),
+				((m_core->o_@$(PREFIX)_we)&&(!m_core->o_@$(PREFIX)))?0:1);
 #else
-		m_core->i_mdio = ((m_core->o_mdwe)&&(!m_core->o_mdio))?0:1;
+		m_core->i_@$(PREFIX) = ((m_core->o_@$(PREFIX)_we)&&(!m_core->o_@$(PREFIX)))?0:1;
 #endif // @$(ACCESS)
-@RTL.MAKE.GROUP=ENETMDIO
+@RTL.MAKE.GROUP=ENET@$(DEVCLASS)
 @RTL.MAKE.FILES=enetctrl.v

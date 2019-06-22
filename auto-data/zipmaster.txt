@@ -420,7 +420,7 @@
 @RTL.MAKE.FILES= zipcpu.v cpuops.v pfcache.v pipemem.v idecode.v dcache.v
 		zipsystem.v zipcounter.v zipjiffies.v ziptimer.v div.v mpyop.v
 		wbdmac.v icontrol.v wbwatchdog.v cpudefs.v wbdblpriarb.v
-		iscachable.v memops.v dblfetch.v
+		iscachable.v memops.v dblfetch.v slowmpy.v
 @RTL.MAKE.SUBD= cpu
 #
 #

@@ -41,22 +41,49 @@
 @ACCESS=@$(DEVID)_ACCESS
 @SLAVE.TYPE=SINGLE
 @SLAVE.BUS=wb
-@NUMOUTPUT=11
-@NUMINPUT=11
+@NUMOUTPUT=3
+@NUMINPUT=2
 @INT.GPIO.WIRE=gpio_int
 @INT.GPIO.PIC=altpic
 @TOP.PORTLIST=
 		// GPIO ports
-		i_@$(PREFIX), o_@$(PREFIX)
+		// i_@$(PREFIX), o_@$(PREFIX)
+		o_@$(PREFIX)_clk_reset_n,
+		// i_@$(PREFIX)_clk_locked,
+		io_@$(PREFIX)_clk_scl,
+		io_@$(PREFIX)_clk_sda
 @TOP.IODECL=
 	// GPIO wires
 	localparam	NGPI = @$(NUMINPUT), NGPO=@$(NUMOUTPUT);
 	// GPIO ports
-	input	wire	[(@$(NUMINPUT)-1):0]	i_@$(PREFIX);
-	output	wire	[(@$(NUMOUTPUT)-1):0]	o_@$(PREFIX);
+	// GSRN clk_reset_n (R1), FPGA_WRITEN
+	output	wire	o_@$(PREFIX)_clk_reset_n;
+	//
+	// There doesn't appear to be any true clock locked input.
+	// The CLK_LOCK1 pin from the ispCLOCK doesn't go to any pins
+	// on the FPGA.  Not quite sure where my info came from to
+	// suggest that it would.
+	// input	wire	i_@$(PREFIX)_clk_locked;
+	inout	wire	io_@$(PREFIX)_clk_scl, io_@$(PREFIX)_clk_sda;
+@TOP.DEFNS=
+	wire	w_@$(PREFIX)_clk_reset;
+	wire	w_@$(PREFIX)_clk_scl, w_@$(PREFIX)_clk_sda;
+@TOP.INSERT=
+	assign	o_@$(PREFIX)_clk_reset_n= !w_@$(PREFIX)_clk_reset;
+	// assign	io_@$(PREFIX)_clk_scl = w_@$(PREFIX)_clk_scl ? 1'bz : 1'b0;
+	// assign	io_@$(PREFIX)_clk_sda = w_@$(PREFIX)_clk_sda ? 1'bz : 1'b0;
+	BB @$(PREFIX)_clk_scli(.I(1'b0), .T(w_@$(PREFIX)_clk_scl),
+		.O(io_@$(PREFIX)_clk_scl));
+	BB @$(PREFIX)_clk_sdai(.I(1'b0), .T(w_@$(PREFIX)_clk_sda),
+		.O(io_@$(PREFIX)_clk_sda));
+
 @TOP.MAIN=
 		// GPIO wires
-		i_@$(PREFIX), o_@$(PREFIX)
+		// @$(NUMINPUT) Inputs first
+		{ io_@$(PREFIX)_clk_scl, io_@$(PREFIX)_clk_sda },
+		// Then the @$(NUMOUTPUT) outputs
+		{ w_@$(PREFIX)_clk_reset,
+			w_@$(PREFIX)_clk_scl, w_@$(PREFIX)_clk_sda }
 @MAIN.PORTLIST=
 		// GPIO ports
 		i_@$(PREFIX), o_@$(PREFIX)
@@ -73,7 +100,7 @@
 	// another 16 @$(DEVID) outputs.  The interrupt trips when any of the inputs
 	// changes.  (Sorry, which input isn't (yet) selectable.)
 	//
-	localparam	INITIAL_@$(DEVID) = @$(NUMOUTPUT)'h0;
+	localparam	INITIAL_@$(DEVID) = @$(NUMOUTPUT)'h3;
 	wbgpio	#(NGPI, NGPO, INITIAL_@$(DEVID))
 		@$(PREFIX)i(i_clk, 1'b1, (wb_stb)&&(@$(PREFIX)_sel), wb_we,
 			wb_data, @$(PREFIX)_data, i_@$(PREFIX), o_@$(PREFIX),
@@ -90,6 +117,11 @@
 //
 #define	@$(DEVID)_SET(WIRE)	(((WIRE)<<16)|(WIRE))
 #define	@$(DEVID)_CLR(WIRE)	 ((WIRE)<<16)
+
+#define GPIO_ICLK_SDA		1
+#define GPIO_ICLK_SCL		2
+#define GPIO_ICLK_LOCKED	4
+#define GPIO_ICLK_RESET		4
 //
 //
 @BDEF.IONAME=	i_@$(PREFIX)

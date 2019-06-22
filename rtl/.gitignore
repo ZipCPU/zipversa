@@ -3,3 +3,5 @@ design.h
 *.yslog
 *.pnrlog
 obj_dir
+cmem_*.hex
+zipversa.cfg

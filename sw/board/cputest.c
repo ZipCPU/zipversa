@@ -2,7 +2,7 @@
 //
 // Filename:	cputest.c
 //
-// Project:	Zip CPU -- a small, lightweight, RISC CPU soft core
+// Project:	ZipVersa, Versa Brd implementation using ZipCPU infrastructure
 //
 // Purpose:	To test the CPU, it's instructions, cache, and pipeline, to make
 //		certain that it works.  This includes testing that each of the
@@ -12,9 +12,9 @@
 // Creator:	Dan Gisselquist, Ph.D.
 //		Gisselquist Technology, LLC
 //
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2015-2019, Gisselquist Technology, LLC
+// Copyright (C) 2019, Gisselquist Technology, LLC
 //
 // This program is free software (firmware): you can redistribute it and/or
 // modify it under the terms of the GNU General Public License as published
@@ -35,7 +35,7 @@
 //		http://www.gnu.org/licenses/gpl.html
 //
 //
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //
 //
 #include <stdint.h>

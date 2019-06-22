@@ -50,8 +50,20 @@ IOBUF PORT "i_clk" IO_TYPE=LVDS;
 # LOCATE COMP "o_wbu_uart_tx" SITE "A11";
 # LOCATE COMP "i_wbu_uart_rx" SITE "C11";
 
-# IOBUF PORT "o_uart_tx" IO_TYPE=LVCMOS33;
-# IOBUF PORT "i_uart_rx" IO_TYPE=LVCMOS33;
+# IOBUF PORT "o_wbu_uart_tx" IO_TYPE=LVCMOS33;
+# IOBUF PORT "i_wbu_uart_rx" IO_TYPE=LVCMOS33;
+
+##
+## Clock programming and control
+##
+# LOCATE COMP "o_gpio_clk_reset_n" SITE "R1";
+# LOCATE COMP "i_gpio_clk_locked" SITE "C11";
+# LOCATE COMP "io_gpio_clk_scl" SITE "R3";
+# LOCATE COMP "io_gpio_clk_sda" SITE "V1";
+
+# IOBUF PORT "o_wbu_uart_tx" IO_TYPE=LVCMOS33;
+# IOBUF PORT "i_wbu_uart_rx" IO_TYPE=LVCMOS33;
+
 
 ##
 ## 14-segment display
@@ -210,48 +222,49 @@ IOBUF PORT "i_clk" IO_TYPE=LVDS;
 ## RGMII Network port
 ##
 
-# LOCATE COMP "o_net_ck125[0]"  SITE "L19";
+LOCATE COMP "i_clk_125mhz"  SITE "L19";
+# IOBUF PORT "i_clk_125mhz" IO_TYPE=LVCMOS25;
 # LOCATE COMP "o_net_ck125[1]"  SITE "J20";
 ### ?? # LOCATE COMP "o_net_ck125pii[0]"  SITE "U16";
 ### ?? # LOCATE COMP "o_net_ck125pii[1]"  SITE "C18";
 
 ## First network port
-# LOCATE COMP "o_neta_config"  SITE "T17";
-# LOCATE COMP "o_neta_reset_n" SITE "U17";
-# LOCATE COMP "o_neta_txclk"   SITE "P19";
-# LOCATE COMP "o_neta_txd[0]"  SITE "N19";
-# LOCATE COMP "o_neta_txd[1]"  SITE "N20";
-# LOCATE COMP "o_neta_txd[2]"  SITE "P18";
-# LOCATE COMP "o_neta_txd[3]"  SITE "P20";
-# LOCATE COMP "o_neta_txctrl"  SITE "R20";
+# LOCATE COMP "o_net_config"  SITE "T17";
+# LOCATE COMP "o_net1_reset_n" SITE "U17";
+# LOCATE COMP "o_net1_tx_clk"   SITE "P19";
+# LOCATE COMP "o_net1_txd[0]"  SITE "N19";
+# LOCATE COMP "o_net1_txd[1]"  SITE "N20";
+# LOCATE COMP "o_net1_txd[2]"  SITE "P18";
+# LOCATE COMP "o_net1_txd[3]"  SITE "P20";
+# LOCATE COMP "o_net1_tx_ctl"  SITE "R20";
 
-# LOCATE COMP "o_neta_rxclk"   SITE "L20";
-# LOCATE COMP "o_neta_rxd[0]"  SITE "T20";
-# LOCATE COMP "o_neta_rxd[1]"  SITE "U20";
-# LOCATE COMP "o_neta_rxd[2]"  SITE "T19";
-# LOCATE COMP "o_neta_rxd[3]"  SITE "R18";
-# LOCATE COMP "o_neta_rxctrl"  SITE "U19";
+# LOCATE COMP "i_net1_rx_clk"   SITE "L20";
+# LOCATE COMP "i_net1_rxd[0]"  SITE "T20";
+# LOCATE COMP "i_net1_rxd[1]"  SITE "U20";
+# LOCATE COMP "i_net1_rxd[2]"  SITE "T19";
+# LOCATE COMP "i_net1_rxd[3]"  SITE "R18";
+# LOCATE COMP "i_net1_rx_ctl"   SITE "U19";
 
-# LOCATE COMP "o_neta_mdio"  SITE "U18";
-# LOCATE COMP "o_neta_mdc"   SITE "T18;
+# LOCATE COMP "io_net1_mdio"  SITE "U18";
+# LOCATE COMP "o_net1_mdc"   SITE "T18";
 
 ## Second network port
 
 # LOCATE COMP "o_netb_config"   SITE "G20";
 # LOCATE COMP "o_netb_reset_n"  SITE "F20";
-# LOCATE COMP "o_netb_txclk"    SITE "C20";
+# LOCATE COMP "o_netb_tx_clk"    SITE "C20";
 # LOCATE COMP "o_netb_txdb[0]"  SITE "J17";
 # LOCATE COMP "o_netb_txdb[1]"  SITE "J16";
 # LOCATE COMP "o_netb_txdb[2]"  SITE "D19";
 # LOCATE COMP "o_netb_txdb[3]"  SITE "D20";
-# LOCATE COMP "o_netb_txctrl"   SITE "E19";
+# LOCATE COMP "o_netb_tx_ctrl"   SITE "E19";
 
-# LOCATE COMP "o_netb_rxclk"   SITE "J19";
+# LOCATE COMP "o_netb_rx_clk"   SITE "J19";
 # LOCATE COMP "o_netb_rxd[0]"  SITE "G18";
 # LOCATE COMP "o_netb_rxd[1]"  SITE "G16";
 # LOCATE COMP "o_netb_rxd[2]"  SITE "H18";
 # LOCATE COMP "o_netb_rxd[3]"  SITE "H17";
-# LOCATE COMP "o_netb_rxctrl"  SITE "F19";
+# LOCATE COMP "o_netb_rx_ctl"  SITE "F19";
 
 
 # LOCATE COMP "o_netb_mdio"  SITE "H20";

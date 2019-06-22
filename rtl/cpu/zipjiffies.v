@@ -98,10 +98,10 @@ module	zipjiffies(i_clk, i_reset, i_ce,
 	reg	[(BW-1):0]	r_counter;
 	initial	r_counter = 0;
 	always @(posedge i_clk)
-		if (i_reset)
-			r_counter <= 0;
-		else if (i_ce)
-			r_counter <= r_counter+1;
+	if (i_reset)
+		r_counter <= 0;
+	else if (i_ce)
+		r_counter <= r_counter+1;
 
 	//
 	// Writes to the counter set an interrupt--but only if they are in the

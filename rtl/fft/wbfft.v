@@ -1,7 +1,7 @@
 `default_nettype none
 //
 module wbfft(i_clk, i_reset, i_wb_cyc, i_wb_stb, i_wb_we, i_wb_addr, i_wb_data,
-		o_wb_stall, o_wb_ack, o_wb_data, o_int, o_CKPCE);
+		o_wb_stall, o_wb_ack, o_wb_data, o_int);
 	localparam	[1:0]	INPUT = 2'b00,
 				PROCESSING = 2'b01,
 				IDLE = 2'b10;
@@ -18,7 +18,6 @@ module wbfft(i_clk, i_reset, i_wb_cyc, i_wb_stb, i_wb_we, i_wb_addr, i_wb_data,
 	output	reg			o_wb_ack;
 	output	reg	[31:0]		o_wb_data;
 	output	reg			o_int;
-	output	wire	[3:0]		o_CKPCE = CKPCE;
 
 	reg			ctrl_write, data_write;
 	reg			syncd, fft_reset, fft_ce_delay, fft_ce;

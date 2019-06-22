@@ -43,6 +43,7 @@
 @CLOCK.WIRE=i_clk
 @TOP.DEFNS=
 	wire	s_clk, s_reset;
+	wire	s_clk_125mhz, s_clk_125d;
 @TOP.INSERT=
 	assign	s_reset = 1'b0;
 

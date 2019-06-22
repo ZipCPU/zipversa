@@ -94,12 +94,13 @@ $(VOBJ)/V%.h: $(FBDIR)/%.v
 .PHONY: yosys
 yosys: $(JSON)
 $(JSON): toplevel.v $(VFLIST)
-	$(YOSYS) -ql $(YLOG) -p 'synth_ecp5 -top toplevel -json $(JSON)' toplevel.v $(VFLIST)
+	$(YOSYS) -ql $(YLOG) -p 'read -incdir fft/; synth_ecp5 -top toplevel -json $(JSON)' toplevel.v $(sort $(VFLIST))
 
 .PHONY: nextpnr
 CHIP := --um-45k --speed 8 --package CABGA381
+CLOCKS := --freq 50 --pre-pack clocks.py
 $(TEXTCFG): $(JSON)
-	$(NEXTPNR) -q --json $(JSON) $(CHIP) --lpf $(CONSTRAINTS) --freq 50 --textcfg $(TEXTCFG) -l $(PNRLOG)
+	$(NEXTPNR) -q --json $(JSON) $(CHIP) --lpf $(CONSTRAINTS) $(CLOCKS) --textcfg $(TEXTCFG) -l $(PNRLOG)
 nextpnr: $(TEXTCFG)
 
 .PHONY: bin

@@ -4,3 +4,4 @@
 *.cpp
 *.v
 rtl.make.inc
+*.lpf

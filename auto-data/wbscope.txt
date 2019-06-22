@@ -72,14 +72,19 @@
 @RTL.MAKE.GROUP=SCOPE
 @RTL.MAKE.FILES=@$(CORE).v
 @BDEF.DEFN=
-#ifndef	SCOPE_H
-#define	SCOPE_H
+#ifndef WBSCOPE_H
+#define WBSCOPE_H
 
-typedef	struct	SCOPE_S {
-	unsigned s_ctrl, s_data;
-} SCOPE;
+#define WBSCOPE_NO_RESET        0x80000000u
+#define WBSCOPE_TRIGGER         (WBSCOPE_NO_RESET|0x08000000u)
+#define WBSCOPE_MANUAL          (WBSCOPE_TRIGGER)
+#define WBSCOPE_DISABLE         0x04000000u
+
+typedef struct WBSCOPE_S {
+        unsigned s_ctrl, s_data;
+} WBSCOPE;
 #endif
+@BDEF.IOTYPE=WBSCOPE
 @BDEF.IONAME=_@$(PREFIX)
-@BDEF.IOTYPE=SCOPE
 @BDEF.OSDEF=_BOARD_HAS_@$(DEVID)
 @BDEF.OSVAL=static volatile @$(BDEF.IOTYPE) *const @$(BDEF.IONAME) = ((@$(BDEF.IOTYPE) *)@$[0x%08x](REGBASE));

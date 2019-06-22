@@ -1,6 +1,6 @@
 ################################################################################
 ##
-## Filename: 	busconsole.txt
+## Filename: 	wbuconsole.txt
 ##
 ## Project:	ZipVersa, Versa Brd implementation using ZipCPU infrastructure
 ##
@@ -41,6 +41,7 @@
 ##
 ##
 @PREFIX=wbu
+@DEVID=DBGBUS
 @ACCESS=WBUBUS_MASTER
 @MASTER.BUS=wbu
 @MASTER.TYPE=HOST
@@ -65,8 +66,8 @@
 	// UART interface
 	//
 	//
-	// Baudrate : @$BAUDRATE
-	// Clock    : @$(CLOCK.FREQUENCY)
+	// Baudrate : @$[%9d](BAUDRATE)
+	// Clock    : @$[%9d](CLOCK.FREQUENCY)
 	localparam [23:0] BUSUART = @$SETUP;	// @$BAUDRATE baud
 	wire	[7:0]	@$(PREFIX)_rx_data, @$(PREFIX)_tx_data;
 	wire		@$(PREFIX)_rx_stb;
@@ -91,21 +92,14 @@
 @$ZIP_DBGDATA=4+@$.ZIP_ADDRESS
 @ZIP_DBGDATA.FORMAT= 0x%08x
 @MAIN.INSERT=
-	localparam	BUSUART_BITS=(BUSUART > 4095) ? 24
-				: (BUSUART > 2047) ? 12
-				: (BUSUART > 1023) ? 11
-				: (BUSUART >  511) ? 10
-				: (BUSUART >  255) ?  9
-				: (BUSUART >  127) ?  8
-				: (BUSUART >   63) ?  7
-				: (BUSUART >   31) ?  6
-				: (BUSUART >   15) ?  5
-				: (BUSUART >    7) ?  4 : 3;
+	localparam	@$(DEVID)BITS = $clog2(BUSUART);
 	// The Host USB interface, to be used by the WB-UART bus
-	rxuartlite	#(BUSUART_BITS[4:0],BUSUART[BUSUART_BITS-1:0])
+	rxuartlite	#(.TIMER_BITS(@$(DEVID)BITS),
+				.CLOCKS_PER_BAUD(BUSUART[@$(DEVID)BITS-1:0]))
 		rcv(@$(CLOCK.WIRE), i_@$(PREFIX)_uart_rx,
 				@$(PREFIX)_rx_stb, @$(PREFIX)_rx_data);
-	txuartlite	#(BUSUART_BITS[4:0],BUSUART[BUSUART_BITS-1:0])
+	txuartlite	#(.TIMING_BITS(@$(DEVID)BITS[4:0]),
+				.CLOCKS_PER_BAUD(BUSUART[@$(DEVID)BITS-1:0]))
 		txv(@$(CLOCK.WIRE),
 				@$(PREFIX)_tx_stb,
 				@$(PREFIX)_tx_data,
@@ -138,8 +132,7 @@
 @REGDEFS.H.DEFNS=
 #define	R_ZIPCTRL	@$.ZIP_ADDRESS
 #define	R_ZIPDATA	@$.ZIP_DBGDATA
-// #define	RESET_ADDRESS	@$[0x%08x](RESET_ADDRESS)
-#define	BAUDRATE	@$(BAUDRATE)
+#define	BAUDRATE	@$[%d](BAUDRATE)
 @RTL.MAKE.GROUP= WBUBUS
 @RTL.MAKE.SUBD=  wbubus
 @RTL.MAKE.FILES= wbuconsole.v wbufifo.v wbucompactlines.v wbucompress.v
