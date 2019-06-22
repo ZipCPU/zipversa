@@ -1,0 +1,22 @@
+[tasks]
+prf
+# cvr
+
+[options]
+prf: mode prove
+prf: depth 40
+
+[engines]
+smtbmc
+
+[script]
+read -formal rxecrc.v
+read -formal addecrc.v
+read -formal composecrc.v
+prep -top composecrc
+
+[files]
+../../rtl/enet/rxecrc.v
+../../rtl/enet/addecrc.v
+# ../../rtl/enet/videozip/addecrc.v
+composecrc.v

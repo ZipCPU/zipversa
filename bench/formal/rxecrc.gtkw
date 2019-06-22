@@ -1,0 +1,95 @@
+[*]
+[*] GTKWave Analyzer v3.3.66 (w)1999-2015 BSI
+[*] Sat Jun 22 14:03:52 2019
+[*]
+[dumpfile] "(null)"
+[savefile] "/home/dan/work/rnd/opencores/zipversa/trunk/bench/formal/rxecrc.gtkw"
+[timestart] 281
+[size] 1918 600
+[pos] -1 -1
+*-3.000000 250 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 196
+[signals_width] 174
+[sst_expanded] 1
+[sst_vpaned_height] 155
+@28
+rxecrc.f_past_valid
+[color] 3
+rxecrc.i_reset
+[color] 3
+rxecrc.i_clk
+[color] 3
+rxecrc.i_ce
+[color] 3
+rxecrc.i_en
+@200
+-
+@28
+[color] 3
+rxecrc.i_v
+@22
+[color] 3
+rxecrc.i_d[7:0]
+rxecrc.r_crc[31:0]
+@200
+-
+@28
+[color] 2
+rxecrc.o_v
+@22
+[color] 2
+rxecrc.o_d[7:0]
+@28
+[color] 2
+rxecrc.o_err
+@200
+-
+@22
+rxecrc.v1[69:0]
+rxecrc.v2[69:0]
+@200
+-
+@23
+rxecrc.lowoctet[7:0]
+@22
+rxecrc.crc_eqn<0>[31:0]
+rxecrc.crc_eqn<1>[31:0]
+rxecrc.crc_eqn<2>[31:0]
+rxecrc.crc_eqn<3>[31:0]
+rxecrc.crc_eqn<4>[31:0]
+rxecrc.crc_eqn<5>[31:0]
+rxecrc.crc_eqn<6>[31:0]
+rxecrc.crc_eqn<7>[31:0]
+rxecrc.eqn[31:0]
+rxecrc.f_crc[31:0]
+rxecrc.f_pre_crc<0>[31:0]
+rxecrc.f_pre_crc<1>[31:0]
+rxecrc.f_pre_crc<2>[31:0]
+rxecrc.f_pre_crc<3>[31:0]
+rxecrc.f_pre_crc<4>[31:0]
+rxecrc.f_pre_crc<5>[31:0]
+rxecrc.f_pre_crc<6>[31:0]
+rxecrc.f_pre_crc<7>[31:0]
+rxecrc.f_v[4:0]
+rxecrc.preqn<0>[30:0]
+rxecrc.preqn<1>[31:0]
+rxecrc.preqn<2>[31:0]
+rxecrc.preqn<3>[31:0]
+rxecrc.preqn<4>[31:0]
+rxecrc.preqn<5>[31:0]
+rxecrc.preqn<6>[31:0]
+rxecrc.preqn<7>[31:0]
+rxecrc.r_buf[26:0]
+rxecrc.r_crc_q0[23:0]
+rxecrc.r_crc_q1[15:0]
+rxecrc.r_crc_q2[7:0]
+@28
+rxecrc.r_err
+@22
+rxecrc.r_mp[3:0]
+@28
+rxecrc.r_mq[2:0]
+@22
+rxecrc.shifted_crc[23:0]
+[pattern_trace] 1
+[pattern_trace] 0

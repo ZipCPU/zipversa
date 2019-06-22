@@ -1,0 +1,78 @@
+[*]
+[*] GTKWave Analyzer v3.3.66 (w)1999-2015 BSI
+[*] Tue May 28 21:41:37 2019
+[*]
+[dumpfile] "/home/dan/work/rnd/opencores/zipversa/trunk/bench/formal/wbfft_cvr/engine_0/trace1.vcd"
+[dumpfile_mtime] "Tue May 28 21:40:57 2019"
+[dumpfile_size] 3640
+[savefile] "/home/dan/work/rnd/opencores/zipversa/trunk/bench/formal/wbfft.gtkw"
+[timestart] 0
+[size] 1823 600
+[pos] -1 -1
+*-7.000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 196
+[signals_width] 198
+[sst_expanded] 1
+[sst_vpaned_height] 155
+@28
+wbfft.f_past_valid
+wbfft.i_clk
+wbfft.i_reset
+@200
+-
+@28
+[color] 3
+wbfft.i_wb_cyc
+[color] 3
+wbfft.i_wb_stb
+[color] 3
+wbfft.i_wb_we
+@22
+[color] 3
+wbfft.i_wb_addr[4:0]
+[color] 3
+wbfft.i_wb_data[31:0]
+@29
+[color] 2
+wbfft.o_wb_ack
+@23
+[color] 2
+wbfft.o_wb_data[31:0]
+@29
+[color] 2
+wbfft.o_wb_stall
+@28
+wbfft.o_int
+@22
+wbfft.o_CKPCE[3:0]
+@200
+-
+@28
+wbfft.data_write
+wbfft.ctrl_write
+wbfft.fft_ce
+@200
+-
+@28
+wbfft.fft_reset
+wbfft.fft_sync
+wbfft.fsm_state[1:0]
+@200
+-
+@22
+wbfft.samples_in[3:0]
+wbfft.wr_addr[3:0]
+wbfft.br_addr[3:0]
+@200
+-
+@22
+wbfft.N[31:0]
+wbfft.arbitrary_value[31:0]
+wbfft.fft_input[31:0]
+wbfft.fft_output[31:0]
+wbfft.mem<0>[31:0]
+@28
+wbfft.syncd
+wbfft.unused
+[pattern_trace] 1
+[pattern_trace] 0

@@ -1,0 +1,22 @@
+[tasks]
+prf
+cvr
+
+[options]
+prf: mode prove
+prf: depth 10
+cvr: mode cover
+cvr: depth 140	# (CKPCE + 1) * 16
+
+[engines]
+smtbmc
+
+[script]
+read -formal fwb_slave.v
+read -formal wbfft.v
+hierarchy -top wbfft -chparam LGFFT 4 -chparam CKPCE 3
+prep -top wbfft
+
+[files]
+fwb_slave.v
+../../rtl/fft/wbfft.v

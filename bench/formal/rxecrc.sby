@@ -1,0 +1,21 @@
+[tasks]
+prf
+cvr
+
+[options]
+prf: mode prove
+prf: depth 26
+# prf: mode bmc
+# prf: depth 80
+cvr: mode cover
+cvr: depth 12
+
+[engines]
+smtbmc
+
+[script]
+read -formal -D RXECRC rxecrc.v
+prep -top rxecrc
+
+[files]
+../../rtl/enet/rxecrc.v
