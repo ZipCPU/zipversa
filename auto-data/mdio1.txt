@@ -42,3 +42,4 @@
 @INCLUDEFILE=mdio.txt
 @MDCLK=o_net1_mdc
 @MDDAT=io_net1_mdio
+@PHYADDR=5'h00

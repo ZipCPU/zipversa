@@ -153,6 +153,7 @@ module	enetpackets(i_wb_clk, i_reset,
 	// also known as 4kB of data in each of the RX and TX channels.  This
 	// effectively defines the maximum packet size as well.
 	parameter	MEMORY_ADDRESS_WIDTH = 12; // Log_2 octet width:11..14
+	parameter [47:0] INITIAL_HARDWARE_MAC = 48'hd2d828e8b094;
 	//
 	// MAW is roughly 
 	localparam	MAW =((MEMORY_ADDRESS_WIDTH>14)? 14: // width of words
@@ -160,7 +161,7 @@ module	enetpackets(i_wb_clk, i_reset,
 	//
 	// Select whether the outgoing debug wires are associated with the
 	// receive or the transmit side of interface
-	localparam	[0:0]	RXSCOPE = 1'b0;
+	localparam	[0:0]	RXSCOPE = 1'b1;
 
 	input	wire		i_wb_clk, i_reset;
 	//
@@ -241,6 +242,8 @@ module	enetpackets(i_wb_clk, i_reset,
 	initial	rx_err    = 1'b0;
 	initial	rx_miss   = 1'b0;
 	initial	rx_clear  = 1'b0;
+	//
+	initial	hw_mac    = INITIAL_HARDWARE_MAC;
 	always @(posedge i_wb_clk)
 	begin
 		// if (i_wb_addr[(MAW+1):MAW] == 2'b10)
@@ -287,7 +290,7 @@ module	enetpackets(i_wb_clk, i_reset,
 		clear_pipe <= { clear_pipe[6:0], rx_clear };
 		p_rx_clear <= |clear_pipe;
 
-		if ((tx_busy)||(tx_cancel))
+		if (tx_busy || tx_cancel)
 			tx_cmd <= 1'b0;
 		if (!tx_busy)
 			tx_cancel <= 1'b0;
@@ -469,28 +472,23 @@ module	enetpackets(i_wb_clk, i_reset,
 
 	wire	[MAW-1:0]	n_tx_addr;
 	reg	[31:0]		n_tx_data;
-	reg			n_tx_complete;
 	(* ASYNC_REG = "TRUE" *) reg	n_tx_busy,
 					n_tx_config_hw_mac, n_tx_config_hw_crc;
 
 	initial	n_tx_busy  = 1'b0;
-	initial	n_tx_complete  = 1'b0;
 	always @(posedge i_net_tx_clk)
 	if (n_tx_reset || n_tx_cancel)
 	begin
 		n_tx_busy <= 1'b0;
-		n_tx_complete <= 1'b0;
 	end else if (!n_tx_busy)
 	begin
 		if (n_tx_cmd)
 		begin
 			n_tx_busy     <= 1'b1;
-			n_tx_complete <= 1'b0;
 		end
 	end else if (tx_ce && o_net_tx_ctl && !w_txprev)
 	begin
 		n_tx_busy     <= 1'b0;
-		n_tx_complete <= 1'b1;
 	end
 
 	always @(posedge i_net_tx_clk)
@@ -677,7 +675,7 @@ module	enetpackets(i_wb_clk, i_reset,
 		// n_rx_net_err goes true as soon as an error is detected,
 		// and stays true as long as valid data is coming in
 		n_rx_net_err <= (i_net_rx_dv)&&(
-				i_net_rx_err	// PHY sensed a collision
+				0 // i_net_rx_err	//PHY sensed a collision
 				||(w_minerr)||(w_macerr)||(w_rxcrcerr)
 				||(w_iperr)
 				||(n_rx_net_err)
@@ -791,11 +789,13 @@ module	enetpackets(i_wb_clk, i_reset,
 		reg	rx_trigger, rx_last_dv;
 		reg	rx_dvalid;
 
-		// always @(*)	rx_dvalid = i_net_rx_dv;
-
+`ifdef	TRIGGER_ON_TX_BUSY
 		reg	rx_tx_busy;
 		always @(posedge i_net_rx_clk)
 			{ rx_dvalid, rx_tx_busy }<={ rx_tx_busy, n_still_busy };
+`else
+		always @(*)	rx_dvalid = i_net_rx_dv;
+`endif
 
 		initial	rx_last_dv = 0;
 		always @(posedge i_net_rx_clk)
@@ -826,6 +826,11 @@ module	enetpackets(i_wb_clk, i_reset,
 			//
 			i_net_rx_dv, i_net_rxd };		// 9 bits
 
+		//		||(w_minerr)||(w_macerr)||(w_rxcrcerr)
+		//		||(w_iperr)
+		//		||(n_rx_net_err)
+		//		||((w_rxwr)&&(n_rx_valid)));
+
 
 	end else begin : TXSCOPE_DEF
 
@@ -833,7 +838,7 @@ module	enetpackets(i_wb_clk, i_reset,
 
 		assign	o_debug = {
 			// 3 bits
-			n_tx_cmd, n_tx_complete, n_tx_busy,
+			n_tx_cmd, 1'b0, n_tx_busy,
 			// 9 bits
 			w_memv, w_memd,
 			// 2 bits

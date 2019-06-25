@@ -4,7 +4,7 @@ prf
 
 [options]
 prf: mode prove
-prf: depth 40
+prf: depth 12	# Takes about 15 minutes for induction, 38 for BMC
 
 [engines]
 smtbmc

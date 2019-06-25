@@ -53,7 +53,8 @@
 @SCOPE.TRIGGER=zip_trigger
 @SCOPE.DATA=zip_debug
 @CPURESET=i_cpu_reset
-@$RESET_ADDRESS=@$(bkram.REGBASE)+(4<<20)
+# @$RESET_ADDRESS=@$(bkram.REGBASE)
+@$RESET_ADDRESS=@$(flash.REGBASE)+(4<<20)
 @INT.ZIP.WIRE=zip_cpu_int
 @INT.ZIP.BUS=buspic
 @CACHABLE.FILE=iscachable.v

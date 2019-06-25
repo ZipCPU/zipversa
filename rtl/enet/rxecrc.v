@@ -68,11 +68,12 @@ module	rxecrc(i_clk, i_reset, i_ce, i_en, i_v, i_d, o_v, o_d, o_err);
 	// Verilator lint_off UNUSED
 	integer	k;
 	// Verilator lint_on  UNUSED
+
+`define GENERATE_POLYNOMIALS
 `ifdef	GENERATE_POLYNOMIALS
 	initial begin
 		crc_eqn[7] = TAPS;
 		for(k=6; k>=0; k=k-1)
-		// for(j=0; j<7; j=j+1)
 		begin : INITIAL_CRC_EQN
 			// k = 6-j;
 			if (crc_eqn[k+1][0])
@@ -99,7 +100,7 @@ module	rxecrc(i_clk, i_reset, i_ce, i_en, i_v, i_d, o_v, o_d, o_err);
 
 	assign	shifted_crc = { 8'h0, r_crc[31:8] };
 
-// `define	FOR_LOOP
+`define	FOR_LOOP
 `ifdef FOR_LOOP
 	always @(*)
 	begin

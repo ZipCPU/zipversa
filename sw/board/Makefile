@@ -36,7 +36,7 @@
 ##
 ##
 .PHONY: all
-PROGRAMS := cputest cputestcis # hello gettysburg
+PROGRAMS := cputest cputestcis hello gettysburg simple_ping
 all:	$(PROGRAMS)
 #
 #
@@ -50,9 +50,9 @@ OBJDUMP := zip-objdump
 SUBMAKE:= $(MAKE) --no-print-directory -C
 #
 #
-SOURCES := cputest.c hello.c gettysburg.c
-HEADERS :=
-DUMPRTL := -fdump-rtl-all
+SOURCES := cputest.c hello.c gettysburg.c simple_ping.c
+HEADERS := $(foreach hdr,$(subst .c,.o,$(SOURCES)),$(wildcard $(hdr))) board.h
+INCS    := -I../zlib -I../../rtl -I.DUMPRTL := -fdump-rtl-all
 DUMPTREE:= -fdump-tree-all
 LFLAGS  := -T board.ld -L../zlib -Wl,--start-group -lversa -lgcc
 INCS    := -I../zlib -I../../rtl -I.
@@ -112,6 +112,10 @@ hello: $(OBJDIR)/hello.o board.ld
 
 gettysburg: $(OBJDIR)/gettysburg.o board.ld
 	$(CC) $(CFLAGS) $(LFLAGS) $(OBJDIR)/gettysburg.o -o $@
+
+simple_ping: $(OBJDIR)/simple_ping.o $(OBJDIR)/zipcpu.o
+simple_ping: $(OBJDIR)/arp.o $(OBJDIR)/ipcksum.o
+	$(CC) -Wl,-Map=simple_ping.map $(CFLAGS) $(LFLAGS) $^ -o $@
 
 define	mk-objdir
 	@bash -c "if [ ! -e $(OBJDIR) ]; then mkdir -p $(OBJDIR)/; fi"

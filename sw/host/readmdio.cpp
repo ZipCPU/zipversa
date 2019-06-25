@@ -62,7 +62,7 @@ void	usage(void) {
 }
 
 int main(int argc, char **argv) {
-#ifndef	NETCTRL_ACCESS
+#ifndef	NETCTRL1_ACCESS
 	printf(
 "This program depends upon the MDIO interface.  This interface was not\n"
 "built into your design.  Please add it in and try again.\n");
@@ -70,7 +70,9 @@ int main(int argc, char **argv) {
 	bool	all_flag = false;
 
 	FPGAOPEN(m_fpga);
-	MDIODEV	*mdio = new MDIODEV(m_fpga);
+	typedef	FPGA MDIODEV;
+	// MDIODEV	*mdio = new MDIODEV(m_fpga);
+	MDIODEV *m_mdio = m_fpga;
 
 	if (argc == 2)
 		all_flag = true;
@@ -81,7 +83,7 @@ int main(int argc, char **argv) {
 	}
 
 	unsigned	v;
-	v = m_mdio->readio(R_MDIO_BMCR, R_MDIO_BMCR);
+	v = m_mdio->readio(R_MDIO1_BMCR);
 	if (all_flag || ((v & 0x01000) == 0) || ((v & 0x0100) == 0)
 				|| ((v&0xcc80)!=0)) {
 	printf("    BMCR    %04x\tBasic Mode Control Register\n", v);
@@ -113,7 +115,7 @@ int main(int argc, char **argv) {
 	}
 
 	////////////////////////////////////////
-	v = m_mdio->readio(R_MDIO_BMSR);
+	v = m_mdio->readio(R_MDIO1_BMSR);
 	printf("R/O BMSR    %04x\tBasic Mode Status Register\n", v);
 	if (all_flag && (v & 0x08000))
 		printf("                \t100Base-T4 capable\n");
@@ -150,16 +152,16 @@ int main(int argc, char **argv) {
 		printf("                \tExtended register capabilities\n");
 
 	////////////////////////////////////////
-	v = m_mdio->readio(R_MDIO_PHYIDR1);
+	v = m_mdio->readio(R_MDIO1_PHYIDR1);
 	if (all_flag || (v != 0x141)) {
 	printf("R/O PHYID1  %04x\tPHY Identifier Reg #1\n", v);
 	//printf("            %4x\tOUI MSB\n", v);
 	}
 
 	////////////////////////////////////////
-	v = m_mdio->readio(R_MDIO_PHYIDR2);
-	if (all_flag || ((v&~-16)!=0x0dd0)) {
-	v = m_mdio->readio(R_MDIO_PHYIDR2);
+	v = m_mdio->readio(R_MDIO1_PHYIDR2);
+	if (all_flag || ((v&0xfff0)!=0x0dd0)) {
+	v = m_mdio->readio(R_MDIO1_PHYIDR2);
 	printf("R/O PHYID2  %04x\tPHY Identifier Reg #2\n", v);
 	printf("            %4x\tOUI LSBs\n", (v>>10)&0x3f);
 	printf("            %4x\tVendor model number\n",   (v>>4)&0x3f);
@@ -168,7 +170,7 @@ int main(int argc, char **argv) {
 
 	////////////////////////////////////////
 	if (all_flag) {
-	v = m_mdio->readio(R_MDIO_ANAR);
+	v = m_mdio->readio(R_MDIO1_ANAR);
 	printf("    ANAR    %04x\tAuto-negotiation advertisement register\n", v);
 	if (v & 0x8000)
 		printf("                \tNext pages exchange desired\n");
@@ -193,15 +195,15 @@ int main(int argc, char **argv) {
 
 	////////////////////////////////////////
 	if (all_flag) {
-	v = m_mdio->readio(R_MDIO_ANLPAR);
+	v = m_mdio->readio(R_MDIO1_ANLPAR);
 	printf("    ANLPAR  %04x\tAuto-negotiation link partner ability\n", v);
 	printf("            %4x\tTechnology ability field\n", (v>>5)&0x0ff);
 	printf("            %4x\tSelector field\n", v&0x01f);
 	}
 
 	////////////////////////////////////////
-	if (all_flag) {
-	v = m_mdio->readio(R_MDIO_ANER);
+	v = m_mdio->readio(R_MDIO1_ANER);
+	if (all_flag || (v & 0x010)) {
 	printf("    ANER    %04x\tAuto-negotiation expansion register\n", v);
 	if (v&0x0010)
 		printf("                \tParallel detection fault detected\n");
@@ -217,7 +219,7 @@ int main(int argc, char **argv) {
 
 	////////////////////////////////////////
 	if (all_flag) {
-	v = m_mdio->readio(R_MDIO_ANNPTR);
+	v = m_mdio->readio(R_MDIO1_ANNPTR);
 	printf("    ANNPTR  %04x\tAuto-negotiation Next page TX\n", v);
 	if (v&0x8000)
 		printf("                \tNext page indication: more pages remain to be sent\n");
@@ -233,7 +235,7 @@ int main(int argc, char **argv) {
 	////////////////////////////////////////
 	// ANNPRR register -- not decoded here
 	if (all_flag) {
-	v = m_mdio->readio(R_MDIO_ANNPRR);
+	v = m_mdio->readio(R_MDIO1_ANNPRR);
 	printf("    ANNPRR  %04x\tAuto-negotiation next page receive register\n", v);
 	if (v&0x8000)
 		printf("                \tNext page\n");
@@ -245,13 +247,77 @@ int main(int argc, char **argv) {
 		printf("                \tAcknowledge 2\n");
 	if (v&0x0800)
 		printf("                \tToggle\n");
-	printf("             %03x\tTransmit code word\n", v & 0x07ff);
+	printf("             %03x\tReceive code word\n", v & 0x07ff);
 	}
 
-#ifdef	NOT_CHECKED
+	////////////////////////////////////////
+	// 1000Base-T Control register
+	v = m_mdio->readio(R_MDIO1_GBECTRL);
+	printf("    GBECTRL %04x\t1000Base-T Control Register\n", v);
+	if (all_flag && ((v & 0x0e000) == 0))
+		printf("                \tNormal mode\n");
+	else if ((v & 0x0e000) == 0x02000)
+		printf("                \tTest mode 1 - Transmit waveform test\n");
+	else if ((v & 0x0e000) == 0x04000)
+		printf("                \tTest mode 2 - Transmit jitter test (MASTER)\n");
+	else if ((v & 0x0e000) == 0x06000)
+		printf("                \tTest mode 3 - Transmit jitter test (SLAVE)\n");
+	else if ((v & 0x0e000) == 0x08000)
+		printf("                \tTest mode 3 - Transmit distortion test\n");
+	else if ((v & 0x0e000) > 0x08000)
+		printf("                \tReserved mode\n");
+	if (v & 0x01000)
+		printf("                \tManual MASTER/SLAVE configuration\n");
+	if (v & 0x00800)
+		printf("                \tManual configuration as MASTER\n");
+	else if (all_flag)
+		printf("                \tManual configuration as SLAVE\n");
+	if (v & 0x00400)
+		printf("                \tPrefer multi-port device (MASTER)\n");
+	else if (all_flag)
+		printf("                \tPrefer single-port device (SLAVE)\n");
+	if (all_flag && (v & 0x00200))
+		printf("                \tAdvertise full-duplex 1000BASE-T capability\n");
+	if (all_flag && (v & 0x00100))
+		printf("                \tAdvertise half-duplex 1000BASE-T capability\n");
+
+
 	////////////////////////////////////////
 	if (all_flag) {
-	v = m_mdio->readio(R_MDIO_GBCR);
+	v = m_mdio->readio(R_MDIO1_GBESTAT);
+	printf("    GBESTAT %04x\t1000Base-T Status Register\n", v);
+	if (v & 0x8000)
+		printf("                \tMaster/SLAVE configuration fault\n");
+	if (v & 0x4000)
+		printf("                \tLocal PHY configuration resolved to MASTER\n");
+	else if (all_flag)
+		printf("                \tLocal PHY configuration resolved to SLAVE\n");
+	if ((v & 0x2000)==0)
+		printf("                \tLocal receiver is NOT OK\n");
+	else if (all_flag)
+		printf("                \tLocal receiver OK\n");
+	if ((v & 0x1000)==0)
+		printf("                \tRemote receiver is NOT OK\n");
+	else if (all_flag)
+		printf("                \tRemote receiver OK\n");
+	if ((v & 0x0800)==0)
+		printf("                \tLink partner is not capable of 1000BASE-T full-duplex\n");
+	else if (all_flag)
+		printf("                \tLink partner is     capable of 1000BASE-T full-duplex\n");
+	if (all_flag && (v & 0x0400))
+		printf("                \tLink partner is     capable of 1000BASE-T half-duplex\n");
+	else if ((v & 0x0400)==0)
+		printf("                \tLink partner is not capable of 1000BASE-T half-duplex\n");
+	if ((v & 0x0ff) == 0x0ff)
+	printf("            MAX\tMSB of Idle Error Counter\n");
+	else
+	printf("            %2x\tMSB of Idle Error Counter\n", (v&0xff));
+	}
+#ifdef	NOT_CHECKED
+
+	////////////////////////////////////////
+	if (all_flag) {
+	v = m_mdio->readio(R_MDIO1_GBCR);
 	printf("      GBCR  %04x\t1000Base-T Control Register\n", v);
 	if ((v&0xe000)==0x2000)
 		printf("                \tTest mode 1 - Transmit Jitter test\n");
@@ -281,7 +347,7 @@ int main(int argc, char **argv) {
 
 	////////////////////////////////////////
 	if (all_flag) {
-	v = m_mdio->readio(R_MDIO_GBSR);
+	v = m_mdio->readio(R_MDIO1_GBSR);
 	printf("R/O   GBSR   %04x\t1000Base-T Status Register\n", v);
 	if (v & 0x8000)
 		printf("                \tMASTER/SLAVE configuration fault detected\n");
@@ -305,7 +371,7 @@ int main(int argc, char **argv) {
 
 	////////////////////////////////////////
 	if (all_flag) {
-	v = m_mdio->readio(R_MDIO_MACR);
+	v = m_mdio->readio(R_MDIO1_MACR);
 	printf("W/O   MACR  %04x\tMMD Access Control Register\n", v);
 	if ((v&0xc000)==0x0)
 		printf("                \tAddress\n");
@@ -320,19 +386,19 @@ int main(int argc, char **argv) {
 
 	////////////////////////////////////////
 	if (all_flag) {
-	v = m_mdio->readio(R_MDIO_MAADR);
+	v = m_mdio->readio(R_MDIO1_MAADR);
 	printf("     MAADR  %04x\tMMD Access Address Data Register\n", v);
 	}
 
 	////////////////////////////////////////
 	if (all_flag) {
-	v = m_mdio->readio(R_MDIO_GBESR);
+	v = m_mdio->readio(R_MDIO1_GBESR);
 	printf("R/O  GBESR  %04x\t1000Base-T Extended Status Register\n", v);
 	}
 
 	////////////////////////////////////////
 	if (all_flag) {
-	v = m_mdio->readio(R_MDIO_PHYCR);
+	v = m_mdio->readio(R_MDIO1_PHYCR);
 	printf("     PHYCR  %04x\tPHY specific control register\n", v);
 	if (v&0x8000)
 		printf("                \tRX clock output disabled\n");
@@ -351,7 +417,7 @@ int main(int argc, char **argv) {
 	}
 
 	////////////////////////////////////////
-	v = m_mdio->readio(R_MDIO_PHYSR);
+	v = m_mdio->readio(R_MDIO1_PHYSR);
 	printf("R/O  PHYSR  %04x\tPHY specific status register\n", v);
 	if ((v&0xc000)==0)
 		printf("                \t  10Mbps link speed\n");
@@ -384,7 +450,7 @@ int main(int argc, char **argv) {
 
 	////////////////////////////////////////
 	if (all_flag) {
-	v = m_mdio->readio(R_MDIO_INER);
+	v = m_mdio->readio(R_MDIO1_INER);
 	printf("      INER  %04x\tInterrupt Enable Register\n", v);
 	if (v&0x8000)
 		printf("                \tAuto-negotiation error int enabled\n");
@@ -404,7 +470,7 @@ int main(int argc, char **argv) {
 
 	////////////////////////////////////////
 	if (all_flag) {
-	v = m_mdio->readio(R_MDIO_INSR);
+	v = m_mdio->readio(R_MDIO1_INSR);
 	printf("RC    INSR  %04x\tInterrupt Status Register\n", v);
 	if (v & 0x8000)
 		printf("                \tAuto-Negotiation Error\n");
@@ -425,13 +491,13 @@ int main(int argc, char **argv) {
 	}
 
 	////////////////////////////////////////
-	v = m_mdio->readio(R_MDIO_RXERC);
+	v = m_mdio->readio(R_MDIO1_RXERC);
 	if (all_flag || (v != 0)) {
 	printf("R/O RXERC   %04x\tReceive Error Counter\n", v);
 	}
 
 	////////////////////////////////////////
-	v = m_mdio->readio(R_MDIO_LDPSR);
+	v = m_mdio->readio(R_MDIO1_LDPSR);
 	if (all_flag || (v & 0x0001)) {
 	printf("R/O LPDSR   %04x\tLink Down Power Saving Register\n", v);
 	if (v & 0x0001)
@@ -440,18 +506,18 @@ int main(int argc, char **argv) {
 
 	////////////////////////////////////////
 	if (all_flag) {
-	v = m_mdio->readio(R_MDIO_EPAGSR);
+	v = m_mdio->readio(R_MDIO1_EPAGSR);
 	printf("   EPAGSR   %04x\tExtension Page Select Register\n", v);
 	}
 
 	////////////////////////////////////////
 	if (all_flag) {
-	v = m_mdio->readio(R_MDIO_PAGSEL);
+	v = m_mdio->readio(R_MDIO1_PAGSEL);
 	printf("   PAGSEL   %04x\tPage Select Register\n", v);
 	}
 #endif
 
-	delete	m_mdio;
+	// delete	m_mdio;
 	delete	m_fpga;
 #endif
 }

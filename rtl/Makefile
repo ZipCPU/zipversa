@@ -99,7 +99,7 @@ $(JSON): toplevel.v $(VFLIST)
 .PHONY: nextpnr
 CHIP := --um-45k --speed 8 --package CABGA381
 CLOCKS := --freq 50 --pre-pack clocks.py
-$(TEXTCFG): $(JSON)
+$(TEXTCFG): $(JSON) $(CONSTRAINTS) clocks.py
 	$(NEXTPNR) -q --json $(JSON) $(CHIP) --lpf $(CONSTRAINTS) $(CLOCKS) --textcfg $(TEXTCFG) -l $(PNRLOG)
 nextpnr: $(TEXTCFG)
 

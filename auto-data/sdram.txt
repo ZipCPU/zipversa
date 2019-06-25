@@ -53,6 +53,7 @@
 @CLOCK.NAME=clk
 @CLOCK.FREQUENCY = 81250000
 @BUS=wb
+@BUSP=@$(BUS.NAME)
 @ERROR.WIRE=@$(PREFIX)_err
 # 8-bit byte accesses
 @LD.PERM=wx
@@ -78,79 +79,43 @@
 	inout	wire	[15:0]	ddr3_dq;
 
 @TOP.DEFNS=
-	// Wires necessary to run the SDRAM
-	//
-	wire	@$(PREFIX)_cyc, @$(PREFIX)_stb, @$(PREFIX)_we,
-		@$(PREFIX)_ack, @$(PREFIX)_stall, @$(PREFIX)_err;
-	wire	[(@$(BUS.AWID)-1):0]	@$(PREFIX)_addr;
-	wire	[(@$(BUS.WIDTH)-1):0]	@$(PREFIX)_wdata,
-					@$(PREFIX)_rdata;
-	wire	[(@$(BUS.WIDTH)/8-1):0]	@$(PREFIX)_sel;
-	wire	[31:0]			@$(PREFIX)_dbg;
-
+	wire		w_@$(PREFIX)_reset_n, w_@$(PREFIX)_cke;
+	wire [1:0]	w_@$(PREFIX)_oe;
+	wire [26:0]	w_@$(PREFIX)_cmd_a, w_@$(PREFIX)_cmd_b,
+			w_@$(PREFIX)_cmd_c, w_@$(PREFIX)_cmd_d;
+	wire [31:0]	o_@$(PREFIX)_data;
+	wire [31:0]	i_@$(PREFIX)_data;
 @TOP.MAIN=
-		// The SDRAM interface to an toplevel AXI4 module
-		//
-		@$(PREFIX)_cyc, @$(PREFIX)_stb, @$(PREFIX)_we,
-			@$(PREFIX)_addr, @$(PREFIX)_wdata, @$(PREFIX)_sel,
-			@$(PREFIX)_ack, @$(PREFIX)_stall, @$(PREFIX)_rdata,
-			@$(PREFIX)_err, @$(PREFIX)_dbg
+		w_@$(PREFIX)_reset_n, w_@$(PREFIX)_cke,
+		w_@$(PREFIX)_oe,
+		w_@$(PREFIX)_cmd_a, w_@$(PREFIX)_cmd_b,
+		w_@$(PREFIX)_cmd_c, w_@$(PREFIX)_cmd_d,
+		o_@$(PREFIX)_data, i_@$(PREFIX)_data
 @TOP.INSERT=
-	wire	[31:0]	@$(PREFIX)_debug;
-
-	migsdram #(.AXIDWIDTH(5), .WBDATAWIDTH(@$(BUS.WIDTH)),
-			.DDRWIDTH(16),
-			.RAMABITS(@$(LGMEMSZ)-1)) @$(PREFIX)i(
-		.i_clk(mem_clk_nobuf),
-		.i_clk_200mhz(mem_clk_200mhz_nobuf),
-		.o_sys_clk(s_clk),
-		.i_rst(pwr_reset),
-		.o_sys_reset(s_reset),
-		.i_wb_cyc(@$(PREFIX)_cyc), .i_wb_stb(@$(PREFIX)_stb),
-		.i_wb_we(@$(PREFIX)_we), .i_wb_addr(@$(PREFIX)_addr),
-			.i_wb_data(@$(PREFIX)_wdata), .i_wb_sel(@$(PREFIX)_sel),
-		.o_wb_ack(@$(PREFIX)_ack),    .o_wb_stall(@$(PREFIX)_stall),
-			.o_wb_data(@$(PREFIX)_rdata), .o_wb_err(@$(PREFIX)_err),
-		.o_ddr_ck_p(ddr3_ck_p), .o_ddr_ck_n(ddr3_ck_n),
-		.o_ddr_reset_n(ddr3_reset_n), .o_ddr_cke(ddr3_cke),
-		.o_ddr_cs_n(ddr3_cs_n), .o_ddr_ras_n(ddr3_ras_n),
-		.o_ddr_cas_n(ddr3_cas_n), .o_ddr_we_n(ddr3_we_n),
-		.o_ddr_ba(ddr3_ba), .o_ddr_addr(ddr3_addr),
-		.o_ddr_odt(ddr3_odt), .o_ddr_dm(ddr3_dm),
-		.io_ddr_dqs_p(ddr3_dqs_p), .io_ddr_dqs_n(ddr3_dqs_n),
-		.io_ddr_data(ddr3_dq),
-		.o_ram_dbg(@$(PREFIX)_dbg)
-		);
- 	
 @MAIN.PORTLIST=
-		o_@$(PREFIX)_cyc, o_@$(PREFIX)_stb, o_@$(PREFIX)_we,
-				o_@$(PREFIX)_addr, o_@$(PREFIX)_data, o_@$(PREFIX)_sel,
-			i_@$(PREFIX)_ack, i_@$(PREFIX)_stall, i_@$(PREFIX)_data,
-			i_@$(PREFIX)_err, i_@$(PREFIX)_dbg
+		o_@$(PREFIX)_reset_n, o_@$(PREFIX)_cke,
+		o_@$(PREFIX)_oe,
+		o_@$(PREFIX)_cmd_a, o_@$(PREFIX)_cmd_b,
+		o_@$(PREFIX)_cmd_c, o_@$(PREFIX)_cmd_d,
+		o_@$(PREFIX)_data, i_@$(PREFIX)_data
 @MAIN.IODECL=
-	output	wire	o_@$(PREFIX)_cyc, o_@$(PREFIX)_stb, o_@$(PREFIX)_we;
-	output	wire	[(@$(BUS.AWID)-1):0]	o_@$(PREFIX)_addr;
-	output	wire	[(@$(BUS.WIDTH)-1):0]	o_@$(PREFIX)_data;
-	output	wire	[(@$(BUS.WIDTH)/8)-1:0]	o_@$(PREFIX)_sel;
-	//
-	input	wire	i_@$(PREFIX)_ack;
-	input	wire	i_@$(PREFIX)_stall;
-	input	wire	[(@$(BUS.WIDTH)-1):0]	i_@$(PREFIX)_data;
-	input	wire			i_@$(PREFIX)_err;
-	// Verilator lint_off UNUSED
-	input	wire	[32-1:0]	i_@$(PREFIX)_dbg;
-	// Verilator lint_on  UNUSED
+	output	wire		o_@$(PREFIX)_reset_n,
+				o_@$(PREFIX)_cke;
+	output	wire [1:0]	o_@$(PREFIX)_oe;
+	output	wire [26:0]	o_@$(PREFIX)_cmd_a, o_@$(PREFIX)_cmd_b,
+				o_@$(PREFIX)_cmd_c, o_@$(PREFIX)_cmd_d;
+	output	wire [31:0]	o_@$(PREFIX)_data;
+	input	wire [31:0]	i_@$(PREFIX)_data;
 @MAIN.INSERT=
-	assign	o_@$(PREFIX)_cyc  = @$(SLAVE.BUS.NAME)_cyc;
-	assign	o_@$(PREFIX)_stb  =(@$(SLAVE.BUS.NAME)_stb)&&(@$(PREFIX)_sel);
-	assign	o_@$(PREFIX)_we   = @$(SLAVE.BUS.NAME)_we;
-	assign	o_@$(PREFIX)_addr = @$(SLAVE.BUS.NAME)_addr;
-	assign	o_@$(PREFIX)_data = @$(SLAVE.BUS.NAME)_data;
-	assign	o_@$(PREFIX)_sel  = @$(SLAVE.BUS.NAME)_sel;
-	assign	@$(PREFIX)_ack   = i_@$(PREFIX)_ack;
-	assign	@$(PREFIX)_stall = i_@$(PREFIX)_stall;
-	assign	@$(PREFIX)_data = i_@$(PREFIX)_data;
-	assign	@$(PREFIX)_err   = i_@$(PREFIX)_err;
+	wbddrsdram
+	@$(PREFIX)i(i_clk, i_reset,
+		@$(BUSP)_cyc, @$(BUSP)_stb, @$(BUSP)_we, @$(BUSP)_addr[@$(LGNBYTES)-3:0],
+			@$(BUSP)_data, @$(BUSP)_sel,
+		@$(PREFIX)_ack, @$(PREFIX)_stall, @$(PREFIX)_data,
+		o_@$(PREFIX)_reset_n, o_@$(PREFIX)_cke, o_@$(PREFIX)_oe,
+		o_@$(PREFIX)_cmd_a, o_@$(PREFIX)_cmd_b,
+		o_@$(PREFIX)_cmd_c, o_@$(PREFIX)_cmd_d,
+		o_@$(PREFIX)_data, i_@$(PREFIX)_data);
 
 @REGS.N=1
 @REGS.0= 0 R_@$(DEVID) @$(DEVID)
@@ -164,30 +129,23 @@
 @LDSCRIPT.DEF=
 _@$(PREFIX) = ORIGIN(@$(PREFIX));
 @SIM.INCLUDE=
-#include "memsim.h"
+// #include "ddrsdramsim.h"
 @SIM.DEFNS=
 #ifdef	@$(ACCESS)
-	MEMSIM	*m_sdram;
+	// DDRSDRAMSIM	*m_@$(PREFIX);
 #endif	// @$(ACCESS)
 @SIM.INIT=
 #ifdef	@$(ACCESS)
-		m_@$(PREFIX) = new MEMSIM(@$(NBYTES));
+		m_@$(PREFIX) = new DDRSDRAMSIM(@$(NBYTES));
 #endif	// @$(ACCESS)
 @SIM.CLOCK=@$(SLAVE.BUS.CLOCK.NAME)
 @SIM.TICK=
 #ifdef	@$(ACCESS)
-		(*m_sdram)(m_core->o_@$(PREFIX)_cyc,
-			m_core->o_@$(PREFIX)_stb,
-			m_core->o_@$(PREFIX)_we,
-			m_core->o_@$(PREFIX)_addr,
-			m_core->o_@$(PREFIX)_data,
-			m_core->o_@$(PREFIX)_sel,
-			m_core->i_@$(PREFIX)_ack,
-			m_core->i_@$(PREFIX)_stall,
-			m_core->i_@$(PREFIX)_data);
+		// DDR3 SDRAM simulator would go here
+		// m_@$(PREFIX)();
 #endif	// @$(ACCESS)
 @SIM.LOAD=
 #ifdef	@$(ACCESS)
-			m_@$(PREFIX)->load(start, &buf[offset], wlen);
+		m_@$(PREFIX)->load(start, &buf[offset], wlen);
 #endif // @$(ACCESS)
 

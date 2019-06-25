@@ -1,6 +1,14 @@
 dumpflash
+erxscope
+etxscope
+flashid
+flashscope
+netstat
 netuart
+rdclocks
+readmdio
 wbregs
 zipdbg
 zipload
 zipstate
+

@@ -46,7 +46,7 @@ module	ecpiddr(i_clk, i_pin, o_v);
 		.RST(1'b0),
 		.SCLK(i_clk),
 		.D(i_pin),
-		.Q1(o_v[0]),	// Q1 comes first
-		.Q0(o_v[1]));	// then Q0
+		.Q1(o_v[1]),	// Q1 comes first
+		.Q0(o_v[0]));	// then Q0
 
 endmodule

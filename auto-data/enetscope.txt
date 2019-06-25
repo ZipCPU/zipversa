@@ -39,21 +39,20 @@
 @PREFIX=enetscope
 @NADDR=2
 @DEVID=NETSCOPE
-@DEPENDS=ETHERNET_ACCESS
+@DEPENDS=NET1_ACCESS
 @MAIN.PARAM=
-`define	ENETRX_SCOPE
-@TARGET=netp
+@TARGET=net1
 @MAIN.DEFNS=
-	wire	netp_dbg_trigger;
+	wire	net1_dbg_trigger;
 @MAIN.INSERT=
    @$(+.MAIN.INSERT)
 
-	assign	netp_dbg_trigger = netp_debug[31];
+	assign	net1_dbg_trigger = net1_debug[31];
 @INT.ENETSCOPE.WIRE=@$(PREFIX)_int
 @INT.ENETSCOPE.PIC=buspic
 @LOG_CAPTURE_SIZE=9
 @SYNCHRONOUS=0
-@DATA_CLOCK=netp_debug_clk
+@DATA_CLOCK=net1_debug_clk
 @$DATA_FREQ=125000000
 @$CLOCK_PERIOD=1000000000/@$(DATA_FREQ)
 @$BUSCLOCK_PERIOD=1000000000/@SLAVE.BUS.CLOCK.FREQUENCY

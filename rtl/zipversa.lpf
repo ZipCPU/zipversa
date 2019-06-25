@@ -222,6 +222,7 @@ IOBUF PORT "i_wbu_uart_rx" IO_TYPE=LVCMOS33;
 ## RGMII Network port
 ##
 
+## Port "1" is the one closest to the power supply.
 LOCATE COMP "i_clk_125mhz"  SITE "L19";
 # IOBUF PORT "i_clk_125mhz" IO_TYPE=LVCMOS25;
 # LOCATE COMP "o_net_ck125[1]"  SITE "J20";
@@ -229,7 +230,7 @@ LOCATE COMP "i_clk_125mhz"  SITE "L19";
 ### ?? # LOCATE COMP "o_net_ck125pii[1]"  SITE "C18";
 
 ## First network port
-# LOCATE COMP "o_net_config"  SITE "T17";
+LOCATE COMP "o_net1_config"  SITE "T17";
 LOCATE COMP "o_net1_reset_n" SITE "U17";
 LOCATE COMP "o_net1_tx_clk"   SITE "P19";
 LOCATE COMP "o_net1_txd[0]"  SITE "N19";
@@ -248,7 +249,10 @@ LOCATE COMP "i_net1_rx_ctl"   SITE "U19";
 LOCATE COMP "io_net1_mdio"  SITE "U18";
 LOCATE COMP "o_net1_mdc"   SITE "T18";
 
+##
 ## Second network port
+##
+## This is the one closest to the edge of the board
 
 # LOCATE COMP "o_netb_config"   SITE "G20";
 # LOCATE COMP "o_netb_reset_n"  SITE "F20";
@@ -269,6 +273,24 @@ LOCATE COMP "o_net1_mdc"   SITE "T18";
 
 # LOCATE COMP "o_netb_mdio"  SITE "H20";
 # LOCATE COMP "o_netb_mdc"   SITE "G19;
+
+
+
+##
+## Flash
+##
+LOCATE COMP "o_qspi_cs_n" SITE "R2";
+# LOCATE COMP "o_qspi_sck"  SITE "U3";
+LOCATE COMP "io_qspi_dat[0]" SITE "W2"; # Slave-In
+LOCATE COMP "io_qspi_dat[1]" SITE "V2"; # Slave-Out
+LOCATE COMP "io_qspi_dat[2]" SITE "Y2";
+LOCATE COMP "io_qspi_dat[3]" SITE "W1";
+IOBUF PORT "o_qspi_cs_n"    IO_TYPE=LVCMOS33;
+# IOBUF PORT "o_qspi_sck"     IO_TYPE=LVCMOS33;
+IOBUF PORT "io_qspi_dat[0]" IO_TYPE=LVCMOS33;
+IOBUF PORT "io_qspi_dat[1]" IO_TYPE=LVCMOS33;
+IOBUF PORT "io_qspi_dat[2]" IO_TYPE=LVCMOS33;
+IOBUF PORT "io_qspi_dat[3]" IO_TYPE=LVCMOS33;
 
 
 

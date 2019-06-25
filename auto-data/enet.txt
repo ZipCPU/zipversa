@@ -98,7 +98,8 @@ static volatile unsigned *const @$(BDEF.IONAME)tx = ((unsigned *)(@$[0x%08x](REG
 		// eth_int_b	// Interrupt, leave floating
 		// eth_pme_b	// Power management event, leave floating
 		i_@$(PREFIX)_rx_clk, i_@$(PREFIX)_rx_ctl, i_@$(PREFIX)_rxd,
-		o_@$(PREFIX)_tx_clk, o_@$(PREFIX)_tx_ctl, o_@$(PREFIX)_txd
+		o_@$(PREFIX)_tx_clk, o_@$(PREFIX)_tx_ctl, o_@$(PREFIX)_txd,
+		o_@$(PREFIX)_config
 @TOP.IODECL=
 	// Ethernet (RGMII) port wires
 	output	wire		o_@$(PREFIX)_reset_n;
@@ -106,6 +107,7 @@ static volatile unsigned *const @$(BDEF.IONAME)tx = ((unsigned *)(@$[0x%08x](REG
 	input	wire	[3:0]	i_@$(PREFIX)_rxd;
 	output	wire		o_@$(PREFIX)_tx_clk, o_@$(PREFIX)_tx_ctl;
 	output	wire	[3:0]	o_@$(PREFIX)_txd;
+	output	wire		o_@$(PREFIX)_config;
 @TOP.DEFNS=
 	// Ethernet (RGMII) port wires
 	wire	[7:0]		w_@$(PREFIX)_rxd,  w_@$(PREFIX)_txd;
@@ -131,6 +133,7 @@ static volatile unsigned *const @$(BDEF.IONAME)tx = ((unsigned *)(@$[0x%08x](REG
 	ecpoddr	txc(s_clk_125mhz, { w_@$(PREFIX)_txctl,  w_@$(PREFIX)_txctl  }, o_@$(PREFIX)_tx_ctl);
 	ecpoddr	txck(s_clk_125d,{w_@$(PREFIX)_tx_clk[1],w_@$(PREFIX)_tx_clk[0]},o_@$(PREFIX)_tx_clk);
 
+	assign	o_@$(PREFIX)_config = 1'b0;
 @MAIN.PORTLIST=
 		// Ethernet control (packets) lines
 		o_@$(PREFIX)_reset_n,
@@ -158,7 +161,12 @@ static volatile unsigned *const @$(BDEF.IONAME)tx = ((unsigned *)(@$[0x%08x](REG
 				@$(PREFIX)_ack, @$(PREFIX)_stall, @$(PREFIX)_data,
 			o_@$(PREFIX)_reset_n,
 			i_@$(PREFIX)_rx_clk, i_@$(PREFIX)_rx_dv, i_@$(PREFIX)_rx_err, i_@$(PREFIX)_rxd,
-			i_clk_125mhz, o_@$(PREFIX)_tx_clk, o_@$(PREFIX)_tx_ctl, o_@$(PREFIX)_txd,
+			// For some reason, this 125MHz clock isn't being
+			// generated (??)
+			//
+			// i_clk_125mhz,
+			i_@$(PREFIX)_rx_clk,
+			o_@$(PREFIX)_tx_clk, o_@$(PREFIX)_tx_ctl, o_@$(PREFIX)_txd,
 			@$(PREFIX)rx_int, @$(PREFIX)tx_int, @$(PREFIX)_debug_clk, @$(PREFIX)_debug);
 
 @REGS.N=8

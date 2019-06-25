@@ -40,48 +40,37 @@
 @CLOCK.WIRE=i_clk
 @CLOCK.FREQUENCY=50000000
 @CLOCK.TOP=i_clk
-#
-#
-@PREFIX=masterclk
+@REGDEFS.H.DEFNS=
+#define	CLKFREQHZ @$(CLOCK.FREQUENCY)
 @TOP.DEFNS=
-	// reg	[2:0]	locked;
-	reg		s_reset;
-	wire		s_clk, s_clk_125mhz, s_clk_125d;
-/*
-	wire	sysclk_locked, sysclk_feedback,
-		s_clk_125mhz,  s_clk_125_unbuffered,
-		s_clk_125d,    s_clk_125d_unbuffered,
-		s_clksync,     s_clksync_unbuffered,
-		s_clk4x,       s_clk4x_unbuffered,
-		netclk_locked, netclk_feedback;
-	wire	i_clk_buffered;
-	wire	clocks_locked;
-	reg	[3:0]	sysclk_stable, netclk_stable,
-			upper_plls_stable;
-*/
-@TOP.PORTLIST=
-@TOP.IODECL=
-@TOP.MAIN=
-		// PLL generated clocks
-		s_clk_125mhz
+	// Master clock input and reset
+	wire	s_clk;
+	reg	s_reset;
 @TOP.INSERT=
+	//
+	// Master clock input and reset
 	CLKDIVF	clock_divider(.CLKI(i_clk),
 		.RST(0), .ALIGNWD(1'b0), .CDIVX(s_clk));
 
-	assign	s_clk_125mhz = i_clk_125mhz;
-	assign	s_clk_125d   = i_clk_125mhz;
-
-	// There is no incoming clock locked pin.
-	//
-	// initial	locked = 0;
-	// always @(posedge s_clk)
-	//	locked <= { locked[1:0], i_gpio_clk_locked };
-
 	initial	s_reset = 1;
 	always @(posedge s_clk)
-		s_reset <= 0; // !locked[2];
+		s_reset <= 0;
+#
+#
+@PREFIX=netclk
+@TOP.DEFNS=
+	// Network clock at 125MHz
+	wire		s_clk_125mhz, s_clk_125d;
+@TOP.PORTLIST=
+@TOP.IODECL=
+@TOP.MAIN=
+		// Network clock at 125MHz
+		s_clk_125mhz
+@TOP.INSERT=
+	assign	s_clk_125mhz = i_clk_125mhz;
+	assign	s_clk_125d   = i_clk_125mhz;
 @MAIN.PORTLIST=
-		// Extra clocks
+		// Network clock at 125MHz
 		i_clk_125mhz
 @MAIN.IODECL=
 		// Extra clocks
@@ -96,5 +85,3 @@
 @CLOCK.NAME= clk_125mhz
 @CLOCK.FREQUENCY= 125000000
 @CLOCK.TOP=
-@MAIN.IODECL=
-	input	wire		i_net_tx_clk;

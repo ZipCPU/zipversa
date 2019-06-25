@@ -174,7 +174,7 @@ void	FLASHDRVR::restore_quadio(void) {
 
 		// Then sending a 0xab, 0x81
 		m_fpga->writeio(R_FLASHCFG, CFG_USERMODE | 0x81);
-		m_fpga->writeio(R_FLASHCFG, CFG_USERMODE | 0xf3);
+		m_fpga->writeio(R_FLASHCFG, CFG_USERMODE | 0x23);
 		m_fpga->writeio(R_FLASHCFG, F_END);
 	}
 
@@ -306,9 +306,9 @@ bool	FLASHDRVR::page_program(const unsigned addr, const unsigned len,
 	// Write the page
 	//
 
-	// Issue the command
+	// Issue the page program command
 	m_fpga->writeio(R_FLASHCFG, F_PP);
-	// The address
+	// The address of the page to be programmed
 	m_fpga->writeio(R_FLASHCFG, CFG_USERMODE|((flashaddr>>16)&0x0ff));
 	m_fpga->writeio(R_FLASHCFG, CFG_USERMODE|((flashaddr>> 8)&0x0ff));
 	m_fpga->writeio(R_FLASHCFG, CFG_USERMODE|((flashaddr    )&0x0ff));
@@ -324,8 +324,10 @@ bool	FLASHDRVR::page_program(const unsigned addr, const unsigned len,
 	else
 		printf("\n");
 
+	// Wait for the write to complete
 	flwait();
 
+	// Turn quad-mode read back on, so we can verify the program
 	place_online();
 	if (verify_write) {
 		// printf("Attempting to verify page\n");
