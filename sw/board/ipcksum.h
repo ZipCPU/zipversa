@@ -2,7 +2,7 @@
 //
 // Filename: 	ipcksum.h
 //
-// Project:	VideoZip, a ZipCPU SoC supporting video functionality
+// Project:	ZipVersa, Versa Brd implementation using ZipCPU infrastructure
 //
 // Purpose:	To calculate (and return) an IP checksum on a section of data.
 //		The data must be contiguous in memory, and the checksum field
@@ -14,10 +14,10 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2015-2019, Gisselquist Technology, LLC
+// Copyright (C) 2019, Gisselquist Technology, LLC
 //
 // This program is free software (firmware): you can redistribute it and/or
-// modify it under the terms of  the GNU General Public License as published
+// modify it under the terms of the GNU General Public License as published
 // by the Free Software Foundation, either version 3 of the License, or (at
 // your option) any later version.
 //

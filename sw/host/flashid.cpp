@@ -2,7 +2,7 @@
 //
 // Filename:	flashid.cpp
 //
-// Project:	OpenArty, an entirely open SoC based upon the Arty platform
+// Project:	ZipVersa, Versa Brd implementation using ZipCPU infrastructure
 //
 // Purpose:	Reads the ID from the flash, and verifies that the flash can
 //		be put back into QSPI mode after reading the ID.
@@ -16,7 +16,7 @@
 // Copyright (C) 2015-2019, Gisselquist Technology, LLC
 //
 // This program is free software (firmware): you can redistribute it and/or
-// modify it under the terms of  the GNU General Public License as published
+// modify it under the terms of the GNU General Public License as published
 // by the Free Software Foundation, either version 3 of the License, or (at
 // your option) any later version.
 //

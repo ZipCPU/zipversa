@@ -442,8 +442,8 @@ module	idecode(i_clk, i_reset, i_ce, i_stalled,
 
 		// If the lock function isn't implemented, this should
 		// also cause an illegal instruction error
-		if ((!OPT_LOCK)&&(w_lock))
-			o_illegal <= 1'b1;
+//		if ((!OPT_LOCK)&&(w_lock))
+//			o_illegal <= 1'b1;
 
 		if (i_illegal)
 			o_illegal <= 1'b1;

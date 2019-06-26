@@ -439,15 +439,17 @@ int main(int argc, char **argv) {
 		_zip->z_pic = EINT(SYSINT_TMA|SYSINT_PPS|SYSINT_ENETRX);
 		_zip->z_pic = EINT(SYSINT_TMA|SYSINT_PPS|SYSINT_ENETRX);
 		_zip->z_pic = EINT(SYSINT_TMA|SYSINT_PPS|SYSINT_ENETRX);
+/*
 		if ((_zip->z_pic & DINT(INTNOW))==0) {
 			*_spio = LED_FAULT & -2;
 			zip_halt();
 		}
+*/
 		do {
-			if ((_zip->z_pic & DINT(INTNOW))==0) {
-				*_spio = LED_FAULT;
-				zip_halt();
-			}
+			// if ((_zip->z_pic & DINT(INTNOW))==0) {
+			//	*_spio = LED_FAULT;
+			//	zip_halt();
+			// }
 			if ((_zip->z_pic & INTNOW)==0) {
 				// Run the user process if no
 				// interrupts are pending

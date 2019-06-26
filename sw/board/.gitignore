@@ -2,4 +2,6 @@ cputest
 cputestcis
 gettysburg
 hello
+simple_ping
 *.txt
+*.map

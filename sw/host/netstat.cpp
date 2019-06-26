@@ -2,9 +2,9 @@
 //
 // Filename: 	netstat.cpp
 //
-// Project:	VideoZip, a ZipCPU SoC supporting video functionality
+// Project:	ZipVersa, Versa Brd implementation using ZipCPU infrastructure
 //
-// Purpose:	Reads the network PHY's registers through it's MDIO interface
+// Purpose:	Reads and decodes the network controller's status registers.
 //
 //
 // Creator:	Dan Gisselquist, Ph.D.
@@ -15,7 +15,7 @@
 // Copyright (C) 2019, Gisselquist Technology, LLC
 //
 // This program is free software (firmware): you can redistribute it and/or
-// modify it under the terms of  the GNU General Public License as published
+// modify it under the terms of the GNU General Public License as published
 // by the Free Software Foundation, either version 3 of the License, or (at
 // your option) any later version.
 //

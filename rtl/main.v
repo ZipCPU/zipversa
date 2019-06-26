@@ -140,11 +140,11 @@ module	main(i_clk, i_reset,
 	//
 	// A 32-bit address indicating where the ZipCPU should start running
 	// from
-//`ifdef	FLASH_ACCESS
-//	localparam	RESET_ADDRESS = 20971520;
-//`else
+`ifdef	FLASH_ACCESS
+	localparam	RESET_ADDRESS = 20971520;
+`else
 	localparam	RESET_ADDRESS = 10485760;
-//`endif
+`endif
 	//
 	// The number of valid bits on the bus
 	localparam	ZIP_ADDRESS_WIDTH = 23; // Zip-CPU address width
