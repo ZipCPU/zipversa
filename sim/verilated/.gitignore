@@ -1,2 +1,3 @@
 obj-pc
 main_tb
+*.hex

@@ -90,7 +90,8 @@ module fftmain(i_clk, i_reset, i_ce,
 
 
 	// Outputs of the FFT, ready for bit reversal.
-	wire	[(2*OWIDTH-1):0]	br_sample;
+	wire				br_sync;
+	wire	[(2*OWIDTH-1):0]	br_result;
 
 
 	// A hardware optimized FFT stage
@@ -184,26 +185,28 @@ module fftmain(i_clk, i_reset, i_ce,
 					w_s4, w_d4, w_d2, w_s2);
 
 
-	// Prepare for a (potential) bit-reverse stage.
-	assign	br_sample= w_d2;
-
 
 	// Now for the bit-reversal stage.
-	wire	br_sync;
-	assign	br_sync     = w_s2;
+	//
+	// Since the bit-reversal stage isn't included, according to the current
+	// settings, this will just be a stub instead of the actual bit-reversal
+	// logic.
+	//
+	assign	br_result   = w_d2;
+	assign	br_sync    = w_s2;
 
 
 	// Last clock: Register our outputs, we're done.
 	initial	o_sync  = 1'b0;
 	always @(posedge i_clk)
-		if (i_reset)
-			o_sync  <= 1'b0;
-		else if (i_ce)
-			o_sync  <= br_sync;
+	if (i_reset)
+		o_sync  <= 1'b0;
+	else if (i_ce)
+		o_sync  <= br_sync;
 
 	always @(posedge i_clk)
-		if (i_ce)
-			o_result  <= br_sample;
+	if (i_ce)
+		o_result  <= br_result;
 
 
 endmodule
