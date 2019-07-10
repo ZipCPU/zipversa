@@ -41,7 +41,7 @@
 ##
 @PREFIX=mem_bkram_only
 @MASTER.TYPE=CPU
-@MASTER.BUS=zip
+@MASTER.BUS=@$(CPUBUS)
 @LD.FILE=bkram.ld
 @LD.DEFNS=
 /* LD.DEFNS from @$(PREFIX) */

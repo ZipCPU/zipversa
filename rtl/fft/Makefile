@@ -37,11 +37,13 @@
 ##
 ##
 .PHONY: all
-all:	check-install archive datestamp rtl sim sw
+all:	check-install fft
 CORES := $(HOME)/work/rnd/opencores
 FFTDIR := $(CORES)/dblclockfft/trunk
 FFTGEN := $(FFTDIR)/sw/fftgen
 FFTSZ  := 1024
+
+check-install: $(FFTGEN)
 
 help:
 	$(FFTGEN)

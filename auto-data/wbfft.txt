@@ -37,7 +37,6 @@
 ##
 @PREFIX=wbfft
 @DEVID=WBFFT
-@DEPENDS=VERILATOR
 @ACCESS=@$(DEVID)_ACCESS
 @$LGFFT=10
 @$NADDR=(1<<(@$(LGFFT)+1))
@@ -45,7 +44,7 @@
 @SLAVE.TYPE=OTHER
 @SLAVE.BUS=wb
 @MAIN.DEFNS=
-	wire	@$(PREFIX)_int;
+	wire		@$(PREFIX)_int;
 @MAIN.INSERT=
 	wbfft fft(i_clk, i_reset, wb_cyc, (wb_stb)&&(@$(PREFIX)_sel), wb_we,
 			wb_addr[@$LGFFT:0], wb_data, @$(PREFIX)_stall,

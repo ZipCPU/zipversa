@@ -41,25 +41,27 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2015-2018, Gisselquist Technology, LLC
+// Copyright (C) 2015-2019, Gisselquist Technology, LLC
 //
-// This program is free software (firmware): you can redistribute it and/or
-// modify it under the terms of  the GNU General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or (at
-// your option) any later version.
+// This file is part of the general purpose pipelined FFT project.
 //
-// This program is distributed in the hope that it will be useful, but WITHOUT
-// ANY WARRANTY; without even the implied warranty of MERCHANTIBILITY or
-// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-// for more details.
+// The pipelined FFT project is free software (firmware): you can redistribute
+// it and/or modify it under the terms of the GNU Lesser General Public License
+// as published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
 //
-// You should have received a copy of the GNU General Public License along
-// with this program.  (It's in the $(ROOT)/doc directory.  Run make with no
-// target there if the PDF file isn't present.)  If not, see
+// The pipelined FFT project is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTIBILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
+// General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program.  (It's in the $(ROOT)/doc directory.  Run make
+// with no target there if the PDF file isn't present.)  If not, see
 // <http://www.gnu.org/licenses/> for a copy.
 //
-// License:	GPL, v3, as defined and found on www.gnu.org,
-//		http://www.gnu.org/licenses/gpl.html
+// License:	LGPL, v3, as defined and found on www.gnu.org,
+//		http://www.gnu.org/licenses/lgpl.html
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -120,22 +122,22 @@ module	qtrstage(i_clk, i_reset, i_ce, i_sync, i_data, o_data, o_sync);
 	initial wait_for_sync = 1'b1;
 	initial iaddr = 0;
 	always @(posedge i_clk)
-		if (i_reset)
-		begin
-			wait_for_sync <= 1'b1;
-			iaddr <= 0;
-		end else if ((i_ce)&&((!wait_for_sync)||(i_sync)))
-		begin
-			iaddr <= iaddr + 1'b1;
-			wait_for_sync <= 1'b0;
-		end
+	if (i_reset)
+	begin
+		wait_for_sync <= 1'b1;
+		iaddr <= 0;
+	end else if ((i_ce)&&((!wait_for_sync)||(i_sync)))
+	begin
+		iaddr <= iaddr + 1'b1;
+		wait_for_sync <= 1'b0;
+	end
 
 	always @(posedge i_clk)
-		if (i_ce)
-		begin
-			imem[0] <= i_data;
-			imem[1] <= imem[0];
-		end
+	if (i_ce)
+	begin
+		imem[0] <= i_data;
+		imem[1] <= imem[0];
+	end
 
 
 	// Note that we don't check on wait_for_sync or i_sync here.
@@ -143,20 +145,20 @@ module	qtrstage(i_clk, i_reset, i_ce, i_sync, i_data, o_data, o_sync);
 	// first i_ce, so we are safe.
 	initial pipeline = 3'h0;
 	always	@(posedge i_clk)
-		if (i_reset)
-			pipeline <= 3'h0;
-		else if (i_ce) // is our pipeline process full?  Which stages?
-			pipeline <= { pipeline[1:0], iaddr[1] };
+	if (i_reset)
+		pipeline <= 3'h0;
+	else if (i_ce) // is our pipeline process full?  Which stages?
+		pipeline <= { pipeline[1:0], iaddr[1] };
 
 	// This is the pipeline[-1] stage, pipeline[0] will be set next.
 	always	@(posedge i_clk)
-		if ((i_ce)&&(iaddr[1]))
-		begin
-			sum_r  <= imem_r + i_data_r;
-			sum_i  <= imem_i + i_data_i;
-			diff_r <= imem_r - i_data_r;
-			diff_i <= imem_i - i_data_i;
-		end
+	if ((i_ce)&&(iaddr[1]))
+	begin
+		sum_r  <= imem_r + i_data_r;
+		sum_i  <= imem_i + i_data_i;
+		diff_r <= imem_r - i_data_r;
+		diff_i <= imem_i - i_data_i;
+	end
 
 	// pipeline[1] takes sum_x and diff_x and produces rnd_x
 
@@ -165,42 +167,42 @@ module	qtrstage(i_clk, i_reset, i_ce, i_sync, i_data, o_data, o_sync);
 	// on the next clock.  Thus, we simplify this logic and do
 	// it independent of pipeline[2].
 	always	@(posedge i_clk)
-		if (i_ce)
+	if (i_ce)
+	begin
+		ob_a <= { rnd_sum_r, rnd_sum_i };
+		// on Even, W = e^{-j2pi 1/4 0} = 1
+		if (!iaddr[0])
 		begin
-			ob_a <= { rnd_sum_r, rnd_sum_i };
-			// on Even, W = e^{-j2pi 1/4 0} = 1
-			if (!iaddr[0])
-			begin
-				ob_b_r <= rnd_diff_r;
-				ob_b_i <= rnd_diff_i;
-			end else if (INVERSE==0) begin
-				// on Odd, W = e^{-j2pi 1/4} = -j
-				ob_b_r <=   rnd_diff_i;
-				ob_b_i <= n_rnd_diff_r;
-			end else begin
-				// on Odd, W = e^{j2pi 1/4} = j
-				ob_b_r <= n_rnd_diff_i;
-				ob_b_i <=   rnd_diff_r;
-			end
+			ob_b_r <= rnd_diff_r;
+			ob_b_i <= rnd_diff_i;
+		end else if (INVERSE==0) begin
+			// on Odd, W = e^{-j2pi 1/4} = -j
+			ob_b_r <=   rnd_diff_i;
+			ob_b_i <= n_rnd_diff_r;
+		end else begin
+			// on Odd, W = e^{j2pi 1/4} = j
+			ob_b_r <= n_rnd_diff_i;
+			ob_b_i <=   rnd_diff_r;
 		end
+	end
 
 	always	@(posedge i_clk)
-		if (i_ce)
-		begin // In sequence, clock = 3
-			omem[0] <= ob_b;
-			omem[1] <= omem[0];
-			if (pipeline[2])
-				o_data <= ob_a;
-			else
-				o_data <= omem[1];
-		end
+	if (i_ce)
+	begin // In sequence, clock = 3
+		omem[0] <= ob_b;
+		omem[1] <= omem[0];
+		if (pipeline[2])
+			o_data <= ob_a;
+		else
+			o_data <= omem[1];
+	end
 
 	initial	o_sync = 1'b0;
 	always	@(posedge i_clk)
-		if (i_reset)
-			o_sync <= 1'b0;
-		else if (i_ce)
-			o_sync <= (iaddr[2:0] == 3'b101);
+	if (i_reset)
+		o_sync <= 1'b0;
+	else if (i_ce)
+		o_sync <= (iaddr[2:0] == 3'b101);
 
 `ifdef	FORMAL
 	reg	f_past_valid;

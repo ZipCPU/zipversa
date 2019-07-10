@@ -35,8 +35,8 @@
 ################################################################################
 ##
 ##
-## Be able to support 2^14, or 16384 byte packets
-@$LGPKTBUFSZB=14
+## Be able to support 2^11, or 2048 byte packets
+@$LGPKTBUFSZB=11
 ##
 @PREFIX=netb
 @$LGBUFSZ=@$(/LGPKTBUFSZB)
@@ -87,8 +87,8 @@ static volatile unsigned *const @$(BDEF.IONAME)tx = ((unsigned *)(@$[0x%08x](REG
 @$LGBUFSZ=@$(/LGPKTBUFSZB)
 @INT.NETRX.WIRE=@$(PREFIX)rx_int
 @INT.NETTX.WIRE=@$(PREFIX)tx_int
-@INT.NETRX.PIC=syspic
-@INT.NETTX.PIC=syspic
+@INT.NETRX.PIC=@$(SYSPIC)
+@INT.NETTX.PIC=@$(SYSPIC)
 @NADDR=8
 @SLAVE.TYPE=OTHER
 @SLAVE.BUS=wb

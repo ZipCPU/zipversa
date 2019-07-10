@@ -155,9 +155,9 @@ unsigned	pkt_id = 0;
 #define	LED_FAULT	0xffff
 
 //
-// We'll give our user 64kW of global variables
+// We'll give our user 512B of global variables
 //
-#define	USER_STACK_SIZE	4096
+#define	USER_STACK_SIZE	512
 int	user_stack[USER_STACK_SIZE];
 const int *user_sp = &user_stack[USER_STACK_SIZE];
 

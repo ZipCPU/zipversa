@@ -52,7 +52,10 @@
 #undef PIC
 #define	PIC		_zip->z_pic
 #define	TIMER		_zip->z_tma
+
+#ifdef	_HAVE_ZIPSYS_PERFORMANCE_COUNTERS
 #define	COUNTER		_zip->z_m.ac_ck
+#endif
 
 #ifdef	ZIPSCOPE_SCOPE
 #define	HAVE_SCOPE

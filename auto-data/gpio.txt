@@ -44,7 +44,7 @@
 @NUMOUTPUT=3
 @NUMINPUT=2
 @INT.GPIO.WIRE=gpio_int
-@INT.GPIO.PIC=altpic
+@INT.GPIO.PIC=@$(SYSPIC)
 @TOP.PORTLIST=
 		// GPIO ports
 		// i_@$(PREFIX), o_@$(PREFIX)

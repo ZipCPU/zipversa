@@ -1,0 +1,15 @@
+[options]
+mode prove
+depth 8
+
+[engines]
+smtbmc boolector
+
+[script]
+read -formal wbddrsdram.v
+read -formal fwb_slave.v
+prep -top wbddrsdram
+
+[files]
+../../rtl/wbddrsdram.v
+fwb_slave.v

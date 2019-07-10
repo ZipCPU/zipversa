@@ -20,25 +20,27 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2015-2018, Gisselquist Technology, LLC
+// Copyright (C) 2015-2019, Gisselquist Technology, LLC
 //
-// This program is free software (firmware): you can redistribute it and/or
-// modify it under the terms of  the GNU General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or (at
-// your option) any later version.
+// This file is part of the general purpose pipelined FFT project.
 //
-// This program is distributed in the hope that it will be useful, but WITHOUT
-// ANY WARRANTY; without even the implied warranty of MERCHANTIBILITY or
-// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-// for more details.
+// The pipelined FFT project is free software (firmware): you can redistribute
+// it and/or modify it under the terms of the GNU Lesser General Public License
+// as published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
 //
-// You should have received a copy of the GNU General Public License along
-// with this program.  (It's in the $(ROOT)/doc directory.  Run make with no
-// target there if the PDF file isn't present.)  If not, see
+// The pipelined FFT project is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTIBILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
+// General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program.  (It's in the $(ROOT)/doc directory.  Run make
+// with no target there if the PDF file isn't present.)  If not, see
 // <http://www.gnu.org/licenses/> for a copy.
 //
-// License:	GPL, v3, as defined and found on www.gnu.org,
-//		http://www.gnu.org/licenses/gpl.html
+// License:	LGPL, v3, as defined and found on www.gnu.org,
+//		http://www.gnu.org/licenses/lgpl.html
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -107,11 +109,11 @@ module	longbimpy(i_clk, i_ce, i_a_unsorted, i_b_unsorted, o_r
 	// within the number of bits given (for now).
 	initial u_a = 0;
 	generate if (IW > AW)
-	begin
+	begin : ABS_AND_ADD_BIT_TO_A
 		always @(posedge i_clk)
 			if (i_ce)
 				u_a <= { 1'b0, (i_a[AW-1])?(-i_a):(i_a) };
-	end else begin
+	end else begin : ABS_A
 		always @(posedge i_clk)
 			if (i_ce)
 				u_a <= (i_a[AW-1])?(-i_a):(i_a);
@@ -121,7 +123,7 @@ module	longbimpy(i_clk, i_ce, i_a_unsorted, i_b_unsorted, o_r
 	initial u_b = 0;
 	always @(posedge i_clk)
 	if (i_ce)
-	begin
+	begin : ABS_B
 		u_b <= (i_b[BW-1])?(-i_b):(i_b);
 		sgn <= i_a[AW-1] ^ i_b[BW-1];
 	end

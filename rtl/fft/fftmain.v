@@ -7,7 +7,7 @@
 // Purpose:	This is the main module in the General Purpose FPGA FFT
 //		implementation.  As such, all other modules are subordinate
 //	to this one.  This module accomplish a fixed size Complex FFT on
-//	4096 data points.
+//	1024 data points.
 //	The FFT is fully pipelined, and accepts as inputs one complex two's
 //	complement sample per clock.
 //
@@ -34,35 +34,37 @@
 // Arguments:	This file was computer generated using the following command
 //		line:
 //
-//		% /home/dan/work/rnd/opencores/dblclockfft/trunk/sw/fftgen -d ./ -f 4096 -m 16 -1 -k 3 -c 2 -s -x 2 -p 14
+//		% /home/dan/work/rnd/opencores/dblclockfft/trunk/sw/fftgen -d ./ -f 1024 -m 16 -1 -k 3 -c 2 -s -x 2 -p 14
 //
 //	This core will use hardware accelerated multiplies (DSPs)
-//	for 10 of the 12 stages
+//	for 8 of the 10 stages
 //
 // Creator:	Dan Gisselquist, Ph.D.
 //		Gisselquist Technology, LLC
 //
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2015-2018, Gisselquist Technology, LLC
+// Copyright (C) 2015-2019, Gisselquist Technology, LLC
 //
-// This program is free software (firmware): you can redistribute it and/or
-// modify it under the terms of  the GNU General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or (at
-// your option) any later version.
+// This file is part of the general purpose pipelined FFT project.
 //
-// This program is distributed in the hope that it will be useful, but WITHOUT
-// ANY WARRANTY; without even the implied warranty of MERCHANTIBILITY or
-// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-// for more details.
+// The pipelined FFT project is free software (firmware): you can redistribute
+// it and/or modify it under the terms of the GNU Lesser General Public License
+// as published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
 //
-// You should have received a copy of the GNU General Public License along
-// with this program.  (It's in the $(ROOT)/doc directory.  Run make with no
-// target there if the PDF file isn't present.)  If not, see
+// The pipelined FFT project is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTIBILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
+// General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program.  (It's in the $(ROOT)/doc directory.  Run make
+// with no target there if the PDF file isn't present.)  If not, see
 // <http://www.gnu.org/licenses/> for a copy.
 //
-// License:	GPL, v3, as defined and found on www.gnu.org,
-//		http://www.gnu.org/licenses/gpl.html
+// License:	LGPL, v3, as defined and found on www.gnu.org,
+//		http://www.gnu.org/licenses/lgpl.html
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -80,7 +82,7 @@ module fftmain(i_clk, i_reset, i_ce,
 	// changed.  (These values can be adjusted by running the core
 	// generator again.)  The reason is simply that these values have
 	// been hardwired into the core at several places.
-	localparam	IWIDTH=16, OWIDTH=16, LGWIDTH=12;
+	localparam	IWIDTH=16, OWIDTH=16, LGWIDTH=10;
 	//
 	input	wire				i_clk, i_reset, i_ce;
 	//
@@ -95,29 +97,13 @@ module fftmain(i_clk, i_reset, i_ce,
 
 
 	// A hardware optimized FFT stage
-	wire		w_s4096;
-	wire	[35:0]	w_d4096;
-	fftstage	#(IWIDTH,IWIDTH+2,18,11,0,
-			1, 3, "cmem_4096.hex")
-		stage_4096(i_clk, i_reset, i_ce,
-			(!i_reset), i_sample, w_d4096, w_s4096);
-
-
-	// A hardware optimized FFT stage
-	wire		w_s2048;
-	wire	[35:0]	w_d2048;
-	fftstage	#(18,20,18,10,0,
-			1, 3, "cmem_2048.hex")
-		stage_2048(i_clk, i_reset, i_ce,
-			w_s4096, w_d4096, w_d2048, w_s2048);
-
-	// A hardware optimized FFT stage
 	wire		w_s1024;
 	wire	[35:0]	w_d1024;
-	fftstage	#(18,20,18,9,0,
+	fftstage	#(IWIDTH,IWIDTH+2,18,9,0,
 			1, 3, "cmem_1024.hex")
 		stage_1024(i_clk, i_reset, i_ce,
-			w_s2048, w_d2048, w_d1024, w_s1024);
+			(!i_reset), i_sample, w_d1024, w_s1024);
+
 
 	// A hardware optimized FFT stage
 	wire		w_s512;
@@ -177,7 +163,7 @@ module fftmain(i_clk, i_reset, i_ce,
 
 	wire		w_s4;
 	wire	[35:0]	w_d4;
-	qtrstage	#(18,18,12,0,0)	stage_4(i_clk, i_reset, i_ce,
+	qtrstage	#(18,18,10,0,0)	stage_4(i_clk, i_reset, i_ce,
 						w_s8, w_d8, w_d4, w_s4);
 	wire		w_s2;
 	wire	[31:0]	w_d2;

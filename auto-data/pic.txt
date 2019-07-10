@@ -44,11 +44,13 @@
 @DEVID=BUSPIC
 @PIC.BUS= bus_int_vector
 @PIC.MAX= 15
-@INT.BUS.WIRE= w_bus_int
-@INT.BUS.PIC=  syspic
+# @INT.BUS.WIRE= w_bus_int
+# @INT.BUS.PIC=  syspic
 @INT.BUS.ID=   6
 @BDEF.DEFN=
 #define BUSPIC(X) (1<<X)
+@MAIN.DEFNS=
+	wire	w_bus_int;
 @MAIN.INSERT=
 	//
 	// The BUS Interrupt controller

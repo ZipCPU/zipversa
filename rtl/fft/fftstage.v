@@ -33,25 +33,27 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2015-2018, Gisselquist Technology, LLC
+// Copyright (C) 2015-2019, Gisselquist Technology, LLC
 //
-// This program is free software (firmware): you can redistribute it and/or
-// modify it under the terms of  the GNU General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or (at
-// your option) any later version.
+// This file is part of the general purpose pipelined FFT project.
 //
-// This program is distributed in the hope that it will be useful, but WITHOUT
-// ANY WARRANTY; without even the implied warranty of MERCHANTIBILITY or
-// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-// for more details.
+// The pipelined FFT project is free software (firmware): you can redistribute
+// it and/or modify it under the terms of the GNU Lesser General Public License
+// as published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
 //
-// You should have received a copy of the GNU General Public License along
-// with this program.  (It's in the $(ROOT)/doc directory.  Run make with no
-// target there if the PDF file isn't present.)  If not, see
+// The pipelined FFT project is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTIBILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
+// General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program.  (It's in the $(ROOT)/doc directory.  Run make
+// with no target there if the PDF file isn't present.)  If not, see
 // <http://www.gnu.org/licenses/> for a copy.
 //
-// License:	GPL, v3, as defined and found on www.gnu.org,
-//		http://www.gnu.org/licenses/gpl.html
+// License:	LGPL, v3, as defined and found on www.gnu.org,
+//		http://www.gnu.org/licenses/lgpl.html
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -65,7 +67,7 @@ module	fftstage(i_clk, i_reset, i_ce, i_sync, i_data, o_data, o_sync);
 	// core is built ... Note that the minimum LGSPAN (the base two log
 	// of the span, or the base two log of the current FFT size) is 3.
 	// Smaller spans (i.e. the span of 2) must use the dbl laststage module.
-	parameter	LGSPAN=11, BFLYSHIFT=0; // LGWIDTH=12
+	parameter	LGSPAN=9, BFLYSHIFT=0; // LGWIDTH=10
 	parameter	[0:0]	OPT_HWMPY = 1;
 	// Clocks per CE.  If your incoming data rate is less than 50% of your
 	// clock speed, you can set CKPCE to 2'b10, make sure there's at least
@@ -77,7 +79,7 @@ module	fftstage(i_clk, i_reset, i_ce, i_sync, i_data, o_data, o_sync);
 	parameter		CKPCE = 3;
 	// The COEFFILE parameter contains the name of the file containing the
 	// FFT twiddle factors
-	parameter	COEFFILE="cmem_4096.hex";
+	parameter	COEFFILE="cmem_1024.hex";
 
 `ifdef	VERILATOR
 	parameter [0:0] ZERO_ON_IDLE = 1'b0;

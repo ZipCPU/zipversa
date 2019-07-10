@@ -163,10 +163,10 @@
 @INT.UARTTX.WIRE=uarttx_int
 @INT.UARTRXF.WIRE=uartrxf_int
 @INT.UARTTXF.WIRE=uarttxf_int
-@INT.UARTRX.PIC=altpic
-@INT.UARTTX.PIC=altpic
-@INT.UARTRXF.PIC=syspic
-@INT.UARTTXF.PIC=syspic
+@INT.UARTRX.PIC=
+@INT.UARTTX.PIC=
+@INT.UARTRXF.PIC=@$(SYSPIC)
+@INT.UARTTXF.PIC=@$(SYSPIC)
 @MAIN.DEFNS=
 	// Console definitions
 	wire	w_console_rx_stb, w_console_tx_stb, w_console_busy;
