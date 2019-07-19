@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 //
 // Filename: 	wbddrsdram.v
 //
@@ -61,7 +61,7 @@ module	wbddrsdram(i_clk, i_reset,
 	parameter	CKRP = 0;
 	parameter	BUSNOW = 2, BUSREG = BUSNOW-1;
 	localparam	AW = 24;
-	localparam	CMDW = 27;
+	localparam	CMDW = 28;
 	localparam	LANES = 2;
 	localparam	DW = LANES * 8 * 8;
 	localparam	DDRDW = LANES * 8 * 8; // 8b per lane, 2 side ea of 4cyc
@@ -138,7 +138,7 @@ module	wbddrsdram(i_clk, i_reset,
 	output	reg	[DDRDW-1:0]	o_ddr_data;
 	input	wire	[DDRDW-1:0]	i_ddr_data;
 
-	integer			ik;
+	integer			ik, jk;
 
 	////////
 	//
@@ -167,9 +167,6 @@ module	wbddrsdram(i_clk, i_reset,
 	reg	[2:0]		cmd_pipe;
 	reg	[1:0]		nxt_pipe;
 
-	wire	[16:0]	w_ckREFI_left, w_ckRFC_nxt, w_wait_for_idle,
-			w_pre_stall_counts;
-
 
 	// Our chosen timing doesn't require any more resolution than one
 	// bus clock for ODT.  (Of course, this really isn't necessary, since
@@ -177,7 +174,7 @@ module	wbddrsdram(i_clk, i_reset,
 	// around in case we change our minds later.)
 	reg	[2:0]		drive_dqs;
 	reg	[5:0]		dqs_pattern;
-	reg	[15:0]		ddr_dm;
+	reg	[8*LANES-1:0]	ddr_dm;
 
 	reg			pipe_stall;
 
@@ -185,7 +182,7 @@ module	wbddrsdram(i_clk, i_reset,
 	reg	[DW-1:0]	r_data;
 	reg			r_pending, r_we;
 	reg	[LGNROWS-1:0]	r_row;
-	reg	[LGNBANKS:0]	r_bank;
+	reg	[LGNBANKS-1:0]	r_bank;
 	reg	[9:0]		r_col;
 	reg	[DW/8-1:0]	r_sel;
 
@@ -205,17 +202,17 @@ module	wbddrsdram(i_clk, i_reset,
 	reg	[LGNBANKS-1:0]	r_nxt_bank;
 
 	// wire	w_precharge_all;
-	reg	[CKRP:0]	bank_status	[0:7];
-	reg	[LGNROWS-1:0]	bank_address	[0:7];
+	reg	[(1<<LGNBANKS)-1:0]	bank_status;
+	reg	[LGNROWS-1:0]		bank_address	[0:7];
 
 	reg	[(LGFIFOLN-1):0]	bus_fifo_head, bus_fifo_tail;
-	reg	[DW-1:0]		bus_fifo_data	[0:(FIFOLEN-1)];
-	reg	[DW/8-1:0]			bus_fifo_sel	[0:(FIFOLEN-1)];
+	reg	[DW-1:0]		bus_fifo_data	[0:BUSNOW];
+	reg	[DW/8-1:0]		bus_fifo_sel	[0:BUSNOW];
 	reg				pre_ack;
-	wire	w_bus_fifo_read_next_transaction;
 
 
 	reg	[BUSNOW:0]	bus_active, bus_read, bus_ack;
+	reg	dir_stall;
 
 	////////////////////////////////////////////////////////////////////////
 	//
@@ -234,13 +231,17 @@ module	wbddrsdram(i_clk, i_reset,
 	// or not the command during the timer is to be set to idle, or whether
 	// the command is instead left as it was.
 	//
+	parameter [24:0]	INITIAL_RESET_INSTRUCTION = { 4'h4, DDR_NOOP, 17'd40_000 };
+	//
+	//
 	initial	reset_override = 1'b1;
 	initial	reset_address  = 4'h0;
+	initial	reset_cmd <= { DDR_NOOP, INITIAL_RESET_INSTRUCTION[16:0]};
 	always @(posedge i_clk)
 	if (i_reset)
 	begin
 		reset_override <= 1'b1;
-		reset_cmd <= { DDR_NOOP, reset_instruction[16:0]};
+		reset_cmd <= { DDR_NOOP, INITIAL_RESET_INSTRUCTION[16:0]};
 	end else if ((reset_ztimer)&&(reset_override))
 	begin
 		if (reset_instruction[DDR_RSTDONE])
@@ -267,7 +268,7 @@ module	wbddrsdram(i_clk, i_reset,
 			reset_timer  <= reset_instruction[16:0];
 		end
 	end else
-		reset_ztimer <= 1'b0;
+		reset_ztimer <= 1'b1;
 
 		
 	assign	w_MR0 = 14'h0210;
@@ -275,59 +276,69 @@ module	wbddrsdram(i_clk, i_reset,
 	assign	w_MR2 = 14'h0040;
 	assign	w_ckXPR = 17'd12;// Table 68, p186: 56 nCK / 4 sys clks= 14(-2)
 	assign	w_ckRFC_first = 17'd11; // i.e. 52 nCK, or ckREFI
-	always @(posedge i_clk)
+	function [24:0]	get_reset_instruction;
+		input	[3:0]	i_addr;
+
 	// DONE, TIMER, RESET, CKE, 
-	if (i_reset)
-		reset_instruction <= { 4'h4, DDR_NOOP, 17'd40_000 };
-	else if (reset_ztimer) case(reset_address) // RSTDONE, TIMER, CKE, ??
+	case(i_addr) // RSTDONE, TIMER, CKE, ??
 	//
 	// 1. Reset asserted (active low) for 200 us. (@80MHz)
-	4'h0: reset_instruction <= { 4'h4, DDR_NOOP, 17'd16_000 };
+	// INITIAL_RESET_INSTRUCTION = { 4'h4, DDR_NOOP, 17'd40_000 };
+	4'h0: get_reset_instruction = { 4'h4, DDR_NOOP, 17'd16_000 };
 	//
 	// 2. Reset de-asserted, wait 500 us before asserting CKE
-	4'h1: reset_instruction <= { 4'h6, DDR_NOOP, 17'd40_000 };
+	4'h1: get_reset_instruction = { 4'h6, DDR_NOOP, 17'd40_000 };
 	//
 	// 3. Assert CKE, wait minimum of Reset CKE Exit time
-	4'h2: reset_instruction <= { 4'h7, DDR_NOOP, w_ckXPR };
+	4'h2: get_reset_instruction = { 4'h7, DDR_NOOP, w_ckXPR };
 	//
 	// 4. Set MR2.  (4 nCK, no TIMER, but needs a NOOP cycle)
-	4'h3: reset_instruction <= { 4'h3, DDR_MRSET, 3'h2, w_MR2 };
+	4'h3: get_reset_instruction = { 4'h3, DDR_MRSET, 3'h2, w_MR2 };
 	//
 	// 5. Set MR1.  (4 nCK, no TIMER, but needs a NOOP cycle)
-	4'h4: reset_instruction <= { 4'h3, DDR_MRSET, 3'h1, w_MR1 };
+	4'h4: get_reset_instruction = { 4'h3, DDR_MRSET, 3'h1, w_MR1 };
 	//
 	// 6. Set MR0
-	4'h5: reset_instruction <= { 4'h3, DDR_MRSET, 3'h0, w_MR0 };
+	4'h5: get_reset_instruction = { 4'h3, DDR_MRSET, 3'h0, w_MR0 };
 	//
 	// 7. Wait 12 nCK clocks, or 3 sys clocks
-	4'h6: reset_instruction <= { 4'h7, DDR_NOOP,  17'd1 };
+	4'h6: get_reset_instruction = { 4'h7, DDR_NOOP,  17'd1 };
 	//
 	// 8. Issue a ZQCL command to start ZQ calibration, A10 is high
-	4'h7: reset_instruction <= { 4'h3, DDR_ZQS, 6'h0, 1'b1, 10'h0};
+	4'h7: get_reset_instruction = { 4'h3, DDR_ZQS, 6'h0, 1'b1, 10'h0};
 	//
 	// 9. Wait for both tDLLK and tZQinit completed, both are
 	// 512 cks. Of course, since every one of these commands takes
 	// two clocks, we wait for one quarter as many clocks (minus
 	// two for our timer logic)
-	4'h8: reset_instruction <= { 4'h7, DDR_NOOP, 17'd126 };
+	4'h8: get_reset_instruction = { 4'h7, DDR_NOOP, 17'd126 };
 	//
 	// 10. Precharge all command
-	4'h9: reset_instruction <= { 4'h3, DDR_PRECHARGE, 6'h0, 1'b1, 10'h0 };
+	4'h9: get_reset_instruction = { 4'h3, DDR_PRECHARGE, 6'h0, 1'b1, 10'h0 };
 	//
 	// 11. Wait 5 memory clocks (8 memory clocks) for the precharge
 	// to complete.  A single NOOP here will have us waiting
 	// 8 clocks, so we should be good here.
-	4'ha: reset_instruction <= { 4'h3, DDR_NOOP, 17'd0 };
+	4'ha: get_reset_instruction = { 4'h3, DDR_NOOP, 17'd0 };
 	//
 	// 12. A single Auto Refresh commands
-	4'hb: reset_instruction <= { 4'h3, DDR_REFRESH, 17'h00 };
+	4'hb: get_reset_instruction = { 4'h3, DDR_REFRESH, 17'h00 };
 	//
 	// 13. Wait for the auto refresh to complete
-	4'hc: reset_instruction <= { 4'h7, DDR_NOOP, w_ckRFC_first };
-	4'hd: reset_instruction <= { 4'h7, DDR_NOOP, 17'd3 };
+	4'hc: get_reset_instruction = { 4'h7, DDR_NOOP, w_ckRFC_first };
+	4'hd: get_reset_instruction = { 4'h7, DDR_NOOP, 17'd3 };
 	default:
-	reset_instruction <={4'hb, DDR_NOOP, 17'd00_000 };
+		get_reset_instruction ={4'hb, DDR_NOOP, 17'd00_000 };
 	endcase
+
+	endfunction
+
+	initial	reset_instruction = INITIAL_RESET_INSTRUCTION;
+	always @(posedge i_clk)
+	if (i_reset)
+		reset_instruction <= INITIAL_RESET_INSTRUCTION;
+	else if (reset_ztimer)
+		reset_instruction <= get_reset_instruction(reset_address);
 
 	initial	reset_address = 4'h0;
 	always @(posedge i_clk)
@@ -399,21 +410,21 @@ module	wbddrsdram(i_clk, i_reset,
 	localparam [16:0]	PRIOR_WAIT       = 13;
 	localparam [16:0]	REFRESH_INTERVAL = 624;
 
-	assign	w_ckREFI_left[16:0] = REFRESH_INTERVAL
+	localparam [16:0] w_ckREFI_left = REFRESH_INTERVAL
 				- PRIOR_WAIT // Minus what we've already waited
 				- WAIT_FOR_IDLE
 				-17'd19;
-	assign	w_ckRFC_nxt[16:0] = 17'd12-17'd3;
+	localparam [16:0] w_ckRFC_nxt = 17'd12-17'd3;
 
-	assign	w_wait_for_idle    = WAIT_FOR_IDLE;
-	assign	w_pre_stall_counts = PRE_STALL_COUNTS;
+	localparam	w_wait_for_idle    = WAIT_FOR_IDLE;
+	localparam	w_pre_stall_counts = PRE_STALL_COUNTS;
 
-	initial	refresh_instruction <= { 4'h2, DDR_NOOP, 17'd1 };
-	always @(posedge i_clk)
-	if (reset_override)
-		refresh_instruction <= { 4'h2, DDR_NOOP, 17'd1 };
-	else if (refresh_ztimer)
-		case(refresh_addr)
+
+	parameter [24:0]	INITIAL_REFRESH_INSTRUCTION = { 4'h2, DDR_NOOP, 17'd1 };
+	function [24:0] get_refresh_instruction;
+		input	[2:0]	i_refaddr;
+
+		case(i_refaddr)
 		// Bit fields are:
 		//	NEED-REFRESH, HAVE-TIMER, BEGIN(start-over)
 		//	DDR_PREREFRESH_STALL = 24;
@@ -424,37 +435,55 @@ module	wbddrsdram(i_clk, i_reset,
 		//	timer value, 16:0
 		//
 		// First, a number of clocks needing no refresh
-		3'h0: refresh_instruction <= { 4'h2, DDR_NOOP, w_ckREFI_left };
+		3'h0: get_refresh_instruction = { 4'h2, DDR_NOOP, w_ckREFI_left };
 		// Then, we take command of the bus and wait for it to be
 		// guaranteed idle
-		3'h1: refresh_instruction <= { 4'ha, DDR_NOOP, w_pre_stall_counts };
-		3'h2: refresh_instruction <= { 4'hc, DDR_NOOP, w_wait_for_idle };
+		3'h1: get_refresh_instruction = { 4'ha, DDR_NOOP, w_pre_stall_counts };
+		3'h2: get_refresh_instruction = { 4'hc, DDR_NOOP, w_wait_for_idle };
 		// Once the bus is idle, all commands complete, and a minimum
 		// recovery time given, we can issue a precharge all command
-		3'h3: refresh_instruction <= { 4'hc, DDR_PRECHARGE, 17'h0400 };
+		3'h3: get_refresh_instruction = { 4'hc, DDR_PRECHARGE, 17'h0400 };
 		// Now we need to wait tRP = 3 clocks (6 nCK)
-		3'h4: refresh_instruction <= { 4'hc, DDR_NOOP, 17'h00 };
-		3'h5: refresh_instruction <= { 4'hc, DDR_REFRESH, 17'h00 };
-		3'h6: refresh_instruction <= { 4'he, DDR_NOOP, w_ckRFC_nxt };
-		3'h7: refresh_instruction <= { 4'h2, DDR_NOOP, 17'd12 };
+		3'h4: get_refresh_instruction = { 4'hc, DDR_NOOP, 17'h00 };
+		3'h5: get_refresh_instruction = { 4'hc, DDR_REFRESH, 17'h00 };
+		3'h6: get_refresh_instruction = { 4'he, DDR_NOOP, w_ckRFC_nxt };
+		3'h7: get_refresh_instruction = { 4'h2, DDR_NOOP, 17'd12 };
 		// default:
-			// refresh_instruction <= { 4'h1, DDR_NOOP, 17'h00 };
+			// refresh_instruction = { 4'h1, DDR_NOOP, 17'h00 };
 		endcase
+	endfunction
+
+	initial	refresh_instruction = INITIAL_REFRESH_INSTRUCTION;
+	always @(posedge i_clk)
+	if (reset_override)
+		// refresh_instruction <= { 4'h2, DDR_NOOP, 17'd1 };
+		refresh_instruction <= INITIAL_REFRESH_INSTRUCTION;
+	else if (refresh_ztimer)
+		refresh_instruction <= get_refresh_instruction(refresh_addr);
 
 	// Note that we don't need to check if (reset_override) here since
 	// refresh_ztimer will always be true if (reset_override)--in other
 	// words, it will be true for many, many, clocks--enough for this
 	// logic to settle out.
+	initial	refresh_cmd = INITIAL_REFRESH_INSTRUCTION[20:0];
 	always @(posedge i_clk)
-	if (refresh_ztimer)
+	if (reset_override)
+		refresh_cmd <= INITIAL_REFRESH_INSTRUCTION[20:0];
+	else if (refresh_ztimer)
 		refresh_cmd <= refresh_instruction[20:0];
 
+	initial	need_refresh = INITIAL_REFRESH_INSTRUCTION[DDR_NEEDREFRESH];
 	always @(posedge i_clk)
-	if (refresh_ztimer)
+	if (reset_override)
+		need_refresh <= INITIAL_REFRESH_INSTRUCTION[DDR_NEEDREFRESH];
+	else if (refresh_ztimer)
 		need_refresh <= refresh_instruction[DDR_NEEDREFRESH];
 
+	initial	pre_refresh_stall = 1'b0;
 	always @(posedge i_clk)
-	if (refresh_ztimer)
+	if (reset_override)
+		pre_refresh_stall <= 1'b0;
+	else if (refresh_ztimer)
 		pre_refresh_stall <= refresh_instruction[DDR_PREREFRESH_STALL];
 
 
@@ -516,6 +545,11 @@ module	wbddrsdram(i_clk, i_reset,
 
 	end
 
+`ifdef	FORMAL
+always @(*)
+assert(nxt_pipe != 2'b11);
+`endif
+
 	always @(posedge i_clk)
 	if (cmd_pipe[1])
 		bank_address[s_bank] <= s_row;
@@ -553,7 +587,6 @@ module	wbddrsdram(i_clk, i_reset,
 		begin
 			bus_active[0]<= 1'b1; // Data transfers in one clocks
 			bus_ack[0] <= 1'b1;
-			bus_ack[0] <= 1'b1;
 
 			bus_read[0] <= !s_we;
 		end
@@ -562,13 +595,12 @@ module	wbddrsdram(i_clk, i_reset,
 			bus_ack <= 0;
 	end
 
-	reg	dir_stall;
 	//
 	//
 	// Can we issue a read command?
 	//
 	//
-	initial	{ r_pending, s_pending, pipe_stall, o_wb_stall } <= 3'b0001;
+	initial	{ r_pending, s_pending, pipe_stall, o_wb_stall } = 4'b0001;
 	initial	nxt_pipe = 0;
 	initial	cmd_pipe = 0;
 	initial	dir_stall = 0;
@@ -578,6 +610,9 @@ module	wbddrsdram(i_clk, i_reset,
 				||(r_pending)&&(pipe_stall);
 		dir_stall <= (i_wb_stb && !o_wb_stall && r_pending
 				&& r_we != i_wb_we);
+		if (pipe_stall && dir_stall)
+			dir_stall <= 1;
+
 		if (!pipe_stall && !dir_stall)
 			s_pending <= r_pending;
 		if (!pipe_stall && !dir_stall)
@@ -596,18 +631,37 @@ module	wbddrsdram(i_clk, i_reset,
 				if (nxt_pipe[1] && s_nxt_bank == r_bank
 						&& s_nxt_row == r_row)
 				begin
+					// Row was just activated via nxt_pipe,
+					// we can proceed immediately with
+					/// reading or writing
 					cmd_pipe <= 3'b100;
 					pipe_stall <= 1'b0;
 					o_wb_stall <= 1'b0;
-				end else if (!bank_status[r_bank][0])
+				end else if (nxt_pipe[0]&& s_nxt_bank == r_bank)
+					// Row is deactivated, and must be
+					// activated
 					cmd_pipe <= 3'b010;
-				else if (bank_address[r_bank] != r_row)
+				else if (!bank_status[r_bank]
+						&&(!nxt_pipe[1]
+						|| s_nxt_bank != r_bank))
+					// Row is deactivated, and must be
+					// activated
+					cmd_pipe <= 3'b010;
+				else if((bank_address[r_bank] != r_row
+						||(nxt_pipe[1]
+						&& s_nxt_bank == r_bank)
+						&& s_nxt_row  != r_row))
 				begin
+					// The wrong row is activated.  We
+					// must precharge this row and
+					// then activate it on the next cycle
 					cmd_pipe <= 3'b001; // Read in two clocks
 
-					// The "nxt_pipe" just handled
-					//   deactivating this row.
-					if (nxt_pipe[0] && s_nxt_bank == r_bank)
+					// If the "nxt_pipe" logic just handled
+					//   deactivating this row, then
+					//   go directly to activating the right
+					//   row
+					if (nxt_pipe[0] && (s_nxt_bank == r_bank))
 						cmd_pipe <= 3'b010;
 				end else begin
 					cmd_pipe <= 3'b100; // Read now
@@ -615,7 +669,7 @@ module	wbddrsdram(i_clk, i_reset,
 					o_wb_stall <= 1'b0;
 				end
 
-				if (!bank_status[r_nxt_bank][0])
+				if (!bank_status[r_nxt_bank])
 					nxt_pipe <= 2'b10;
 				else if (bank_address[r_nxt_bank] != r_row)
 					nxt_pipe <= 2'b01; // Read in two clocks
@@ -637,7 +691,7 @@ module	wbddrsdram(i_clk, i_reset,
 				o_wb_stall <= (s_pending)&&(cmd_pipe[0]);
 			cmd_pipe <= { cmd_pipe[1:0], 1'b0 };
 
-			if (cmd_pipe & nxt_pipe)
+			if ((cmd_pipe[1:0] & nxt_pipe) != 2'b00)
 				nxt_pipe <= nxt_pipe;
 			else
 				nxt_pipe <= nxt_pipe << 1;
@@ -645,6 +699,9 @@ module	wbddrsdram(i_clk, i_reset,
 
 		if (pre_refresh_stall)
 			o_wb_stall <= 1'b1;
+
+		if (need_refresh)
+			nxt_pipe <= 0;
 
 		if (!o_wb_stall)
 		begin
@@ -760,6 +817,13 @@ module	wbddrsdram(i_clk, i_reset,
 					1'b0, s_row[9:0] };
 		cmd_b[DDR_CSBIT] <= (!cmd_pipe[0])&&(!nxt_pipe[0]);
 
+		// Prevent us from deactivating the same bank twice by
+		// accident
+		if (cmd_pipe[0] && !bank_status[s_bank])
+			cmd_b[DDR_CSBIT] <= 1;	// Disable
+		else if (!cmd_pipe[0]&& nxt_pipe[0] && !bank_status[s_nxt_bank])
+			cmd_b[DDR_CSBIT] <= 1;	// Disable
+
 
 		//
 		// 3rd position: Activate a row, either the next one,
@@ -808,38 +872,28 @@ module	wbddrsdram(i_clk, i_reset,
 	end
 
 	// The bus R/W FIFO
-	assign	w_bus_fifo_read_next_transaction = (bus_ack[BUSREG]);
+	initial for(jk=0; jk<=BUSNOW; jk=jk+1)
+			{ bus_fifo_data[jk], bus_fifo_sel[jk] } = 0;
 	always @(posedge i_clk)
 	begin
-		pre_ack <= 1'b0;
-		if (reset_override)
+		for(ik=1; ik<=BUSNOW; ik=ik+1)
 		begin
-			bus_fifo_head <= {(LGFIFOLN){1'b0}};
-			bus_fifo_tail <= {(LGFIFOLN){1'b0}};
-		end else begin
-			if ((s_pending)&&(!pipe_stall))
-				bus_fifo_head <= bus_fifo_head + 1'b1;
-
-			if (w_bus_fifo_read_next_transaction)
-			begin
-				bus_fifo_tail <= bus_fifo_tail + 1'b1;
-				pre_ack <= 1'b1;
-			end
+			{ bus_fifo_sel[BUSNOW-ik+1], bus_fifo_data[BUSNOW-ik+1] }
+			<= { bus_fifo_sel[BUSNOW-ik], bus_fifo_data[BUSNOW-ik] };
 		end
-		bus_fifo_data[bus_fifo_head] <= s_data;
-		bus_fifo_sel[bus_fifo_head]  <= s_sel;
 
-		if (i_reset || !i_wb_cyc)
-			pre_ack <= 0;
+		{ bus_fifo_data[0], bus_fifo_sel[0] } <= { s_data, s_sel };
+		if (!s_pending || pipe_stall)
+			bus_fifo_sel[0] <= 0;
 	end
 
-
 	always @(posedge i_clk)
-		o_ddr_data  <= bus_fifo_data[bus_fifo_tail];
+		o_ddr_data  <= bus_fifo_data[BUSREG];
 
+	initial	ddr_dm = -1;
 	always @(posedge i_clk)
-		ddr_dm   <= (bus_ack[BUSREG])? bus_fifo_sel[bus_fifo_tail]
-			: (!bus_read[BUSREG] ? 16'hffff: 16'h0000);
+		ddr_dm   <= (bus_ack[BUSREG])? bus_fifo_sel[BUSREG]
+			: (!bus_read[BUSREG] ? {(8*LANES){1'b1}}: {(8*LANES){1'b0}});
 
 	initial	drive_dqs    = 0;
 	always @(posedge i_clk)
@@ -866,24 +920,24 @@ module	wbddrsdram(i_clk, i_reset,
 	end
 
 	// First command
-	assign	o_ddr_cmd_a = {cmd_a,drive_dqs[2],ddr_dm[4*LANES-1:3*LANES],
+	assign	o_ddr_cmd_a = {cmd_a,drive_dqs[2],ddr_dm[6*LANES-1 +: 2*LANES],
 					dqs_pattern[5:4] };
 	// Second command (of four)
-	assign	o_ddr_cmd_b = {cmd_b,drive_dqs[1],ddr_dm[3*LANES-1:2*LANES],
+	assign	o_ddr_cmd_b = {cmd_b,drive_dqs[1],ddr_dm[4*LANES-1 +: 2*LANES],
 					dqs_pattern[3:2] };
 	// Third command (of four)
-	assign	o_ddr_cmd_c = {cmd_c,drive_dqs[1],ddr_dm[2*LANES-1:LANES],
+	assign	o_ddr_cmd_c = {cmd_c,drive_dqs[1],ddr_dm[2*LANES +: 2*LANES],
 					dqs_pattern[3:2] };
 	// Fourth command (of four)--occupies the last timeslot
-	assign	o_ddr_cmd_d = {cmd_d,drive_dqs[0],ddr_dm[LANES-1: 0],
-					drive_dqs[1:0] };
+	assign	o_ddr_cmd_d = {cmd_d,drive_dqs[0],ddr_dm[0*LANES +: 2*LANES],
+					dqs_pattern[1:0] };
 
 	initial	o_wb_ack = 0;
 	always @(posedge i_clk)
-	if (i_reset)
+	if (i_reset || !i_wb_cyc)
 		o_wb_ack <= 0;
 	else
-		o_wb_ack <= i_wb_cyc && pre_ack;
+		o_wb_ack <= bus_ack[BUSNOW];
 
 	always @(posedge i_clk)
 		o_wb_data <= i_ddr_data;
@@ -944,17 +998,122 @@ module	wbddrsdram(i_clk, i_reset,
 	//
 	//
 	//
+	reg	[4:0]	f_reset_addr, f_reset_next, f_reset_active;
+	reg	[24:0]	f_reset_insn, f_reset_next_insn, f_reset_active_insn;
+	// function [24:0]	get_reset_instruction;
+
 	always @(*)
 	if (reset_override)
-		assert(reset_address <= 4'hd);
+		assert(reset_address <= 4'hf);
 	else
-		assert(reset_address == 4'he);
+		assert(reset_address == 4'hf);
+
+	initial	f_reset_addr   = 5'h10;
+	initial	f_reset_next   = 5'h10;
+	initial	f_reset_active = 5'h10;
+	always @(posedge i_clk)
+	if (i_reset)
+	begin
+		f_reset_addr   <= 5'h10;
+		f_reset_next   <= 5'h10;
+		f_reset_active <= 5'h10;
+	end else if (reset_ztimer)
+	begin
+		if (reset_override && !reset_instruction[DDR_RSTDONE])
+			f_reset_addr   <= f_reset_addr + 1;
+		f_reset_addr[4]<= 1'b0;
+
+		f_reset_next   <= { 1'b0, f_reset_addr[3:0] };
+		f_reset_active <= f_reset_next;
+	end
+
+	always @(*)
+	if (f_reset_addr == 5'h10)
+	begin
+		assert(f_reset_next   == 5'h10);
+		assert(f_reset_active == 5'h10);
+	end else if (f_reset_active == 5'h10)
+	begin
+		assert(f_reset_addr[4:0] == 5'h1);
+		assert(f_reset_next[4:0] == 5'h0);
+	end else if (f_reset_active == 5'hf)
+	begin
+		assert(f_reset_next   == 5'h0f);
+		assert(f_reset_active == 5'h0f);
+	end else if (f_reset_next == 5'hf)
+	begin
+		assert(f_reset_addr   == 5'h0f);
+		assert(f_reset_active == 5'h0e);
+	end else
+	begin
+		assert(f_reset_next[3:0]+1   == f_reset_addr[3:0]);
+		assert(f_reset_active[3:0]+1 == f_reset_next[3:0]);
+
+		assert(!f_reset_addr[4]);
+		assert(!f_reset_next[4]);
+		assert(!f_reset_active[4]);
+	end
+
+	always @(*)
+	begin
+		assert(f_reset_addr <= 5'h10);
+		assert(f_reset_next <= 5'h10);
+		assert(f_reset_active <= 5'h10);
+	end
 
 	always @(*)
 	if (reset_timer != 0)
 		assert(!reset_ztimer);
-	else if (reset_override)
+	else if (!reset_override)
 		assert(reset_ztimer);
+
+	always @(*)
+	if (f_reset_addr == 5'h10)
+		f_reset_insn = INITIAL_RESET_INSTRUCTION;
+	else
+		f_reset_insn       = get_reset_instruction(f_reset_addr[3:0]);
+
+	always @(*)
+	if (f_reset_next == 5'h10)
+		f_reset_next_insn  = INITIAL_RESET_INSTRUCTION;
+	else
+		f_reset_next_insn  = get_reset_instruction(f_reset_next[3:0]);
+
+	always @(*)
+	if (f_reset_active == 5'h10)
+		f_reset_active_insn= INITIAL_RESET_INSTRUCTION;
+	else
+		f_reset_active_insn= get_reset_instruction(f_reset_active[3:0]);
+
+	always @(*)
+		assert(reset_instruction == f_reset_next_insn);
+
+	always @(*)
+	if (f_reset_active_insn[DDR_RSTTIMER])
+	begin
+		assert(reset_ztimer == (reset_timer == 0));
+		assert(reset_timer <= f_reset_active_insn[16:0]);
+	end
+
+	always @(*)
+	if (f_reset_active_insn[DDR_RSTDONE])
+		assert(reset_override == 1'b0);
+
+	always @(*)
+	if (reset_override)
+	begin
+		if (f_reset_next == 5'h10)
+			assert(reset_cmd == { DDR_NOOP, f_reset_active_insn[16:0]});
+		else
+			assert(reset_cmd == f_reset_active_insn[20:0]);
+	end
+
+	always @(posedge i_clk)
+	if (!reset_override && $past(!reset_override))
+		assert(reset_ztimer);
+
+	always @(posedge i_clk)
+		assert(reset_address == f_reset_addr[3:0]);
 
 	////////////////////////////////////////////////////////////////////////
 	//
@@ -966,102 +1125,120 @@ module	wbddrsdram(i_clk, i_reset,
 	//
 	//
 	//
-	reg		f_valid_refresh_insn, f_valid_last_refresh_insn;
-	reg	[2:0]	f_refresh_addr, f_last_refresh_addr;
-	reg	[24:0]	f_last_refresh_insn;
+	reg	[3:0]	f_refresh_addr, f_refresh_next, f_refresh_active;
+	reg	[24:0]	f_refresh_next_insn, f_refresh_active_insn;
 
-	always @(*)
-	begin
-		f_valid_refresh_insn = 0;
-		f_refresh_addr       = 0;
-
-		if (refresh_instruction == { 4'h2, DDR_NOOP, 17'd1 })
-			{ f_valid_refresh_insn, f_refresh_addr } = { 1'b1, 3'h0 };
-		if (refresh_instruction == { 4'h2, DDR_NOOP, w_ckREFI_left })
-			{ f_valid_refresh_insn, f_refresh_addr } = { 1'b1, 3'h0 };
-		if (refresh_instruction == { 4'ha, DDR_NOOP, w_pre_stall_counts })
-			{ f_valid_refresh_insn, f_refresh_addr } = { 1'b1, 3'h1 };
-		if (refresh_instruction == { 4'hc, DDR_NOOP, w_wait_for_idle })
-			{ f_valid_refresh_insn, f_refresh_addr } = { 1'b1, 3'h2 };
-		if (refresh_instruction == { 4'hc, DDR_PRECHARGE, 17'h0400 })
-			{ f_valid_refresh_insn, f_refresh_addr } = { 1'b1, 3'h3 };
-		if (refresh_instruction == { 4'hc, DDR_NOOP, 17'h00 })
-			{ f_valid_refresh_insn, f_refresh_addr } = { 1'b1, 3'h4 };
-		if (refresh_instruction == { 4'hc, DDR_REFRESH, 17'h00 })
-			{ f_valid_refresh_insn, f_refresh_addr } = { 1'b1, 3'h5 };
-		if (refresh_instruction == { 4'he, DDR_NOOP, w_ckRFC_nxt })
-			{ f_valid_refresh_insn, f_refresh_addr } = { 1'b1, 3'h6 };
-		if (refresh_instruction == { 4'h2, DDR_NOOP, 17'd12 })
-			{ f_valid_refresh_insn, f_refresh_addr } = { 1'b1, 3'h7 };
-
-		assert(f_valid_refresh_insn);
-	end
-
-	always @(*)
-	if (f_refresh_addr != 0)
-		assert(refresh_addr == f_refresh_addr + 1);
-	else
-		assert(f_refresh_addr == 3'h0 || f_refresh_addr == 3'h7);
-
-	always @(*)
-	if (f_refresh_addr != 0 || refresh_addr != 0)
-		assert(f_refresh_addr == f_last_refresh_addr);
-
-	always @(*)
-	if (refresh_addr > 3'h1)
-		assert(pre_refresh_stall);
-
-	always @(*)
-	if (refresh_addr >= 3'h2)
-		assert(need_refresh);
-
-	initial	f_last_refresh_insn <= { 4'h2, DDR_NOOP, 17'd1 };
+	initial	f_refresh_addr = 4'h8;
 	always @(posedge i_clk)
 	if (reset_override)
-		f_last_refresh_insn <= { 4'h2, DDR_NOOP, 17'd1 };
+		// refresh_instruction <= { 4'h2, DDR_NOOP, 17'd1 };
+		f_refresh_addr <= 4'h8;
 	else if (refresh_ztimer)
-		f_last_refresh_insn <= refresh_instruction;
+	begin
+		f_refresh_addr <= f_refresh_addr + 1;
+		f_refresh_addr[3] <= 1'b0;
+	end
+
+	initial	f_refresh_next = 4'h8;
+	always @(posedge i_clk)
+	if (reset_override)
+		f_refresh_next <= 4'h8;
+	else if (refresh_ztimer)
+	begin
+		if (f_refresh_addr == 4'h8)
+			f_refresh_next <= 4'h0;
+		else
+			f_refresh_next <= f_refresh_addr;
+	end
+
+	initial	f_refresh_active = 4'h8;
+	always @(posedge i_clk)
+	if (reset_override)
+		f_refresh_active <= 4'h8;
+	else if (refresh_ztimer)
+		f_refresh_active <= f_refresh_next;
+
+	wire	[3:0]	f_refresh_next_plus_one, f_refresh_active_plus_one;
+	assign	f_refresh_next_plus_one   = f_refresh_next + 1;
+	assign	f_refresh_active_plus_one = f_refresh_active + 1;
 
 	always @(*)
 	begin
-		f_valid_last_refresh_insn = 0;
-		f_last_refresh_addr       = 0;
+		assert(refresh_addr == f_refresh_addr[2:0]);
 
-		if (f_last_refresh_insn == { 4'h2, DDR_NOOP, 17'd1 })
-			{ f_valid_last_refresh_insn, f_last_refresh_addr } = { 1'b1, 3'h0 };
-		if (f_last_refresh_insn == { 4'h2, DDR_NOOP, w_ckREFI_left })
-			{ f_valid_last_refresh_insn, f_last_refresh_addr } = { 1'b1, 3'h0 };
-		if (f_last_refresh_insn == { 4'ha, DDR_NOOP, w_pre_stall_counts })
-			{ f_valid_last_refresh_insn, f_last_refresh_addr } = { 1'b1, 3'h1 };
-		if (f_last_refresh_insn == { 4'hc, DDR_NOOP, w_wait_for_idle })
-			{ f_valid_last_refresh_insn, f_last_refresh_addr } = { 1'b1, 3'h2 };
-		if (f_last_refresh_insn == { 4'hc, DDR_PRECHARGE, 17'h0400 })
-			{ f_valid_last_refresh_insn, f_last_refresh_addr } = { 1'b1, 3'h3 };
-		if (f_last_refresh_insn == { 4'hc, DDR_NOOP, 17'h00 })
-			{ f_valid_last_refresh_insn, f_last_refresh_addr } = { 1'b1, 3'h4 };
-		if (f_last_refresh_insn == { 4'hc, DDR_REFRESH, 17'h00 })
-			{ f_valid_last_refresh_insn, f_last_refresh_addr } = { 1'b1, 3'h5 };
-		if (f_last_refresh_insn == { 4'he, DDR_NOOP, w_ckRFC_nxt })
-			{ f_valid_last_refresh_insn, f_last_refresh_addr } = { 1'b1, 3'h6 };
-		if (f_last_refresh_insn == { 4'h2, DDR_NOOP, 17'd12 })
-			{ f_valid_last_refresh_insn, f_last_refresh_addr } = { 1'b1, 3'h7 };
+		assert(f_refresh_addr   <= 4'h8);
+		assert(f_refresh_next   <= 4'h8);
+		assert(f_refresh_active <= 4'h8);
 
-		assert(f_valid_last_refresh_insn);
+		if (f_refresh_addr == 4'h8)
+		begin
+			assert(f_refresh_next   == 4'h8);
+			assert(f_refresh_active == 4'h8);
+		end else if (f_refresh_next == 4'h8)
+		begin
+			assert(f_refresh_addr == 4'h1);
+			assert(f_refresh_active == 4'h8);
+		end else begin
+			assert(f_refresh_addr   < 4'h8);
+			assert(f_refresh_next   < 4'h8);
+			assert(f_refresh_active <= 4'h8);
+			if (f_refresh_next > 0)
+				assert(!f_refresh_active[3]);
+
+			assert(f_refresh_next_plus_one[2:0] == f_refresh_addr[2:0]);
+			if (f_refresh_active == 4'h8)
+				assert(f_refresh_next[2:0] == 3'h0);
+			else
+				assert(f_refresh_active_plus_one[2:0] == f_refresh_next[2:0]);
+		end
 	end
+
+	always @(*)
+	begin
+		if (f_refresh_next == 4'h8)
+			f_refresh_next_insn = INITIAL_REFRESH_INSTRUCTION;
+		else
+			f_refresh_next_insn   =get_refresh_instruction(f_refresh_next[2:0]);
+		if (f_refresh_active == 4'h8)
+			f_refresh_active_insn = INITIAL_REFRESH_INSTRUCTION;
+		else
+			f_refresh_active_insn =get_refresh_instruction(f_refresh_active[2:0]);
+	end
+
+	always @(*)
+		assert(f_refresh_next_insn == refresh_instruction);
+
+	always @(*)
+	if (!reset_override)
+		assert(pre_refresh_stall == f_refresh_active_insn[DDR_PREREFRESH_STALL]);
+
+	always @(*)
+		assert(need_refresh == f_refresh_active_insn[DDR_NEEDREFRESH]);
 
 	always @(*)
 	if (!reset_override)
 	begin
-		assert(need_refresh == f_last_refresh_insn[DDR_NEEDREFRESH]);
-		assert(pre_refresh_stall == f_last_refresh_insn[DDR_PREREFRESH_STALL]);
-		if (f_last_refresh_insn[DDR_RFTIMER])
-			assert(refresh_counter <= f_last_refresh_insn[16:0]);
+		assert(need_refresh == f_refresh_active_insn[DDR_NEEDREFRESH]);
+		assert(pre_refresh_stall == f_refresh_active_insn[DDR_PREREFRESH_STALL]);
+		if (f_refresh_addr == 4'h8)
+			assert(refresh_counter <= 4);
+		else if (f_refresh_active_insn[DDR_RFTIMER])
+			assert(refresh_counter <= f_refresh_active_insn[16:0]);
 		else
 			assert(refresh_counter == 0 && refresh_ztimer);
 
-		assert(refresh_cmd == f_last_refresh_insn[20:0]); 
+		assert(refresh_cmd == f_refresh_active_insn[20:0]); 
 	end
 
+	always @(posedge i_clk)
+	if (f_past_valid && $past(!i_reset && reset_override))
+		// assert(refresh_cmd == f_refresh_next_insn[20:0]); 
+		assert(refresh_cmd == INITIAL_REFRESH_INSTRUCTION[20:0]);
+
+	////////////////////////////////////////////////////////////////////////
+	//
+	// Data logic
+	//
 	////////////////////////////////////////////////////////////////////////
 	//
 	//
@@ -1144,7 +1321,7 @@ module	wbddrsdram(i_clk, i_reset,
 		assert(s_col  == swb_col);
 		assert(f_swb_packet[DW+DW/8-1:DW/8] == { s_data});
 		if (f_swb_packet[F_STB-1])
-			assert(f_swb_packet[15:0] == ~s_sel);
+			assert(f_swb_packet[DW/8-1:0] == ~s_sel);
 		else
 			assert(s_sel == 0);
 		assert(cmd_pipe != 0);
@@ -1160,14 +1337,25 @@ module	wbddrsdram(i_clk, i_reset,
 	if (f_cwb_packet[F_STB])
 	begin
 		if (f_cwb_packet[F_STB-1])
+		begin
 			// A write command
 			assert(cmd_d[DDR_CSBIT:DDR_WEBIT] == DDR_WRITE);
-		else
+			assert(bus_ack[0]  == 1);
+			assert(bus_read[0] == 0);
+			assert(bus_fifo_sel[0]  == (~f_cwb_packet[0 +: DW/8]));
+			assert(bus_fifo_data[0] ==  f_cwb_packet[DW/8 +: DW]);
+		end else begin
 			// A read command
 			assert(cmd_d[DDR_CSBIT:DDR_WEBIT] == DDR_READ);
+			//
+			assert(bus_ack[0]  == 1);
+			assert(bus_read[0] == 1);
+		end
+
+		assert(bus_active[0]);
 
 		assert(!cmd_d[DDR_CSBIT]);
-		assert(bank_status[cwb_bank]);
+		assert(bank_status[cwb_bank] || need_refresh);
 		assert(bank_address[cwb_bank] == cwb_row);
 
 		assert(cmd_d[DDR_WEBIT-1:0] ==
@@ -1176,7 +1364,15 @@ module	wbddrsdram(i_clk, i_reset,
 		assert((cmd_b[DDR_CSBIT:DDR_WEBIT] != DDR_PRECHARGE)
 			|| (cmd_b[DDR_WEBIT-1:DDR_WEBIT-LGNBANKS] != cwb_bank));
 	end else if (f_past_valid)
+	begin
 		assert(cmd_d[DDR_CSBIT]);
+	end
+
+	always @(posedge i_clk)
+	if (f_past_valid && $past(bus_ack[BUSREG]))
+		assert(ddr_dm == bus_fifo_sel[BUSNOW]);
+	else if (f_past_valid && $past(!bus_read[BUSREG]))
+		assert(&ddr_dm);
 
 	always @(*)
 	if (!r_pending && !s_pending)
@@ -1195,6 +1391,9 @@ module	wbddrsdram(i_clk, i_reset,
 			// Following a read
 			assert(drive_dqs[1:0] == 2'b00);
 	end
+
+	always @(*)
+		assert(dir_stall == (r_pending && s_pending && r_we != s_we));
 
 	////////////////////////////////////////////////////////////////////////
 	//
@@ -1217,16 +1416,29 @@ module	wbddrsdram(i_clk, i_reset,
 	begin
 		// Can't de-activate an inactive bank
 		assert((cmd_b[DDR_CSBIT:DDR_WEBIT] != DDR_PRECHARGE)
-		      ||(cmd_b[DDR_WEBIT-1:DDR_WEBIT-LGNBANKS] != f_const_bank));
+		      ||(cmd_b[DDR_WEBIT-1:DDR_WEBIT-LGNBANKS] !=f_const_bank));
 		assert((cmd_c[DDR_CSBIT:DDR_WEBIT] != DDR_PRECHARGE)
-		      ||(cmd_c[DDR_WEBIT-1:DDR_WEBIT-LGNBANKS] != f_const_bank));
+		      ||(cmd_c[DDR_WEBIT-1:DDR_WEBIT-LGNBANKS] !=f_const_bank));
 		assert((cmd_d[DDR_CSBIT:DDR_WEBIT] != DDR_PRECHARGE)
-		      ||(cmd_d[DDR_WEBIT-1:DDR_WEBIT-LGNBANKS] != f_const_bank));
+		      ||(cmd_d[DDR_WEBIT-1:DDR_WEBIT-LGNBANKS] !=f_const_bank));
 
+		if (!need_refresh)
 		// Can't read or write from a inactive bank
 		assert(((cmd_d[DDR_CSBIT:DDR_WEBIT] != DDR_WRITE)
 			&&(cmd_d[DDR_CSBIT:DDR_WEBIT] != DDR_READ))
-		      ||(cmd_d[DDR_WEBIT-1:DDR_WEBIT-LGNBANKS] != f_const_bank));
+		      ||(cmd_d[DDR_WEBIT-1:DDR_WEBIT-LGNBANKS] !=f_const_bank));
+	end
+
+	always @(*)
+	if (need_refresh && !cmd_a[DDR_CSBIT]
+			&& (cmd_a[DDR_CSBIT:DDR_WEBIT] != DDR_NOOP))
+	begin
+		assert(!r_pending);
+		assert(!s_pending);
+		assert(cmd_b[DDR_CSBIT]);
+		assert(cmd_c[DDR_CSBIT]);
+		if (cmd_a[DDR_CSBIT:DDR_WEBIT] != DDR_PRECHARGE)
+			assert(cmd_d[DDR_CSBIT]);
 	end
 
 	////////////////////////////////////////////////////////////////////////
@@ -1279,13 +1491,10 @@ module	wbddrsdram(i_clk, i_reset,
 
 	////////////////////////////////////////////////////////////////////////
 	//
+	// (Careless) problem limiting assumption section
 	//
-	always @(*)
-	if (r_pending && s_pending)
-		assume(r_we == s_we);
-
-	always @(*)
-		assume(!need_refresh);
-
+	////////////////////////////////////////////////////////////////////////
+	//
+	//
 `endif
 endmodule
