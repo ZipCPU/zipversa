@@ -745,9 +745,9 @@ module	main(i_clk, i_reset,
 	assign	flashdbg_int = 0;
 
 	// In the case that there is no flashdbg peripheral responding on the wb bus
-	assign	flashdbg_ack   = (wb_stb) && (flashdbg_sel);
 	assign	flashdbg_stall = 0;
 	assign	flashdbg_data  = 0;
+	assign	flashdbg_ack   = (wb_stb) && (flashdbg_sel);
 
 	assign	flashdbg_int = 1'b0;	// flashdbg.INT.FLASHDBG.WIRE
 `endif	// FLASHSCOPE_SCOPC
@@ -793,9 +793,9 @@ module	main(i_clk, i_reset,
 `else	// NET1_ACCESS
 
 	// In the case that there is no net1 peripheral responding on the wb bus
-	assign	net1_ack   = (wb_stb) && (net1_sel);
 	assign	net1_stall = 0;
 	assign	net1_data  = 0;
+	assign	net1_ack   = (wb_stb) && (net1_sel);
 
 	assign	net1tx_int = 1'b0;	// net1.INT.NETTX.WIRE
 	assign	net1rx_int = 1'b0;	// net1.INT.NETRX.WIRE
@@ -814,9 +814,9 @@ module	main(i_clk, i_reset,
 	assign	o_mdio1_we  = 1'b0;
 
 	// In the case that there is no mdio1 peripheral responding on the wb bus
-	assign	mdio1_ack   = (wb_stb) && (mdio1_sel);
 	assign	mdio1_stall = 0;
 	assign	mdio1_data  = 0;
+	assign	mdio1_ack   = (wb_stb) && (mdio1_sel);
 
 `endif	// NETCTRL1_ACCESS
 
@@ -829,9 +829,9 @@ module	main(i_clk, i_reset,
 `else	// BKRAM_ACCESS
 
 	// In the case that there is no bkram peripheral responding on the wb bus
-	assign	bkram_ack   = (wb_stb) && (bkram_sel);
 	assign	bkram_stall = 0;
 	assign	bkram_data  = 0;
+	assign	bkram_ack   = (wb_stb) && (bkram_sel);
 
 `endif	// BKRAM_ACCESS
 
@@ -846,9 +846,9 @@ module	main(i_clk, i_reset,
 `else	// BUSCONSOLE_ACCESS
 
 	// In the case that there is no uart peripheral responding on the wb bus
-	assign	uart_ack   = (wb_stb) && (uart_sel);
 	assign	uart_stall = 0;
 	assign	uart_data  = 0;
+	assign	uart_ack   = (wb_stb) && (uart_sel);
 
 	assign	uarttxf_int = 1'b0;	// uart.INT.UARTTXF.WIRE
 	assign	uartrxf_int = 1'b0;	// uart.INT.UARTRXF.WIRE
@@ -880,9 +880,9 @@ module	main(i_clk, i_reset,
 	assign	o_qspi_dat  = 4'b1111;
 
 	// In the case that there is no flash peripheral responding on the wb bus
-	assign	flash_ack   = (wb_stb) && (flash_sel);
 	assign	flash_stall = 0;
 	assign	flash_data  = 0;
+	assign	flash_ack   = (wb_stb) && (flash_sel);
 
 `endif	// FLASH_ACCESS
 
@@ -906,9 +906,9 @@ module	main(i_clk, i_reset,
 	assign	o_led = 0;
 
 	// In the case that there is no spio peripheral responding on the wb bus
-	assign	spio_ack   = (wb_stb) && (spio_sel);
 	assign	spio_stall = 0;
 	assign	spio_data  = 0;
+	assign	spio_ack   = (wb_stb) && (spio_sel);
 
 	assign	spio_int = 1'b0;	// spio.INT.SPIO.WIRE
 `endif	// SPIO_ACCESS
@@ -927,9 +927,9 @@ module	main(i_clk, i_reset,
 	assign	enetscope_int = 0;
 
 	// In the case that there is no enetscope peripheral responding on the wb bus
-	assign	enetscope_ack   = (wb_stb) && (enetscope_sel);
 	assign	enetscope_stall = 0;
 	assign	enetscope_data  = 0;
+	assign	enetscope_ack   = (wb_stb) && (enetscope_sel);
 
 	assign	enetscope_int = 1'b0;	// enetscope.INT.ENETSCOPE.WIRE
 `endif	// NETSCOPE_SCOPE
@@ -945,9 +945,9 @@ module	main(i_clk, i_reset,
 `else	// BUSPIC_ACCESS
 
 	// In the case that there is no buspic peripheral responding on the wb bus
-	assign	buspic_ack   = (wb_stb) && (buspic_sel);
 	assign	buspic_stall = 0;
 	assign	buspic_data  = 0;
+	assign	buspic_ack   = (wb_stb) && (buspic_sel);
 
 `endif	// BUSPIC_ACCESS
 
@@ -962,9 +962,9 @@ module	main(i_clk, i_reset,
 `else	// PWRCOUNT_ACCESS
 
 	// In the case that there is no pwrcount peripheral responding on the wb bus
-	assign	pwrcount_ack   = (wb_stb) && (pwrcount_sel);
 	assign	pwrcount_stall = 0;
 	assign	pwrcount_data  = 0;
+	assign	pwrcount_ack   = (wb_stb) && (pwrcount_sel);
 
 `endif	// PWRCOUNT_ACCESS
 
@@ -1022,8 +1022,8 @@ module	main(i_clk, i_reset,
 	assign	wbu_addr= 0;
 	assign	wbu_data= 0;
 	// verilator lint_off UNUSED
-	wire	[35:0]	unused_bus_wbu;
-	assign	unused_bus_wbu = { wbu_ack, wbu_stall, wbu_err, wbu_data };
+	wire	unused_bus_wbu;
+	assign	unused_bus_wbu = &{ 1'b0, wbu_ack, wbu_stall, wbu_err, wbu_data };
 	// verilator lint_on  UNUSED
 
 `endif	// WBUBUS_MASTER
@@ -1044,9 +1044,9 @@ module	main(i_clk, i_reset,
 `else	// GPIO_ACCESS
 
 	// In the case that there is no gpio peripheral responding on the wb bus
-	assign	gpio_ack   = (wb_stb) && (gpio_sel);
 	assign	gpio_stall = 0;
 	assign	gpio_data  = 0;
+	assign	gpio_ack   = (wb_stb) && (gpio_sel);
 
 	assign	gpio_int = 1'b0;	// gpio.INT.GPIO.WIRE
 `endif	// GPIO_ACCESS
@@ -1129,9 +1129,9 @@ module	main(i_clk, i_reset,
 `else	// FLASHCFG_ACCESS
 
 	// In the case that there is no flashcfg peripheral responding on the wb bus
-	assign	flashcfg_ack   = (wb_stb) && (flashcfg_sel);
 	assign	flashcfg_stall = 0;
 	assign	flashcfg_data  = 0;
+	assign	flashcfg_ack   = (wb_stb) && (flashcfg_sel);
 
 `endif	// FLASHCFG_ACCESS
 
@@ -1160,8 +1160,8 @@ module	main(i_clk, i_reset,
 	assign	cpu_addr= 0;
 	assign	cpu_data= 0;
 	// verilator lint_off UNUSED
-	wire	[35:0]	unused_bus_cpu;
-	assign	unused_bus_cpu = { cpu_ack, cpu_stall, cpu_err, cpu_data };
+	wire	unused_bus_cpu;
+	assign	unused_bus_cpu = &{ 1'b0, cpu_ack, cpu_stall, cpu_err, cpu_data };
 	// verilator lint_on  UNUSED
 
 `endif	// INCLUDE_PICORV
@@ -1173,9 +1173,9 @@ module	main(i_clk, i_reset,
 `else	// WBFFT_ACCESS
 
 	// In the case that there is no wbfft peripheral responding on the wb bus
-	assign	wbfft_ack   = (wb_stb) && (wbfft_sel);
 	assign	wbfft_stall = 0;
 	assign	wbfft_data  = 0;
+	assign	wbfft_ack   = (wb_stb) && (wbfft_sel);
 
 `endif	// WBFFT_ACCESS
 

@@ -78,6 +78,39 @@
 @RTL.MAKE.GROUP=@$(DEVID)
 @RTL.MAKE.SUBD=picorv
 @RTL.MAKE.FILES=picorv32.v wb_picorv32.v
+@SIM.INCLUDE=
+#include "zipelf.h"
+
+@SIM.DEFINES=
+@SIM.DEFNS=
+@SIM.INIT=
+@SIM.SETRESET=
+@SIM.CLRRESET=
+@SIM.METHODS=
+#ifdef	@$(ACCESS)
+	void	loadelf(const char *elfname) {
+		ELFSECTION	**secpp, *secp;
+		uint32_t	entry;
+
+		elfread(elfname, entry, secpp);
+
+		for(int s=0; secpp[s]->m_len; s++) {
+			bool	successful_load;
+			secp = secpp[s];
+
+			successful_load = load(secp->m_start,
+				secp->m_data, secp->m_len);
+
+			if (!successful_load) {
+				printf("Could not load section "
+					"from %08x to %08x--no such address\n",
+					secp->m_start,
+					secp->m_start+secp->m_len);
+			}
+		} free(secpp);
+	}
+#endif // @$(ACCESS)
+@SIM.TICK=
 #
 #
 #

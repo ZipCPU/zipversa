@@ -58,6 +58,8 @@
 #include "byteswap.h"
 #include "flashsim.h"
 #include "dbluartsim.h"
+#include "zipelf.h"
+
 //
 // SIM.DEFINES
 //
@@ -107,6 +109,7 @@ public:
 		// From wbu
 		m_wbu = new DBLUARTSIM();
 		m_wbu->setup(50);
+		// From picorv
 	}
 
 	void	reset(void) {
@@ -160,6 +163,7 @@ public:
 			m_core->o_qspi_dat,
 			m_core->o_qspi_mod);
 #endif // FLASH_ACCESS
+		// SIM.TICK from picorv
 	}
 
 	// Evaluating clock clk
@@ -313,5 +317,28 @@ public:
 	// it will be pasated here.
 	//
 // Looking for string: SIM.METHODS
+#ifdef	INCLUDE_PICORV
+	void	loadelf(const char *elfname) {
+		ELFSECTION	**secpp, *secp;
+		uint32_t	entry;
+
+		elfread(elfname, entry, secpp);
+
+		for(int s=0; secpp[s]->m_len; s++) {
+			bool	successful_load;
+			secp = secpp[s];
+
+			successful_load = load(secp->m_start,
+				secp->m_data, secp->m_len);
+
+			if (!successful_load) {
+				printf("Could not load section "
+					"from %08x to %08x--no such address\n",
+					secp->m_start,
+					secp->m_start+secp->m_len);
+			}
+		} free(secpp);
+	}
+#endif // INCLUDE_PICORV
 
 };
