@@ -126,8 +126,9 @@ module	main(i_clk, i_reset,
 // As they aren't connected to the toplevel at all, it would
 // be best to use localparam over parameter, but here we don't
 // check
-	localparam	[31-1:0]	RESET_ADDRESS = 10485760,
+	localparam	[31-1:0]	RESET_ADDRESS = 16777216,
 				STACKADDR = 10551296;
+	localparam [0:0]	OPT_BIGENDIAN = 1'b0;
 //
 // The next step is to declare all of the various ports that were just
 // listed above.  
@@ -162,7 +163,7 @@ module	main(i_clk, i_reset,
 	input	wire		i_clk_125mhz;
 	input	wire		i_wbu_uart_rx;
 	output	wire		o_wbu_uart_tx;
-	localparam	NGPI = 2, NGPO=3;
+	localparam	NGPI = 2, NGPO=4;
 	// GPIO ports
 	input		[(NGPI-1):0]	i_gpio;
 	output	wire	[(NGPO-1):0]	o_gpio;
@@ -248,7 +249,7 @@ module	main(i_clk, i_reset,
 	wire	[(4-1):0]	wbu_delayi_sel;
 `include "builddate.v"
 	wire		picorv_trap;
-	wire	[31:0]	cpu_addr_wide;
+	wire	[29:0]	cpu_addr_wide;
 	wire		wbfft_int;
 
 
@@ -775,7 +776,8 @@ module	main(i_clk, i_reset,
 `endif
 
 `ifdef	NET1_ACCESS
-	enetpackets	#(.MEMORY_ADDRESS_WIDTH(11))
+	enetpackets	#(.MEMORY_ADDRESS_WIDTH(11),
+			.OPT_ENDIANSWAP(!OPT_BIGENDIAN))
 		net1i(i_clk, i_reset,
 			wb_cyc,(wb_stb)&&((net1_sel)||(netb_sel)),
 			wb_we, { (netb_sel), wb_addr[11-2:0] }, wb_data, wb_sel,
@@ -859,6 +861,7 @@ module	main(i_clk, i_reset,
 `ifdef	FLASH_ACCESS
 	qflexpress #(.LGFLASHSZ(24), .OPT_CLKDIV(1),
 		.NDUMMY(2), .RDDELAY(0),
+		.OPT_ENDIANSWAP(!OPT_BIGENDIAN),
 		.OPT_STARTUP_FILE("micron.hex"),
 `ifdef	FLASHCFG_ACCESS
 		.OPT_CFG(1'b1)
@@ -1036,7 +1039,7 @@ module	main(i_clk, i_reset,
 	// another 16 GPIO outputs.  The interrupt trips when any of the inputs
 	// changes.  (Sorry, which input isn't (yet) selectable.)
 	//
-	localparam	INITIAL_GPIO = 3'h3;
+	localparam	INITIAL_GPIO = 4'h3;
 	wbgpio	#(NGPI, NGPO, INITIAL_GPIO)
 		gpioi(i_clk, 1'b1, (wb_stb)&&(gpio_sel), wb_we,
 			wb_data, gpio_data, i_gpio, o_gpio,
@@ -1139,13 +1142,13 @@ module	main(i_clk, i_reset,
 	assign	version_ack = wb_stb && version_sel;
 	assign	version_stall = 1'b0;
 `ifdef	INCLUDE_PICORV
-	wb_picorv32 #(.PROGADDR_RESET(10485760),
+	wb_picorv32 #(.PROGADDR_RESET(16777216),
 			.STACKADDR(10551296))
 		picorvi(picorv_trap,
 			i_clk, i_reset,
 			cpu_cyc, cpu_stb, cpu_we,
 				cpu_addr_wide, cpu_data, cpu_sel,
-			cpu_stall, cpu_ack, cpu_data,
+			cpu_stall, cpu_ack, cpu_idata,
 			cpu_err,
 			picorv_int_vec);
 

@@ -158,6 +158,7 @@ module	enetpackets(i_wb_clk, i_reset,
 	// MAW is roughly 
 	localparam	MAW =((MEMORY_ADDRESS_WIDTH>14)? 14: // width of words
 			((MEMORY_ADDRESS_WIDTH<11)? 11:MEMORY_ADDRESS_WIDTH))-2;
+	parameter [0:0]	OPT_ENDIANSWAP = 1'b1;
 	//
 	// Select whether the outgoing debug wires are associated with the
 	// receive or the transmit side of interface
@@ -229,6 +230,12 @@ module	enetpackets(i_wb_clk, i_reset,
 	wire		rx_full_duplex, rx_link_up;
 	wire	[1:0]	rx_link_spd;
 
+	wire		write_to_tx_mem;
+	assign	write_to_tx_mem = (i_wb_stb && i_wb_we)
+					&&(i_wb_addr[MAW+1:MAW] == 2'b11);
+	wire	[MAW-1:0]	wb_memaddr;
+	assign	wb_memaddr = i_wb_addr[MAW-1:0];
+
 	initial	config_hw_crc = 0;
 	initial	config_hw_mac = 0;
 	initial	config_hw_ip_check = 0;
@@ -245,21 +252,31 @@ module	enetpackets(i_wb_clk, i_reset,
 	//
 	initial	hw_mac    = INITIAL_HARDWARE_MAC;
 	always @(posedge i_wb_clk)
+	if (OPT_ENDIANSWAP)
+	begin
+		if (write_to_tx_mem && i_wb_sel[3])
+			txmem[wb_memaddr][ 7: 0] <= i_wb_data[31:24];
+		if (write_to_tx_mem && i_wb_sel[2])
+			txmem[wb_memaddr][15: 8] <= i_wb_data[23:16];
+		if (write_to_tx_mem && i_wb_sel[1])
+			txmem[wb_memaddr][23:16] <= i_wb_data[15: 8];
+		if (write_to_tx_mem && i_wb_sel[0])
+			txmem[wb_memaddr][31:24] <= i_wb_data[ 7: 0];
+	end else begin
+		if (write_to_tx_mem && i_wb_sel[3])
+			txmem[wb_memaddr][31:24] <= i_wb_data[31:24];
+		if (write_to_tx_mem && i_wb_sel[2])
+			txmem[wb_memaddr][23:16] <= i_wb_data[23:16];
+		if (write_to_tx_mem && i_wb_sel[1])
+			txmem[wb_memaddr][15: 8] <= i_wb_data[15: 8];
+		if (write_to_tx_mem && i_wb_sel[0])
+			txmem[wb_memaddr][ 7: 0] <= i_wb_data[ 7: 0];
+	end
+
+	always @(posedge i_wb_clk)
 	begin
 		// if (i_wb_addr[(MAW+1):MAW] == 2'b10)
 			// Writes to rx memory not allowed here
-		if ((i_wb_stb)&&(i_wb_we)&&(i_wb_addr[(MAW+1):MAW] == 2'b11)
-				&&(i_wb_sel[3]))
-			txmem[i_wb_addr[(MAW-1):0]][31:24] <= i_wb_data[31:24];
-		if ((i_wb_stb)&&(i_wb_we)&&(i_wb_addr[(MAW+1):MAW] == 2'b11)
-				&&(i_wb_sel[2]))
-			txmem[i_wb_addr[(MAW-1):0]][23:16] <= i_wb_data[23:16];
-		if ((i_wb_stb)&&(i_wb_we)&&(i_wb_addr[(MAW+1):MAW] == 2'b11)
-				&&(i_wb_sel[1]))
-			txmem[i_wb_addr[(MAW-1):0]][15:8] <= i_wb_data[15:8];
-		if ((i_wb_stb)&&(i_wb_we)&&(i_wb_addr[(MAW+1):MAW] == 2'b11)
-				&&(i_wb_sel[0]))
-			txmem[i_wb_addr[(MAW-1):0]][7:0] <= i_wb_data[7:0];
 
 		// Set the err bits on these conditions (filled out below)
 		if (rx_err_stb)
@@ -385,9 +402,9 @@ module	enetpackets(i_wb_clk, i_reset,
 	// Reads from the bus ... always done, regardless of i_wb_we
 	always @(posedge i_wb_clk)
 	begin
-		rx_wb_data  <= rxmem[i_wb_addr[(MAW-1):0]];
-		rx_wb_valid <= (i_wb_addr[(MAW-1):0] <= { rx_len[(MAW+1):2] });
-		tx_wb_data  <= txmem[i_wb_addr[(MAW-1):0]];
+		rx_wb_data  <= rxmem[wb_memaddr];
+		rx_wb_valid <= (wb_memaddr <= { rx_len[(MAW+1):2] });
+		tx_wb_data  <= txmem[wb_memaddr];
 		pre_ack  <= (i_wb_stb)&&(!i_reset);
 		caseaddr <= {i_wb_addr[(MAW+1):MAW], i_wb_addr[2:0] };
 
@@ -400,8 +417,26 @@ module	enetpackets(i_wb_clk, i_reset,
 		5'h05: o_wb_data <= counter_rx_err;
 		5'h06: o_wb_data <= counter_rx_crc;
 		5'h07: o_wb_data <= 32'h00;
-		5'b10???: o_wb_data <= (rx_wb_valid)?rx_wb_data:32'h00;
-		5'b11???: o_wb_data <= tx_wb_data;
+		5'b10???: begin
+			if (OPT_ENDIANSWAP && rx_wb_valid)
+				o_wb_data <= { rx_wb_data[7:0],
+					rx_wb_data[15:8],
+					rx_wb_data[23:16],
+					rx_wb_data[31:24] };
+			else if (rx_wb_valid)
+				o_wb_data <= rx_wb_data;
+			else
+				o_wb_data <= 32'h00;
+			end
+		5'b11???: begin
+			if (OPT_ENDIANSWAP)
+				o_wb_data <= { tx_wb_data[7:0],
+					tx_wb_data[15:8],
+					tx_wb_data[23:16],
+					tx_wb_data[31:24] };
+			else
+				o_wb_data <= tx_wb_data;
+			end
 		default: o_wb_data <= 32'h00;
 		endcase
 		o_wb_ack <= (pre_ack)&&(i_wb_cyc)&&(!i_reset);

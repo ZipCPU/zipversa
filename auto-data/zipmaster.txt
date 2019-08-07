@@ -96,6 +96,9 @@
 	// Number of ZipCPU interrupts
 	localparam	ZIP_INTS = 16;
 	//
+	// The ZipCPU is big endian
+	localparam [0:0]	OPT_BIGENDIAN = 1'b1;
+	//
 	// ZIP_START_HALTED
 	//
 	// A boolean, indicating whether or not the ZipCPU be halted on startup?
@@ -519,3 +522,7 @@
 @PREFIX=cpu_define
 @ACCESS=INCLUDE_CPU
 @DEPENDS=INCLUDE_ZIPCPU
+#
+#
+@PREFIX=cpu
+@RESET_ADDRESS=@$(zip.RESET_ADDRESS)

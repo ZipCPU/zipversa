@@ -1,23 +1,24 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Filename: 	builddate.v
+// Filename:	txfns.h
 //
-// Project:	ZipVersa, Versa Brd implementation using ZipCPU infrastructure
+// Project:	VideoZip, a ZipCPU SoC supporting video functionality
 //
-// Purpose:	This file records the date of the last build.  Running "make"
-//		in the main directory will create this file.  The `define found
-//	within it then creates a version stamp that can be used to tell which
-//	configuration is within an FPGA and so forth.
+// Purpose:	These are some *very* simple UART routines, designed to support
+//		a program before the C-library is up and running.  Once the
+//	C-library is running on a device, it is anticipated that these routines
+//	will no longer be needed or used--since they access the raw hardware
+//	device(s).
 //
 // Creator:	Dan Gisselquist, Ph.D.
 //		Gisselquist Technology, LLC
 //
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2019, Gisselquist Technology, LLC
+// Copyright (C) 2015-2019, Gisselquist Technology, LLC
 //
 // This program is free software (firmware): you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as published
+// modify it under the terms of  the GNU General Public License as published
 // by the Free Software Foundation, either version 3 of the License, or (at
 // your option) any later version.
 //
@@ -38,8 +39,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 //
-`ifndef	DATESTAMP
-`define DATESTAMP 32'h20190807
-`define BUILDTIME 32'h00175655
-`endif
-//
+#ifndef	TXFNS_H
+#define	TXFNS_H
+
+#include "board.h"
+
+extern	void	txchr(char ch);
+extern	void	txstr(const char *str);
+extern	void	txhex(unsigned val);
+extern	void	txdecimal(int val);
+
+#endif

@@ -64,23 +64,27 @@ _kram  = 0; /* No high-speed kernel RAM */
 _ram   = ORIGIN(bkram);
 _rom   = ORIGIN(flash);
 _top_of_stack = ORIGIN(bkram) + LENGTH(bkram);
+_gpio  = 6291468;
+_uart  = 4194304;
 
 
 /* LD.SCRIPT from zipmaster.txt */
 SECTIONS
 {
-       .rocode @$[0x%08x](zip.RESET_ADDRESS) : ALIGN(4) {
+       .rocode 0x01000000 : ALIGN(4) {
                _boot_address = .;
                *(.start) *(.boot)
                *(.text.startup)
+               *(.srocode*)
                *(.text*)
-               *(.rodata*) *(.strings)
+               *(.srodata*) *(.rodata*) *(.strings)
        } > flash
        _kram_start = . ;
        _kram_end = . ;
        _ram_image_start = . ;
        .kernel : ALIGN_WITH_INPUT {
                *(.kernel)
+               *(.ramcode)
                *(.data) *(COMMON)
                }> bkram AT> flash
        _ram_image_end = . ;

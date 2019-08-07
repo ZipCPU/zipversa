@@ -126,6 +126,7 @@ public:
 		// SIM.CLRRESET tag and thus pasted here.
 		//
 // Looking for string: SIM.CLRRESET
+	m_core->i_reset = 1;
 	}
 
 	void	trace(const char *vcd_trace_file_name) {
@@ -163,7 +164,6 @@ public:
 			m_core->o_qspi_dat,
 			m_core->o_qspi_mod);
 #endif // FLASH_ACCESS
-		// SIM.TICK from picorv
 	}
 
 	// Evaluating clock clk
@@ -183,6 +183,11 @@ public:
 #endif // NETCTRL1_ACCESS
 		// SIM.TICK from wbu
 		m_core->i_wbu_uart_rx = (*m_wbu)(m_core->o_wbu_uart_tx);
+		// SIM.TICK from gpio
+	if (m_core->o_gpio & 4)
+		m_done = true;
+		// SIM.TICK from picorv
+	m_core->i_reset = 0;
 	}
 
 	// Evaluating clock clk_125mhz

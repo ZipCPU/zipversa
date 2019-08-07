@@ -1,0 +1,275 @@
+[*]
+[*] GTKWave Analyzer v3.3.66 (w)1999-2015 BSI
+[*] Wed Aug  7 18:58:33 2019
+[*]
+[dumpfile] "/home/dan/work/rnd/opencores/zipversa/trunk/sim/verilated/trace.vcd"
+[dumpfile_mtime] "Wed Aug  7 18:52:45 2019"
+[dumpfile_size] 7795644
+[savefile] "/home/dan/work/rnd/opencores/zipversa/trunk/sim/verilated/rvtrace.gtkw"
+[timestart] 1
+[size] 1873 600
+[pos] -1 -1
+*-26.000000 89999 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] TOP.
+[treeopen] TOP.main.
+[treeopen] TOP.main.flashi.
+[treeopen] TOP.main.picorvi.
+[sst_width] 196
+[signals_width] 190
+[sst_expanded] 1
+[sst_vpaned_height] 155
+@28
+TOP.i_clk_125mhz
+TOP.i_clk
+TOP.i_reset
+@c00200
+-BASICIO
+@22
+TOP.i_sw[7:0]
+@28
+TOP.i_btn[0]
+TOP.i_gpio[1:0]
+@22
+TOP.o_gpio[3:0]
+TOP.o_led[7:0]
+@1401200
+-BASICIO
+@c00200
+-Network
+@28
+TOP.o_net1_reset_n
+TOP.i_net1_rx_clk
+TOP.i_net1_rx_dv
+@22
+TOP.i_net1_rxd[7:0]
+@28
+TOP.i_net1_rx_err
+TOP.o_net1_tx_ctl
+TOP.o_net1_tx_clk[1:0]
+@22
+TOP.o_net1_txd[7:0]
+@28
+TOP.o_net1_mdc
+TOP.i_mdio1
+TOP.o_mdio1
+TOP.o_mdio1_we
+@1401200
+-Network
+@28
+TOP.i_wbu_uart_rx
+TOP.o_wbu_uart_tx
+@800200
+-Flash
+@28
+TOP.o_qspi_cs_n
+TOP.o_qspi_sck
+@22
+TOP.o_qspi_dat[3:0]
+TOP.i_qspi_dat[3:0]
+@28
+TOP.o_qspi_mod[1:0]
+@1000200
+-Flash
+@c00200
+-Main Wishbone bus
+@28
+TOP.main.wb_cyc
+TOP.main.wb_stb
+TOP.main.wb_we
+@22
+TOP.main.wb_addr[22:0]
+TOP.main.wb_data[31:0]
+TOP.main.wb_sel[3:0]
+@28
+TOP.main.wb_stall
+TOP.main.wb_ack
+@22
+TOP.main.wb_idata[31:0]
+@28
+TOP.main.wb_err
+@1401200
+-Main Wishbone bus
+@c00200
+-Select Lines
+@28
+TOP.main.bkram_sel
+TOP.main.buildtime_sel
+TOP.main.buserr_sel
+TOP.main.buspic_sel
+TOP.main.enetscope_sel
+TOP.main.flash_sel
+TOP.main.flashcfg_sel
+TOP.main.flashdbg_sel
+TOP.main.gpio_sel
+TOP.main.mdio1_sel
+TOP.main.net1_sel
+TOP.main.netb_sel
+TOP.main.pwrcount_sel
+TOP.main.spio_sel
+TOP.main.uart_sel
+TOP.main.version_sel
+@22
+TOP.main.wb_sel[3:0]
+@28
+TOP.main.wb_sio_sel
+TOP.main.wbfft_sel
+TOP.main.wb_none_sel
+@1401200
+-Select Lines
+@c00200
+-PicoRV WB Wrapper
+@28
+TOP.main.picorvi.i_clk
+TOP.main.picorvi.i_reset
+[color] 3
+TOP.main.picorvi.o_wb_cyc
+[color] 3
+TOP.main.picorvi.o_wb_stb
+[color] 3
+TOP.main.picorvi.o_wb_we
+@22
+[color] 3
+TOP.main.picorvi.o_wb_data[31:0]
+[color] 3
+TOP.main.picorvi.o_wb_sel[3:0]
+@28
+[color] 3
+TOP.main.picorvi.i_wb_stall
+[color] 3
+TOP.main.picorvi.i_wb_ack
+@22
+[color] 3
+TOP.main.picorvi.i_wb_data[31:0]
+@28
+[color] 3
+TOP.main.picorvi.i_wb_err
+@22
+TOP.main.picorvi.irq[31:0]
+@28
+TOP.main.picorvi.last_valid
+@22
+TOP.main.picorvi.mem_addr[31:0]
+@28
+TOP.main.picorvi.mem_instr
+@22
+TOP.main.picorvi.mem_rdata[31:0]
+@28
+TOP.main.picorvi.mem_ready
+TOP.main.picorvi.mem_valid
+@22
+TOP.main.picorvi.mem_wdata[31:0]
+TOP.main.picorvi.mem_wstrb[3:0]
+TOP.main.picorvi.pcpi_insn[31:0]
+TOP.main.picorvi.pcpi_rd[31:0]
+@28
+TOP.main.picorvi.pcpi_ready
+@22
+TOP.main.picorvi.pcpi_rs1[31:0]
+TOP.main.picorvi.pcpi_rs2[31:0]
+@28
+TOP.main.picorvi.pcpi_valid
+TOP.main.picorvi.pcpi_wait
+TOP.main.picorvi.pcpi_wr
+@22
+TOP.main.picorvi.pico_irq[31:0]
+TOP.main.picorvi.r_irq[31:0]
+@28
+TOP.main.picorvi.trap
+@22
+TOP.main.picorvi.eoi[31:0]
+@1401200
+-PicoRV WB Wrapper
+@28
+TOP.main.flashi.ckneg
+TOP.main.flashi.ckpos
+TOP.main.flashi.ckpre
+TOP.main.flashi.ckstb
+TOP.main.flashi.i_clk
+TOP.main.flashi.i_reset
+TOP.main.flashi.i_wb_cyc
+TOP.main.flashi.i_wb_stb
+TOP.main.flashi.i_cfg_stb
+TOP.main.flashi.i_wb_we
+@22
+TOP.main.flashi.i_wb_addr[21:0]
+TOP.main.flashi.i_wb_data[31:0]
+@28
+TOP.main.flashi.o_wb_stall
+TOP.main.flashi.o_wb_ack
+@22
+TOP.main.flashi.o_wb_data[31:0]
+@200
+-
+@28
+TOP.main.flashi.o_qspi_cs_n
+TOP.main.flashi.o_qspi_sck
+@22
+TOP.main.flashi.o_qspi_dat[3:0]
+@28
+TOP.main.flashi.o_qspi_mod[1:0]
+@22
+TOP.main.flashi.i_qspi_dat[3:0]
+@201
+-
+@28
+TOP.main.flashi.o_dbg_trigger
+@22
+TOP.main.flashi.o_debug[31:0]
+@28
+TOP.main.flashi.m_clk
+TOP.main.flashi.m_cs_n
+@22
+TOP.main.flashi.m_dat[3:0]
+@28
+TOP.main.flashi.m_mod[1:0]
+TOP.main.flashi.maintenance
+@22
+[color] 3
+TOP.main.flashi.GEN_STARTUP.m_byte[7:0]
+@28
+[color] 3
+TOP.main.flashi.GEN_STARTUP.m_ce
+@22
+[color] 3
+TOP.main.flashi.GEN_STARTUP.m_cmd_index[4:0]
+[color] 3
+TOP.main.flashi.GEN_STARTUP.m_counter[9:0]
+@28
+[color] 3
+TOP.main.flashi.GEN_STARTUP.m_final
+[color] 3
+TOP.main.flashi.GEN_STARTUP.m_midcount
+@22
+[color] 3
+TOP.main.flashi.GEN_STARTUP.m_this_word[10:0]
+@28
+[color] 3
+TOP.main.flashi.GEN_STARTUP.new_word
+TOP.main.flashi.actual_sck
+TOP.main.flashi.bus_request
+TOP.main.flashi.cfg_cs
+TOP.main.flashi.cfg_dir
+TOP.main.flashi.cfg_hs_read
+TOP.main.flashi.cfg_hs_write
+TOP.main.flashi.cfg_ls_write
+TOP.main.flashi.cfg_mode
+TOP.main.flashi.cfg_noop
+TOP.main.flashi.cfg_speed
+TOP.main.flashi.cfg_stb
+TOP.main.flashi.cfg_write
+@22
+TOP.main.flashi.clk_ctr[4:0]
+TOP.main.flashi.data_pipe[35:0]
+@28
+TOP.main.flashi.dly_ack
+TOP.main.flashi.pipe_req
+TOP.main.flashi.pre_ack
+TOP.main.flashi.r_last_cfg
+TOP.main.flashi.read_sck
+@22
+TOP.main.flashi.unused[19:0]
+@28
+TOP.main.flashi.user_request
+TOP.main.flashi.xtra_stall
+[pattern_trace] 1
+[pattern_trace] 0

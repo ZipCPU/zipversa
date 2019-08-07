@@ -44,11 +44,11 @@
 #include "regdefs.h"
 
 #ifndef	FLASH_NDUMMY
-#define	FLASH_NDUMMY	10
+#define	FLASH_NDUMMY	8
 #endif
 
 #ifndef	FLASH_RDDELAY
-#define	FLASH_RDDELAY	3
+#define	FLASH_RDDELAY	0
 #endif
 
 #define	QSPIF_WIP_FLAG			0x0001

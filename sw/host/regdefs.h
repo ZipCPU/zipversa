@@ -112,8 +112,10 @@
 //
 // @REGDEFS.H.DEFNS for masters
 #define	CLKFREQHZ 50000000
+#ifdef	INCLUDE_ZIPCPU
 #define	R_ZIPCTRL	0x01000000
 #define	R_ZIPDATA	0x01000004
+#endif
 #define	BAUDRATE	1000000
 // @REGDEFS.H.DEFNS for peripherals
 #define	BKRAMBASE	0x00a00000

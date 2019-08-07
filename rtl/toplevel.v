@@ -111,7 +111,7 @@ module	toplevel(i_clk, i_clk_125mhz,
 	input	wire		i_wbu_uart_rx;
 	output	wire		o_wbu_uart_tx;
 	// GPIO wires
-	localparam	NGPI = 2, NGPO=3;
+	localparam	NGPI = 2, NGPO=4;
 	// GPIO ports
 	// GSRN clk_reset_n (R1), FPGA_WRITEN
 	output	wire	o_gpio_clk_reset_n;
@@ -147,7 +147,8 @@ module	toplevel(i_clk, i_clk_125mhz,
 	// Network clock at 125MHz
 	wire		s_clk_125mhz, s_clk_125d;
 	wire	w_gpio_clk_reset;
-	wire	w_gpio_clk_scl, w_gpio_clk_sda;
+	wire	w_gpio_clk_scl, w_gpio_clk_sda,
+		w_gpio_halt_sim;
 
 
 	//
@@ -181,8 +182,9 @@ module	toplevel(i_clk, i_clk_125mhz,
 		i_wbu_uart_rx, o_wbu_uart_tx,
 		// GPIO wires
 		// 2 Inputs first
-		{ io_gpio_clk_scl, io_gpio_clk_sda },
-		// Then the 3 outputs
+		{ w_gpio_halt_sim,
+			io_gpio_clk_scl, io_gpio_clk_sda },
+		// Then the 4 outputs
 		{ w_gpio_clk_reset,
 			w_gpio_clk_scl, w_gpio_clk_sda });
 

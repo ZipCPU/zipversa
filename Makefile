@@ -129,6 +129,7 @@ autodata: datestamp check-autofpga
 	$(call copyif-changed,auto-data/regdefs.h,sw/host/regdefs.h)
 	$(call copyif-changed,auto-data/regdefs.cpp,sw/host/regdefs.cpp)
 	$(call copyif-changed,auto-data/board.h,sw/zlib/board.h)
+	$(call copyif-changed,auto-data/board.h,sw/rv32/board.h)
 	$(call copyif-changed,auto-data/board.ld,sw/board/board.ld)
 	$(call copyif-changed,auto-data/bkram.ld,sw/board/bkram.ld)
 	# $(call copyif-changed,auto-data/sdram.ld,sw/board/sdram.ld)

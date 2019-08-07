@@ -130,8 +130,10 @@
 	assign	wbu_sel = 4'hf;
 	assign	wbu_addr = wbu_tmp_addr[(@$BUS_ADDRESS_WIDTH-1):0];
 @REGDEFS.H.DEFNS=
+#ifdef	INCLUDE_ZIPCPU
 #define	R_ZIPCTRL	@$.ZIP_ADDRESS
 #define	R_ZIPDATA	@$.ZIP_DBGDATA
+#endif
 #define	BAUDRATE	@$[%d](BAUDRATE)
 @RTL.MAKE.GROUP= WBUBUS
 @RTL.MAKE.SUBD=  wbubus

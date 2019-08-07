@@ -48,7 +48,7 @@
 @BUS.WIDTH=32
 @BUS.CLOCK=clk
 @CPURESET=i_reset
-@$RESET_ADDRESS=@$(bkram.REGBASE)
+@$RESET_ADDRESS=@$(flash.REGBASE)
 @$STACK_ADDRESS=@$(bkram.REGBASE)+@$(bkram.NADDR)*4
 # @INT.CPU.WIRE=@$(PREFIX)_trap
 # @INT.CPU.BUS=buspic
@@ -57,9 +57,10 @@
 @MAIN.PARAM=
 	localparam	[31-1:0]	RESET_ADDRESS = @$(RESET_ADDRESS),
 				STACKADDR = @$(STACK_ADDRESS);
+	localparam [0:0]	OPT_BIGENDIAN = 1'b0;
 @MAIN.DEFNS=
 	wire		@$(TRAP);
-	wire	[31:0]	@$(BUSN)_addr_wide;
+	wire	[29:0]	@$(BUSN)_addr_wide;
 @MAIN.INSERT=
 	wb_picorv32 #(.PROGADDR_RESET(@$(RESET_ADDRESS)),
 			.STACKADDR(@$(STACK_ADDRESS)))
@@ -67,7 +68,7 @@
 			i_clk, @$(CPURESET),
 			@$(BUSN)_cyc, @$(BUSN)_stb, @$(BUSN)_we,
 				@$(BUSN)_addr_wide, @$(BUSN)_data, @$(BUSN)_sel,
-			@$(BUSN)_stall, @$(BUSN)_ack, @$(BUSN)_data,
+			@$(BUSN)_stall, @$(BUSN)_ack, @$(BUSN)_idata,
 			@$(BUSN)_err,
 			@$(PREFIX)_int_vec);
 
@@ -85,7 +86,6 @@
 @SIM.DEFNS=
 @SIM.INIT=
 @SIM.SETRESET=
-@SIM.CLRRESET=
 @SIM.METHODS=
 #ifdef	@$(ACCESS)
 	void	loadelf(const char *elfname) {
@@ -110,11 +110,17 @@
 		} free(secpp);
 	}
 #endif // @$(ACCESS)
+@SIM.CLOCK=clk
 @SIM.TICK=
+	m_core->i_reset = 0;
+@SIM.CLRRESET=
+	m_core->i_reset = 1;
 #
 #
 #
 @PREFIX=cpu_define
 @ACCESS=INCLUDE_CPU
 @DEPENDS=INCLUDE_PICORV
-
+#
+@PREFIX=cpu
+@$RESET_ADDRESS=@$(picorv.RESET_ADDRESS)

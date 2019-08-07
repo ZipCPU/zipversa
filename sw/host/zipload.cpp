@@ -76,6 +76,7 @@ int main(int argc, char **argv) {
 	fprintf(stderr, "This design doesn\'t seem to contain a ZipCPU\n");
 	return	EXIT_FAILURE;
 #else
+#error "R_ZIPCTRL is still defined"
 	int		skp=0;
 	bool		start_when_finished = false, verbose = false;
 	unsigned	entry = 0;
@@ -362,5 +363,6 @@ int main(int argc, char **argv) {
 	if (m_fpga) delete	m_fpga;
 
 	return EXIT_SUCCESS;
+#error "R_ZIPCTRL is now defined at the end"
 #endif
 }

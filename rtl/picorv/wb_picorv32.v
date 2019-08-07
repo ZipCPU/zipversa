@@ -34,7 +34,7 @@ module wb_picorv32 #(
 	output	reg		o_wb_cyc,
 	output	reg		o_wb_stb,
 	output	reg		o_wb_we,
-	output	reg	[31:0]	o_wb_addr,
+	output	reg	[29:0]	o_wb_addr,
 	output	reg	[31:0]	o_wb_data,
 	output	reg	[3:0]	o_wb_sel,
 	input	wire		i_wb_stall,
@@ -44,6 +44,9 @@ module wb_picorv32 #(
 	// IRQ interface
 	input	wire	[31:0] irq
 );
+	// This is an option to swap endianness.  It is neither fully supported,
+	// nor does what little is supported work (properly).
+	localparam [0:0] OPT_ENDIANSWAP = 1'b0;
 
 	// Pico Co-Processor Interface (PCPI)
 	wire       	pcpi_valid;
@@ -134,6 +137,8 @@ module wb_picorv32 #(
 		last_valid <= 0;
 	else if (mem_valid)
 		last_valid <= 1;
+	else
+		last_valid <= 0;
 
 	always @(posedge i_clk)
 	if (i_reset)
@@ -153,12 +158,35 @@ module wb_picorv32 #(
 		o_wb_stb <= 1;
 	end
 
+	integer	ik;
 	always @(posedge i_clk)
 	if (!o_wb_cyc)
 	begin
-		o_wb_addr <= mem_addr;
-		o_wb_sel  <= mem_wstrb;
-		o_wb_data <= mem_wdata;
+		// Set the various bus wires any time we are idle
+		//
+		// Wishbone doesn't use the sub-word address bits
+		o_wb_addr <= mem_addr[31:2];
+
+		//
+		// Do we need to swap endianness?
+		//
+		if (OPT_ENDIANSWAP)
+		begin
+			for(ik=0; ik<4; ik=ik+1)
+			begin
+				o_wb_sel[ik]  <= mem_wstrb[3-ik];
+				//o_wb_data[ik*8 +: 8]<= mem_wdata[(3-ik)*8+:8];
+			end
+			// Data swap is really a no-op, since the same data
+			// will be on both halves (or all quarters) of the bus
+			// on a write.  Well, that and we don't want to disturb
+			// the bits on a full word write.  (Many of my
+			// peripherals use bus order for their data structures.)
+			o_wb_data <= mem_wdata;
+		end else begin
+			o_wb_sel  <= mem_wstrb;
+			o_wb_data <= mem_wdata;
+		end
 		o_wb_we   <= |mem_wstrb;
 	end
 
@@ -192,5 +220,6 @@ module wb_picorv32 #(
 
 	// Verilator lint_off UNUSED
 	wire	unused;
-	assign	unused = &{ 1'b0, mem_instr, pcpi_valid, pcpi_insn, pcpi_rs1, pcpi_rs2 };
+	assign	unused = &{ 1'b0, mem_addr[1:0], mem_instr,
+		pcpi_valid, pcpi_insn, pcpi_rs1, pcpi_rs2 };
 endmodule

@@ -2,10 +2,10 @@
 //
 // Filename: 	gettysburg.c
 //
-// Project:	ZipVersa, Versa Brd implementation using ZipCPU infrastructure
+// Project:	ZipVersa, Versa Brd implementation using PicoRV32 infrastructure
 //
 // Purpose:	The classical "Hello, world!\r\n" program.  This one, however,
-//		runs on the Versa board over the FTDI interface
+//		runs on the Versa board running the picoRV32
 //
 // Creator:	Dan Gisselquist, Ph.D.
 //		Gisselquist Technology, LLC
@@ -38,6 +38,9 @@
 //
 #include <stdio.h>
 #include <unistd.h>
+
+#include "board.h"
+#include "txfns.h"
 
 const char	address[] = 
 "\r\n"
@@ -72,10 +75,8 @@ const char	address[] =
 "|                                                                              |\r\n"
 "|------------------------------------------------------------------------------|\r\n";
 
-
 int	main(int argc, char **argv) {
 	// Print the Gettysburg address out the UART!
-	write(STDOUT_FILENO, address, sizeof(address));
+	txstr(address);
 	return 0;
 }
-

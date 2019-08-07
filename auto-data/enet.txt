@@ -154,7 +154,8 @@ static volatile unsigned *const @$(BDEF.IONAME)tx = ((unsigned *)(@$[0x%08x](REG
 	wire		@$(PREFIX)_debug_clk;
 	wire	[31:0]	@$(PREFIX)_debug;
 @MAIN.INSERT=
-	enetpackets	#(.MEMORY_ADDRESS_WIDTH(@$(MAWB)))
+	enetpackets	#(.MEMORY_ADDRESS_WIDTH(@$(MAWB)),
+			.OPT_ENDIANSWAP(!OPT_BIGENDIAN))
 		@$(PREFIX)i(i_clk, i_reset,
 			wb_cyc,(wb_stb)&&((@$(PREFIX)_sel)||(@$(NETB)_sel)),
 			wb_we, { (@$(NETB)_sel), wb_addr[@$(MAWB)-2:0] }, wb_data, wb_sel,
