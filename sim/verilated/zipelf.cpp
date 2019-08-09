@@ -254,10 +254,14 @@ assert(n != 0);
 		for(unsigned j=0; j<r[i]->m_len; j++)
 			r[i]->m_data[j] = byteswap(r[i]->m_data[j]);
 		*/
-
 /*
+		// Only turn this on if you need to, otherwise it creates
+		// way too much debugging output--one line per char in the
+		// design
 		if (dbg) for(unsigned j=0; j<r[i]->m_len; j++)
-			fprintf(stderr, "ADR[%04x] = %02x\n", r[i]->m_start+j,
+			fprintf(stderr, "ADR[%04x -> %04x] = %02x\n",
+				r[i]->m_start+j,
+				(unsigned)(phdr.p_vaddr+j),
 				r[i]->m_data[j] & 0x0ff);
 */
 	}

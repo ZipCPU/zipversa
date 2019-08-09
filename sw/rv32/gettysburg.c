@@ -5,7 +5,8 @@
 // Project:	ZipVersa, Versa Brd implementation using PicoRV32 infrastructure
 //
 // Purpose:	The classical "Hello, world!\r\n" program.  This one, however,
-//		runs on the Versa board running the picoRV32
+//		runs on the Versa board running the picoRV32.  It also outputs
+//	the Gettysburg address, rather than just Hello World.
 //
 // Creator:	Dan Gisselquist, Ph.D.
 //		Gisselquist Technology, LLC

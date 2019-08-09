@@ -162,7 +162,7 @@ sim: rtl check-gpp
 # A master target to build all of the support software
 #
 .PHONY: sw
-sw: sw-host sw-zlib sw-board
+sw: sw-host sw-zlib sw-rv32
 
 #
 #
@@ -183,11 +183,17 @@ sw-zlib: check-zip-gcc
 
 #
 #
-# Build the board software.  This may (or may not) use the software library
+# Build the board software.  This may (or may not) use the software library.
+# sw/board contains the software when using the ZipCPU
 #
 .PHONY: sw-board
 sw-board: check-zip-gcc sw-zlib
 	+@$(SUBMAKE) sw/board
+
+# sw/rv32 contains the software when using the picoRV32
+.PHONY: sw-rv32
+swrv32:
+	+@$(SUBMAKE) sw/rv32
 
 #
 # Load the design onto the board

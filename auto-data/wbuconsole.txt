@@ -200,6 +200,8 @@ typedef struct  CONSOLE_S {
 @BDEF.IOTYPE= CONSOLE
 @BDEF.OSDEF=	_BOARD_HAS_BUSCONSOLE
 @BDEF.OSVAL=static volatile CONSOLE *const _uart = ((CONSOLE *)@$.BASE);
+@LD.DEFNS=
+_@$(PREFIX) = @$(REGBASE);
 @RTL.MAKE.GROUP= CONSOLE
 @RTL.MAKE.SUBD=  wbubus
 @RTL.MAKE.FILES= txuartlite.v rxuartlite.v ufifo.v

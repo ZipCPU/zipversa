@@ -128,7 +128,7 @@ cmem_4096.hex:
 .PHONY: yosys
 yosys: $(JSON)
 $(JSON): toplevel.v $(VFLIST)
-	$(YOSYS) -ql $(YLOG) -p 'read -incdir fft/; synth_ecp5 -top toplevel -dsp -json $(JSON)' toplevel.v $(sort $(VFLIST))
+	$(YOSYS) -ql $(YLOG) -p 'read -incdir fft/; synth_ecp5 -top toplevel -json $(JSON)' toplevel.v $(sort $(VFLIST))
 
 .PHONY: nextpnr
 CHIP := --um-45k --speed 8 --package CABGA381

@@ -182,10 +182,9 @@ module	toplevel(i_clk, i_clk_125mhz,
 		i_wbu_uart_rx, o_wbu_uart_tx,
 		// GPIO wires
 		// 2 Inputs first
-		{ w_gpio_halt_sim,
-			io_gpio_clk_scl, io_gpio_clk_sda },
+		{ io_gpio_clk_scl, io_gpio_clk_sda },
 		// Then the 4 outputs
-		{ w_gpio_clk_reset,
+		{ w_gpio_halt_sim, w_gpio_clk_reset,
 			w_gpio_clk_scl, w_gpio_clk_sda });
 
 

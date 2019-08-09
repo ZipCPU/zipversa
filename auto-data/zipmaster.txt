@@ -526,3 +526,4 @@
 #
 @PREFIX=cpu
 @RESET_ADDRESS=@$(zip.RESET_ADDRESS)
+@STARTSYM=_zipboot

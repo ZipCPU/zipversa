@@ -40,7 +40,7 @@
 *
 *
 */
-ENTRY(_start)
+ENTRY(_rvboot)
 
 MEMORY
 {
@@ -59,39 +59,57 @@ MEMORY
 */
 _bkram    = ORIGIN(bkram);
 _flash    = ORIGIN(flash);
+_uart = 4194304;
+
 /* LD.DEFNS from zipmaster.txt */
 _kram  = 0; /* No high-speed kernel RAM */
 _ram   = ORIGIN(bkram);
 _rom   = ORIGIN(flash);
 _top_of_stack = ORIGIN(bkram) + LENGTH(bkram);
-_gpio  = 6291468;
-_uart  = 4194304;
 
+
+_gpio = 6291468;
 
 /* LD.SCRIPT from zipmaster.txt */
 SECTIONS
 {
        .rocode 0x01000000 : ALIGN(4) {
-               _boot_address = .;
-               *(.start) *(.boot)
-               *(.text.startup)
-               *(.srocode*)
-               *(.text*)
-               *(.srodata*) *(.rodata*) *(.strings)
+		_boot_address = .;
+		*(.start) *(.boot)
+		*(.text.startup)
+		*(.srocode*)
+		*(.text*)
+		*(.srodata*)
+		*(.rodata*)
+		*(.strings)
+		. = ALIGN(4);
        } > flash
-       _kram_start = . ;
-       _kram_end = . ;
-       _ram_image_start = . ;
-       .kernel : ALIGN_WITH_INPUT {
+	. = ALIGN(4);
+	_kram_start = . ;
+	_kram_end = . ;
+	_ram_image_start = . ;
+	__global_pointer$ = .;
+	.kernel : ALIGN_WITH_INPUT {
+		*(.irq)	/* IRQ registers and stack */
+		*(.eh_frame)
+		*(.init_array)
+		*(.fini_array)
                *(.kernel)
                *(.ramcode)
                *(.data) *(COMMON)
+               *(.sdata)
+		. = ALIGN(4);
                }> bkram AT> flash
        _ram_image_end = . ;
+       _edata = . ;
        .bss : ALIGN_WITH_INPUT {
+		. = ALIGN(4);
                *(.bss)
+               *(.sbss)
+		. = ALIGN(4);
                _bss_image_end = . ;
                } > bkram
+       _end = . ;
        _top_of_heap = .;
 }
 

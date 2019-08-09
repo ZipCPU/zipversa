@@ -40,7 +40,7 @@
 *
 *
 */
-ENTRY(_start)
+ENTRY(_rvboot)
 
 MEMORY
 {
@@ -64,7 +64,12 @@ _kram  = 0; /* No high-speed kernel RAM */
 _ram   = ORIGIN(bkram);
 _rom   = 0;
 _top_of_stack = ORIGIN(bkram) + LENGTH(bkram);
+__global_pointer$ = @$(GBLPOINTER);
 
+
+_uart = 4194304;
+
+_gpio = 6291468;
 
 /* LD.SCRIPT from mem_bkram_only */
 SECTIONS
@@ -77,9 +82,18 @@ SECTIONS
                *(.start) *(.boot)
                *(.kernel)
                *(.text.startup)
+               *(.srocode*)
                *(.text*)
+               *(.ramcode*)
+               *(.irq*)
+               *(.eh_frame*)
+               *(.init_array*)
+               *(.fini_array*)
+               *(.srodata*)
                *(.rodata*) *(.strings)
+               *(.sdata)
                *(.data) *(COMMON)
+		. = ALIGN(4);
                }> bkram
        _ram_image_end = . ;
        .bss : ALIGN_WITH_INPUT {

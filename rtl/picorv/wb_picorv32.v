@@ -15,7 +15,7 @@ module wb_picorv32 #(
 	parameter [ 0:0] ENABLE_FAST_MUL = 0,
 	parameter [ 0:0] ENABLE_DIV = 1,
 	parameter [ 0:0] ENABLE_IRQ = 1,
-	parameter [ 0:0] ENABLE_IRQ_QREGS = 1,
+	localparam [ 0:0] ENABLE_IRQ_QREGS = ENABLE_IRQ,
 	parameter [ 0:0] ENABLE_IRQ_TIMER = 1,
 	parameter [ 0:0] ENABLE_TRACE = 0,
 	parameter [ 0:0] REGS_INIT_ZERO = 0,
@@ -132,14 +132,17 @@ module wb_picorv32 #(
 	// verilator lint_on PINMISSING
 
 	reg	last_valid;
+	initial	last_valid = 0;
 	always @(posedge i_clk)
 	if (i_reset)
 		last_valid <= 0;
-	else if (mem_valid)
+	else if (mem_valid && !i_wb_ack)
 		last_valid <= 1;
 	else
 		last_valid <= 0;
 
+	initial	o_wb_cyc = 0;
+	initial	o_wb_stb = 0;
 	always @(posedge i_clk)
 	if (i_reset)
 	begin
@@ -191,7 +194,7 @@ module wb_picorv32 #(
 	end
 
 	always @(*)
-		mem_ready = i_wb_ack;
+		mem_ready = i_wb_ack || i_wb_err;
 	always @(*)
 		mem_rdata = i_wb_data;
 
@@ -216,7 +219,7 @@ module wb_picorv32 #(
 	if (i_reset)
 		r_irq <= 0;
 	else
-		r_irq <= (r_irq & eoi) | pico_irq;
+		r_irq <= (r_irq & ~eoi) | pico_irq;
 
 	// Verilator lint_off UNUSED
 	wire	unused;

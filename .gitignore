@@ -4,6 +4,7 @@ xilinx
 obj_dir
 obj-pc
 obj-zip
+obj-rv32
 *.o
 *.a
 *.vcd

@@ -94,6 +94,13 @@ module	qflexpress(i_clk, i_reset,
 	localparam [0:0]	OPT_ADDR32 = (LGFLASHSZ > 24);
 	//
 	parameter	OPT_CLKDIV = 0;
+	//
+	// Normally, I place the first byte read from the flash, and the lowest
+	// flash address, into bits [7:0], and then shift it up--to where upon
+	// return it is found in bits [31:24].  This is ideal for a big endian
+	// systems, not so much for little endian systems.  The endian swap
+	// allows the bus to swap the return values in order to support little
+	// endian systems.
 	parameter [0:0]	OPT_ENDIANSWAP = 1'b1;
 	//
 	// OPT_ODDR will be true any time the clock has no clock division
@@ -880,7 +887,8 @@ module	qflexpress(i_clk, i_reset,
 				stall_pipe <= { stall_pipe[RDDELAY-2:0], not_done };
 
 
-		end else if (RDDELAY > 0) begin
+		end else // if (RDDELAY > 0)
+		begin
 			always @(posedge i_clk)
 			if (i_reset)
 				sck_pipe <= 0;
@@ -898,13 +906,6 @@ module	qflexpress(i_clk, i_reset,
 				stall_pipe <= -1;
 			else
 				stall_pipe <= not_done;
-		end else begin
-			always @(*)
-			begin
-				sck_pipe <= actual_sck;
-				ack_pipe <= dly_ack;
-				stall_pipe <= not_done;
-			end
 		end
 
 		always @(*)
@@ -957,13 +958,22 @@ module	qflexpress(i_clk, i_reset,
 						o_wb_data[11:8], o_wb_data[23:20],
 						o_wb_data[3:0], o_wb_data[15:12]};
 				end
-			end else begin
-				if (!o_qspi_mod[1])
-					o_wb_data <= { o_wb_data[30:0], i_qspi_dat[1] };
-				else
-					o_wb_data <= { o_wb_data[27:0], i_qspi_dat };
-			end
-		end
+
+				if (cfg_mode)
+				begin
+					// No endian-swapping in config mode
+					if (!o_qspi_mod[1])
+					o_wb_data[7:0]<= { o_wb_data[6:0], i_qspi_dat[1] };
+					else
+					o_wb_data[7:0]<= { o_wb_data[3:0], i_qspi_dat };
+				end
+
+			end else if (!o_qspi_mod[1])
+				// No endian-swapping
+				o_wb_data <= { o_wb_data[30:0], i_qspi_dat[1] };
+			else
+				o_wb_data <= { o_wb_data[27:0], i_qspi_dat };
+		end // read_sck
 
 		if ((OPT_CFG)&&(cfg_mode))
 			o_wb_data[16:8] <= { 4'b0, cfg_mode, cfg_speed, 1'b0,

@@ -37,7 +37,7 @@
 ##
 ##
 .PHONY: all
-PROGRAMS := gettysburg
+PROGRAMS := gettysburg job
 all:	$(PROGRAMS)
 #
 #
@@ -59,6 +59,9 @@ INCS    := -I../../rtl -I.
 LFLAGS  := -T board.ld
 LFLAGSD := -T sdram.ld
 CFLAGS  := -O3 $(INCS)
+# RVLIB   := $(OBJDIR)/crt0.o syscalls.c
+RVLIB   := $(OBJDIR)/rvboot.o $(OBJDIR)/bootloader.o $(OBJDIR)/syscalls.o $(OBJDIR)/irq.o $(OBJDIR)/txfns.o
+MAP     := -Wl,-Map=$(OBJDIR)/$@.map
 #
 # For source analysis, the following macros are defined:
 #
@@ -70,6 +73,12 @@ $(OBJDIR)/%.o: %.c
 $(OBJDIR)/%.o: %.S
 	$(mk-objdir)
 	$(AS) -march=rv32imc $< -o $@
+$(OBJDIR)/rvboot.o: rvboot.S
+	$(mk-objdir)
+	$(CC) -c -I ../../../picorv32/firmware -march=rv32imc $< -o $@
+$(OBJDIR)/bootloader.o: bootloader.c
+	$(mk-objdir)
+	$(CC) $(CFLAGS) $(BAREMETAL) -c $< -o $@
 # $(OBJDIR)/hello.o: hello.c
 #	$(mk-objdir)
 #	$(CC) -O3 -c $< -o $@
@@ -85,10 +94,13 @@ $(OBJDIR)/%.s: %.c
 $(OBJDIR)/%.txt: $(OBJDIR)/%.o
 	bash -c "$(RDELF) -a $^ ; $(OBJDUMP) -S -Dr $^ " | tee $@
 %.txt: %
-	$(OBJDUMP) -S -Dr $^ > $@
+	bash -c "$(RDELF) -a $^ ; $(OBJDUMP) -S -Dr $^ " > $@
 
 gettysburg: $(OBJDIR)/gettysburg.o $(OBJDIR)/txfns.o $(OBJDIR)/crt0.o board.ld
 	$(CC) $(CFLAGS) $(BAREMETAL) $(LFLAGS) $(OBJDIR)/crt0.o $(OBJDIR)/gettysburg.o $(OBJDIR)/txfns.o -o $@
+
+job: $(OBJDIR)/job.o $(RVLIB)
+	$(CC) $(CFLAGS) $(LFLAGS) $(RVLIB) $(OBJDIR)/job.o -o $@
 
 simple_ping: $(OBJDIR)/simple_ping.o
 simple_ping: $(OBJDIR)/arp.o $(OBJDIR)/ipcksum.o
@@ -115,7 +127,7 @@ clean:
 	rm -f $(PROGRAMS)
 	rm -rf $(addsuffix .map,$(PROGRAMS))
 	rm -rf $(addsuffix .txt,$(PROGRAMS))
-	rm -rf $(OBJDIR)/
+	rm -rf $(OBJDIR)/ tags
 
 $(OBJDIR)/depends.txt: tags
 	$(build-depends)

@@ -63,6 +63,7 @@
 	wire	[29:0]	@$(BUSN)_addr_wide;
 @MAIN.INSERT=
 	wb_picorv32 #(.PROGADDR_RESET(@$(RESET_ADDRESS)),
+			.PROGADDR_IRQ(@$(RESET_ADDRESS)+16),
 			.STACKADDR(@$(STACK_ADDRESS)))
 		@$(PREFIX)i(@$(TRAP),
 			i_clk, @$(CPURESET),
@@ -124,3 +125,4 @@
 #
 @PREFIX=cpu
 @$RESET_ADDRESS=@$(picorv.RESET_ADDRESS)
+@STARTSYM=_rvboot

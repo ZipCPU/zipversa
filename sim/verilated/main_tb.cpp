@@ -184,7 +184,7 @@ public:
 		// SIM.TICK from wbu
 		m_core->i_wbu_uart_rx = (*m_wbu)(m_core->o_wbu_uart_tx);
 		// SIM.TICK from gpio
-	if (m_core->o_gpio & 4)
+	if (m_core->o_gpio & 8)
 		m_done = true;
 		// SIM.TICK from picorv
 	m_core->i_reset = 0;

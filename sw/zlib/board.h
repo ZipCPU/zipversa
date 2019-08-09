@@ -168,7 +168,8 @@ typedef struct WBSCOPE_S {
 #define GPIO_ICLK_SCL		2
 #define GPIO_ICLK_LOCKED	4
 #define GPIO_ICLK_RESET		4
-#define GPIO_HALT_SIM		4
+#define GPIO_HALT		8
+#define GPIO_SIMHALT		GPIO_SET(GPIO_HALT)
 //
 //
 

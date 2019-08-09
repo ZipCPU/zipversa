@@ -1,13 +1,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Filename: 	builddate.v
+// Filename:	bootloader.h
 //
 // Project:	ZipVersa, Versa Brd implementation using ZipCPU infrastructure
 //
-// Purpose:	This file records the date of the last build.  Running "make"
-//		in the main directory will create this file.  The `define found
-//	within it then creates a version stamp that can be used to tell which
-//	configuration is within an FPGA and so forth.
+// Purpose:	
+//
 //
 // Creator:	Dan Gisselquist, Ph.D.
 //		Gisselquist Technology, LLC
@@ -38,8 +36,17 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 //
-`ifndef	DATESTAMP
-`define DATESTAMP 32'h20190809
-`define BUILDTIME 32'h00172939
-`endif
-//
+#ifndef	BOOTLOADER_H
+#define	BOOTLOADER_H
+
+extern	int	_top_of_heap[1], _top_of_stack[1];
+extern	int	_boot_address[1];
+
+extern	int	_ram[1], _rom[1], _kram[1];
+
+extern	int	_boot_address[1],
+		_kram_start[1], _kram_end[1],
+		_ram_image_start[1], _ram_image_end[1],
+		_bss_image_end[1];
+
+#endif

@@ -2,7 +2,7 @@
 //
 // Filename:	txfns.h
 //
-// Project:	VideoZip, a ZipCPU SoC supporting video functionality
+// Project:	ZipVersa, Versa Brd implementation using ZipCPU infrastructure
 //
 // Purpose:	These are some *very* simple UART routines, designed to support
 //		a program before the C-library is up and running.  Once the
@@ -15,10 +15,10 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2015-2019, Gisselquist Technology, LLC
+// Copyright (C) 2019, Gisselquist Technology, LLC
 //
 // This program is free software (firmware): you can redistribute it and/or
-// modify it under the terms of  the GNU General Public License as published
+// modify it under the terms of the GNU General Public License as published
 // by the Free Software Foundation, either version 3 of the License, or (at
 // your option) any later version.
 //

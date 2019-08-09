@@ -241,6 +241,7 @@ module	main(i_clk, i_reset,
 	wire		zip_dbg_ack, zip_dbg_stall;
 	wire	[31:0]	zip_dbg_data;
 `endif
+	wire	[NGPO-1:0]	w_gpio;
 	// Bus arbiter's internal lines
 	wire		wbu_delayi_cyc, wbu_delayi_stb, wbu_delayi_we,
 			wbu_delayi_ack, wbu_delayi_stall, wbu_delayi_err;
@@ -1042,8 +1043,13 @@ module	main(i_clk, i_reset,
 	localparam	INITIAL_GPIO = 4'h3;
 	wbgpio	#(NGPI, NGPO, INITIAL_GPIO)
 		gpioi(i_clk, 1'b1, (wb_stb)&&(gpio_sel), wb_we,
-			wb_data, gpio_data, i_gpio, o_gpio,
+			wb_data, gpio_data, i_gpio, w_gpio,
 			gpio_int);
+//`ifdef	INCLUDE_PICORV
+//	assign	o_gpio = { w_gpio[3]|picorv_trap, w_gpio[2:0] };
+// `else
+	assign	o_gpio = w_gpio;
+// `endif
 `else	// GPIO_ACCESS
 
 	// In the case that there is no gpio peripheral responding on the wb bus
@@ -1143,6 +1149,7 @@ module	main(i_clk, i_reset,
 	assign	version_stall = 1'b0;
 `ifdef	INCLUDE_PICORV
 	wb_picorv32 #(.PROGADDR_RESET(16777216),
+			.PROGADDR_IRQ(16777216+16),
 			.STACKADDR(10551296))
 		picorvi(picorv_trap,
 			i_clk, i_reset,
