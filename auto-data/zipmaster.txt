@@ -126,7 +126,7 @@
 			// Debug wishbone interface
 			(@$(DBGBUS)_cyc), ((@$(DBGBUS)_stb)&&(zip_dbg_sel)),@$(DBGBUS)_we,
 			@$(DBGBUS)_addr[0],
-			@$(DBGBUS)_data, zip_dbg_ack, zip_dbg_stall, zip_dbg_data,
+			@$(DBGBUS)_data, zip_dbg_stall, zip_dbg_stall, zip_dbg_data,
 			zip_debug);
 	assign	zip_trigger = zip_debug[31];
 @BDEF.INCLUDE=

@@ -44,7 +44,7 @@
 
 const char	message[] = 
 "\n"
-"|------------------------------------------------------------------------------|\n"
+"+------------------------------------------------------------------------------+\n"
 "|                                                                              |\n"
 "| Job, chapter 28                                                              |\n"
 "| -------------------                                                          |\n"
@@ -100,7 +100,7 @@ const char	message[] =
 "| And unto man he said, Behold, the fear of the LORD, that is wisdom; and to   |\n"
 "|   depart from evil is understanding.                                         |\n"
 "|                                                                              |\n"
-"|------------------------------------------------------------------------------|\n";
+"+------------------------------------------------------------------------------+\n";
 
 int	main(int argc, char **argv) {
 	// Print Job 28 the UART using the (newlib) C standard library!

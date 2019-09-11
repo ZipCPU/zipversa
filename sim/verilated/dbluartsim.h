@@ -98,9 +98,13 @@ public:
 	// localhost to listen in on.  Once started, connections may be made
 	// to this port to get the output from the port.
 	DBLUARTSIM(const int port = FPGAPORT, const bool copy_to_stdout=true);
+	~DBLUARTSIM(void);
 	// kill() closes any active connection and the socket.  Once killed,
 	// no further output will be sent to the port.
 	virtual	void	kill(void);
+
+	// Send anything remaining in the buffer
+	virtual	void	flushrx(void);
 
 	// The operator() function is called on every tick.  The input is the
 	// the output txuart transmit wire from the device.  The output is to

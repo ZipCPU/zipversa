@@ -42,6 +42,10 @@
 @CLOCK.TOP=i_clk
 @REGDEFS.H.DEFNS=
 #define	CLKFREQHZ @$(CLOCK.FREQUENCY)
+#define	CLKFREQUENCYHZ @$(CLOCK.FREQUENCY)
+@BDEF.DEFN=
+#define	CLKFREQHZ @$(CLOCK.FREQUENCY)
+#define	CLKFREQUENCYHZ @$(CLOCK.FREQUENCY)
 @TOP.DEFNS=
 	// Master clock input and reset
 	wire	s_clk;

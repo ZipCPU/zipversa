@@ -65,20 +65,39 @@
 FPGA	*m_fpga;
 
 void	usage(void) {
+#ifdef	R_ZIPCTRL
 	printf("USAGE: zipload [-hr] <zip-program-file>\n");
 	printf("\n"
+"\tLoads a ZipCPU program into the flash/sdram/blockRAM of the FPGA,\n"
+"\tand then optionally starts the program once loaded.\n"
 "\t-h\tDisplay this usage statement\n"
 "\t-r\tStart the ZipCPU running from the address in the program file\n");
+#else
+	printf("USAGE: zipload [-h] <zip-program-file>\n");
+"\tLoads a PicoRV program into the flash of the FPGA board.  Once done,\n"
+"\tthe PicoRV is automatically started.\n"
+	printf("\n"
+"\t-h\tDisplay this usage statement\n"
+#endif
 }
 
+#ifdef	R_ZIPCTRL
+#define	CPU_CONTROL_REG	R_ZIPCTRL
+#elif	defined(GPIO_CPU_RESET)
+// The PicoRV is reset via the GPIO register
+#define	CPU_CONTROL_REG	R_GPIO
+#endif
+
 int main(int argc, char **argv) {
-#ifndef	R_ZIPCTRL
-	fprintf(stderr, "This design doesn\'t seem to contain a ZipCPU\n");
+#ifndef	CPU_CONTROL_REG
+	fprintf(stderr, "The CPU within this design has no control register\n");
 	return	EXIT_FAILURE;
 #else
-#error "R_ZIPCTRL is still defined"
 	int		skp=0;
-	bool		start_when_finished = false, verbose = false;
+#ifdef	R_ZIPCTRL
+	bool		start_when_finished = false;
+#endif
+	bool		verbose = false;
 	unsigned	entry = 0;
 #ifdef	FLASH_ACCESS
 	FLASHDRVR	*flash = NULL;
@@ -98,9 +117,11 @@ int main(int argc, char **argv) {
 				usage();
 				exit(EXIT_SUCCESS);
 				break;
+#ifdef	R_ZIPCTRL
 			case 'r':
 				start_when_finished = true;
 				break;
+#endif
 			case 'v':
 				verbose = true;
 				break;
@@ -178,7 +199,7 @@ int main(int argc, char **argv) {
 	// Make certain we can talk to the FPGA
 	try {
 		unsigned v  = m_fpga->readio(R_VERSION);
-		if (v < 0x20170000) {
+		if (v < 0x20170910) {
 			fprintf(stderr, "Could not communicate with board (invalid version)\n");
 			exit(EXIT_FAILURE);
 		}
@@ -190,7 +211,11 @@ int main(int argc, char **argv) {
 	// Halt the CPU
 	try {
 		printf("Halting the CPU\n");
+#ifdef	R_ZIPCTRL
 		m_fpga->writeio(R_ZIPCTRL, CPU_HALT|CPU_RESET);
+#else
+		m_fpga->writeio(R_GPIO, GPIO_CPU_RESET | (GPIO_CPU_RESET << 16));
+#endif
 	} catch(BUSERR b) {
 		fprintf(stderr, "Could not halt the CPU (BUSERR)\n");
 		exit(EXIT_FAILURE);
@@ -334,6 +359,7 @@ int main(int argc, char **argv) {
 		if (m_fpga) m_fpga->readio(R_VERSION); // Check for bus errors
 
 		// Now ... how shall we start this CPU?
+#ifdef	R_ZIPCTRL
 		printf("Clearing the CPUs registers\n");
 		for(int i=0; i<32; i++) {
 			m_fpga->writeio(R_ZIPCTRL, CPU_HALT|i);
@@ -354,15 +380,19 @@ int main(int argc, char **argv) {
 			printf("> wbregs cpu 0x0f\n");
 			printf("\n");
 		}
+#else
+	//	m_fpga->writeio(R_GPIO, (1<<GPIO_CPU_RESET));
+#endif
 	} catch(BUSERR a) {
 		fprintf(stderr, "ARTY-BUS error: %08x\n", a.addr);
 		exit(-2);
 	}
 
+#ifdef	R_ZIPCTRL
 	printf("CPU Status is: %08x\n", m_fpga->readio(R_ZIPCTRL));
+#endif
 	if (m_fpga) delete	m_fpga;
 
 	return EXIT_SUCCESS;
-#error "R_ZIPCTRL is now defined at the end"
 #endif
 }

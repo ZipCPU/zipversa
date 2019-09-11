@@ -80,7 +80,7 @@
 	enetctrl #(.CLKBITS(2), .PHYADDR(@$(PHYADDR)))
 		@$(PREFIX)i(i_clk, i_reset, wb_cyc, (wb_stb)&&(@$(PREFIX)_sel), wb_we,
 				wb_addr[4:0], wb_data[15:0],
-			@$(PREFIX)_ack, @$(PREFIX)_stall, @$(PREFIX)_data,
+			@$(PREFIX)_stall, @$(PREFIX)_ack, @$(PREFIX)_data,
 			@$(MDCLK), o_@$(PREFIX), i_@$(PREFIX), o_@$(PREFIX)_we, @$(PREFIX)_debug);
 @MAIN.ALT=
 	assign	@$(MDCLK) = 1'b1;

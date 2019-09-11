@@ -45,7 +45,7 @@
 
 const char	address[] = 
 "\r\n"
-"| ---------------------------------------------------------------------------- |\r\n"
+"+ ---------------------------------------------------------------------------- +\r\n"
 "|                                                                              |\r\n"
 "| Gettysburg Address                                                           |\r\n"
 "| ----------------------                                                       |\r\n"
@@ -74,7 +74,7 @@ const char	address[] =
 "| nation, under God, shall have a new birth of freedom-and that government of  |\r\n"
 "| the people, by the people, for the people, shall not perish from the earth.  |\r\n"
 "|                                                                              |\r\n"
-"|------------------------------------------------------------------------------|\r\n";
+"+------------------------------------------------------------------------------+\r\n";
 
 int	main(int argc, char **argv) {
 	// Print the Gettysburg address out the UART!

@@ -136,6 +136,7 @@ CLOCKS := --freq 50 --pre-pack clocks.py
 $(TEXTCFG): $(JSON) $(CONSTRAINTS) clocks.py
 	$(NEXTPNR) -q --json $(JSON) $(CHIP) --lpf $(CONSTRAINTS) $(CLOCKS) --textcfg $(TEXTCFG) -l $(PNRLOG)
 nextpnr: $(TEXTCFG)
+pnr: $(TEXTCFG)
 
 .PHONY: bin
 $(SVFILE): $(TEXTCFG)

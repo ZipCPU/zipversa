@@ -48,6 +48,12 @@ module wb_picorv32 #(
 	// nor does what little is supported work (properly).
 	localparam [0:0] OPT_ENDIANSWAP = 1'b0;
 
+	reg	r_reset;
+
+	initial	r_reset = 1'b1;
+	always @(posedge i_clk)
+		r_reset <= i_reset;
+
 	// Pico Co-Processor Interface (PCPI)
 	wire       	pcpi_valid;
 	wire	[31:0]	pcpi_insn;
@@ -106,7 +112,7 @@ module wb_picorv32 #(
 		.STACKADDR           (STACKADDR           )
 	) picorv32_core (
 		.clk      (i_clk     ),
-		.resetn   (!i_reset),
+		.resetn   (!r_reset),
 		.trap     (trap  ),
 
 		.mem_valid(mem_valid),
@@ -134,7 +140,7 @@ module wb_picorv32 #(
 	reg	last_valid;
 	initial	last_valid = 0;
 	always @(posedge i_clk)
-	if (i_reset)
+	if (r_reset)
 		last_valid <= 0;
 	else if (mem_valid && !i_wb_ack)
 		last_valid <= 1;
@@ -144,7 +150,7 @@ module wb_picorv32 #(
 	initial	o_wb_cyc = 0;
 	initial	o_wb_stb = 0;
 	always @(posedge i_clk)
-	if (i_reset)
+	if (r_reset)
 	begin
 		o_wb_cyc <= 0;
 		o_wb_stb <= 0;
@@ -216,7 +222,7 @@ module wb_picorv32 #(
 
 	initial	r_irq = 0;
 	always @(posedge i_clk)
-	if (i_reset)
+	if (r_reset)
 		r_irq <= 0;
 	else
 		r_irq <= (r_irq & ~eoi) | pico_irq;

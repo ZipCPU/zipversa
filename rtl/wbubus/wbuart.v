@@ -49,7 +49,7 @@
 module	wbuart(i_clk, i_rst,
 		//
 		i_wb_cyc, i_wb_stb, i_wb_we, i_wb_addr, i_wb_data,
-			o_wb_ack, o_wb_stall, o_wb_data,
+			o_wb_stall, o_wb_ack, o_wb_data,
 		//
 		i_uart_rx, o_uart_tx, i_cts_n, o_rts_n,
 		//

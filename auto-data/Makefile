@@ -48,7 +48,7 @@ all:	data
 # main project files.
 #
 BASE    := global.txt dlyarbiter.txt
-AUX     := version.txt buserr.txt pwrcount.txt wbfft.txt
+AUX     := version.txt buserr.txt pwrcount.txt bustimer.txt wbfft.txt
 IO      := spio.txt gpio.txt
 RTC     := # rtclight.txt # rtcdate.txt
 DBGBUS  := wbuconsole.txt

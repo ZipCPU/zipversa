@@ -132,7 +132,7 @@ module	zipcpu(i_clk, i_reset, i_interrupt,
 		o_wb_gbl_cyc, o_wb_gbl_stb,
 			o_wb_lcl_cyc, o_wb_lcl_stb,
 			o_wb_we, o_wb_addr, o_wb_data, o_wb_sel,
-			i_wb_ack, i_wb_stall, i_wb_data,
+			i_wb_stall, i_wb_ack, i_wb_data,
 			i_wb_err,
 		// Accounting/CPU usage interface
 		o_op_stall, o_pf_stall, o_i_count
@@ -221,7 +221,7 @@ module	zipcpu(i_clk, i_reset, i_interrupt,
 	output	wire	[31:0]	o_wb_data;
 	output	wire	[3:0]	o_wb_sel;
 	// Wishbone interface -- inputs
-	input	wire		i_wb_ack, i_wb_stall;
+	input	wire		i_wb_stall, i_wb_ack;
 	input	wire	[31:0]	i_wb_data;
 	input	wire		i_wb_err;
 	// Accounting outputs ... to help us count stalls and usage
@@ -1673,7 +1673,7 @@ module	zipcpu(i_clk, i_reset, i_interrupt,
 		// Memory access to the arbiter, priority position
 		mem_cyc_gbl, mem_cyc_lcl, mem_stb_gbl, mem_stb_lcl,
 			mem_we, mem_addr, mem_data, mem_sel,
-			mem_ack, mem_stall, mem_err,
+			mem_stall, mem_ack, mem_err,
 		// Prefetch access to the arbiter
 		//
 		// At a first glance, we might want something like:
@@ -1685,11 +1685,11 @@ module	zipcpu(i_clk, i_reset, i_interrupt,
 		// mem_sel) can be shared with the memory in order to ease
 		// timing and LUT usage.
 		pf_cyc,1'b0,pf_stb, 1'b0, pf_we, pf_addr, mem_data, mem_sel,
-			pf_ack, pf_stall, pf_err,
+			pf_stall, pf_ack, pf_err,
 		// Common wires, in and out, of the arbiter
 		o_wb_gbl_cyc, o_wb_lcl_cyc, o_wb_gbl_stb, o_wb_lcl_stb,
 			o_wb_we, o_wb_addr, o_wb_data, o_wb_sel,
-			i_wb_ack, i_wb_stall, i_wb_err
+			i_wb_stall, i_wb_ack, i_wb_err
 		);
 		//}}}
 
@@ -1709,15 +1709,15 @@ module	zipcpu(i_clk, i_reset, i_interrupt,
 		// mem_sel) can be shared with the memory in order to ease
 		// timing and LUT usage.
 		pf_cyc,1'b0,pf_stb, 1'b0, pf_we, pf_addr, mem_data, mem_sel,
-			pf_ack, pf_stall, pf_err,
+			pf_stall, pf_ack, pf_err,
 		// Memory access to the arbiter
 		mem_cyc_gbl, mem_cyc_lcl, mem_stb_gbl, mem_stb_lcl,
 			mem_we, mem_addr, mem_data, mem_sel,
-			mem_ack, mem_stall, mem_err,
+			mem_stall, mem_ack, mem_err,
 		// Common wires, in and out, of the arbiter
 		o_wb_gbl_cyc, o_wb_lcl_cyc, o_wb_gbl_stb, o_wb_lcl_stb,
 			o_wb_we, o_wb_addr, o_wb_data, o_wb_sel,
-			i_wb_ack, i_wb_stall, i_wb_err
+			i_wb_stall, i_wb_ack, i_wb_err
 `ifdef	FORMAL
 		,f_gbl_arb_nreqs, f_gbl_arb_nacks, f_gbl_arb_outstanding,
 		f_lcl_arb_nreqs, f_lcl_arb_nacks, f_lcl_arb_outstanding,

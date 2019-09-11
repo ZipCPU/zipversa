@@ -47,7 +47,7 @@
 @BUS.NAME=cpu
 @BUS.WIDTH=32
 @BUS.CLOCK=clk
-@CPURESET=i_reset
+@CPURESET=i_reset | cpu_reset
 @$RESET_ADDRESS=@$(flash.REGBASE)
 @$STACK_ADDRESS=@$(bkram.REGBASE)+@$(bkram.NADDR)*4
 # @INT.CPU.WIRE=@$(PREFIX)_trap
@@ -80,6 +80,9 @@
 @RTL.MAKE.GROUP=@$(DEVID)
 @RTL.MAKE.SUBD=picorv
 @RTL.MAKE.FILES=picorv32.v wb_picorv32.v
+@REGDEFS.H.INSERT
+#define	RESET_ADDRESS	@$(RESET_ADDRESS)
+#define	LITTLEENDIAN_CPU	1
 @SIM.INCLUDE=
 #include "zipelf.h"
 

@@ -113,6 +113,11 @@ DBLUARTSIM::DBLUARTSIM(const int port, const bool copy_to_stdout)
 	m_cllen = 0;
 }
 
+DBLUARTSIM::~DBLUARTSIM(void) {
+	flushrx();
+	printf("\n");
+}
+
 void	DBLUARTSIM::kill(void) {
 	// Close any active connection
 	if (m_con >= 0)	    {
@@ -284,32 +289,41 @@ void	DBLUARTSIM::poll_read(void) {
 	} m_rxpos = 0;
 }
 
+void	DBLUARTSIM::flushrx(void) {
+	int	snt = 0;
+
+	// Nothing to send
+	if (m_cmdpos == 0)
+		return;
+
+	if (m_cmd >= 0)
+		// Network port
+		snt = send(m_cmd,m_cmdbuf, m_cmdpos, 0);
+	else
+		snt = m_cmdpos;
+	if (snt < 0) {
+		printf("Closing CMD socket\n");
+		close(m_cmd);
+		m_cmd = -1;
+		snt = 0;
+	} // else printf("%d/%d bytes returned\n", snt, m_cmdpos);
+	m_cmdbuf[m_cmdpos] = '\0';
+	if (m_copy) printf("> %s", m_cmdbuf);
+	if (snt < m_cmdpos) {
+		fprintf(stderr, "CMD: Only sent %d bytes of %d!\n",
+			snt, m_cmdpos);
+	}
+	m_cmdpos = 0;
+}
+
 void	DBLUARTSIM::received(const char ch) {
 	if (ch & 0x80) {
 		m_cmdbuf[m_cmdpos++] = ch & 0x7f;
 	} else
 		m_conbuf[m_conpos++] = ch & 0x7f;
 	if ((m_cmdpos>0)&&((m_cmdbuf[m_cmdpos-1] == '\n')
-				||(m_cmdpos >= DBLPIPEBUFLEN-2))) {
-		int	snt = 0;
-		if (m_cmd >= 0)
-			snt = send(m_cmd,m_cmdbuf, m_cmdpos, 0);
-		else
-			snt = m_cmdpos;
-		if (snt < 0) {
-			printf("Closing CMD socket\n");
-			close(m_cmd);
-			m_cmd = -1;
-			snt = 0;
-		} // else printf("%d/%d bytes returned\n", snt, m_cmdpos);
-		m_cmdbuf[m_cmdpos] = '\0';
-		if (m_copy) printf("> %s", m_cmdbuf);
-		if (snt < m_cmdpos) {
-			fprintf(stderr, "CMD: Only sent %d bytes of %d!\n",
-				snt, m_cmdpos);
-		}
-		m_cmdpos = 0;
-	}
+				||(m_cmdpos >= DBLPIPEBUFLEN-2)))
+		flushrx();
 
 	if ((m_con >= 0)&&(m_conpos > 0)) {
 		int	snt = 0;

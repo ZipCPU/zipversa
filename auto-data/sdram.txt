@@ -111,7 +111,7 @@
 	@$(PREFIX)i(i_clk, i_reset,
 		@$(BUSP)_cyc, @$(BUSP)_stb, @$(BUSP)_we, @$(BUSP)_addr[@$(LGNBYTES)-3:0],
 			@$(BUSP)_data, @$(BUSP)_sel,
-		@$(PREFIX)_ack, @$(PREFIX)_stall, @$(PREFIX)_data,
+		@$(PREFIX)_stall, @$(PREFIX)_ack, @$(PREFIX)_data,
 		o_@$(PREFIX)_reset_n, o_@$(PREFIX)_cke, o_@$(PREFIX)_oe,
 		o_@$(PREFIX)_cmd_a, o_@$(PREFIX)_cmd_b,
 		o_@$(PREFIX)_cmd_c, o_@$(PREFIX)_cmd_d,

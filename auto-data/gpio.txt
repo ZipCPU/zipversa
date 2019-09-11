@@ -41,7 +41,7 @@
 @ACCESS=@$(DEVID)_ACCESS
 @SLAVE.TYPE=SINGLE
 @SLAVE.BUS=wb
-@NUMOUTPUT=4
+@$NUMOUTPUT=5
 @NUMINPUT=2
 @INT.GPIO.WIRE=gpio_int
 @INT.GPIO.PIC=@$(SYSPIC)
@@ -82,7 +82,7 @@
 		// GPIO wires
 		// @$(NUMINPUT) Inputs first
 		{ io_@$(PREFIX)_clk_scl, io_@$(PREFIX)_clk_sda },
-		// Then the @$(NUMOUTPUT) outputs
+		// Then the @$(NUMOUTPUT)-1 outputs
 		{ w_@$(PREFIX)_halt_sim, w_@$(PREFIX)_clk_reset,
 			w_@$(PREFIX)_clk_scl, w_@$(PREFIX)_clk_sda }
 @MAIN.PORTLIST=
@@ -92,9 +92,10 @@
 	localparam	NGPI = @$(NUMINPUT), NGPO=@$(NUMOUTPUT);
 	// @$(DEVID) ports
 	input		[(NGPI-1):0]	i_@$(PREFIX);
-	output	wire	[(NGPO-1):0]	o_@$(PREFIX);
+	output	wire	[(NGPO-2):0]	o_@$(PREFIX);
 @MAIN.DEFNS=
 	wire	[NGPO-1:0]	w_@$(PREFIX);
+	wire			cpu_reset;
 @MAIN.INSERT=
 	//
 	// @$(DEVID)
@@ -108,13 +109,11 @@
 		@$(PREFIX)i(i_clk, 1'b1, (wb_stb)&&(@$(PREFIX)_sel), wb_we,
 			wb_data, @$(PREFIX)_data, i_@$(PREFIX), w_@$(PREFIX),
 			@$(PREFIX)_int);
-//`ifdef	INCLUDE_PICORV
-//	assign	o_gpio = { w_gpio[3]|picorv_trap, w_gpio[2:0] };
-// `else
-	assign	o_@$(PREFIX) = w_@$(PREFIX);
-// `endif
+	assign	o_@$(PREFIX) = w_@$(PREFIX)[NGPO-2:0];
+	assign	cpu_reset = w_@$(PREFIX)[NGPO-1];
 @REGS.N=1
 @REGS.0= 0 R_@$(DEVID) @$(DEVID) GPI GPO
+@$CPURESETMASK=1<<((@$(NUMOUTPUT))-1)
 @BDEF.DEFN=
 //
 // @$(DEVID) input wires
@@ -132,8 +131,10 @@
 #define GPIO_ICLK_RESET		4
 #define GPIO_HALT		8
 #define GPIO_SIMHALT		@$(DEVID)_SET(GPIO_HALT)
+#define GPIO_CPU_RESET		@$(CPURESETMASK)
 //
 //
+@REGDEFS.H.DEFNS=@$(BDEF.DEFN)
 @BDEF.IONAME=	_@$(PREFIX)
 @BDEF.IOTYPE=	unsigned
 @BDEF.OSDEF=	_BOARD_HAS_@$(DEVID)
@@ -144,5 +145,5 @@ _@$(PREFIX) = @$(REGBASE);
 @RTL.MAKE.GROUP=@$(DEVID)
 @SIM.CLOCK=clk
 @SIM.TICK=
-	if (m_core->o_gpio & 8)
+	if (m_core->o_gpio & GPIO_HALT)
 		m_done = true;

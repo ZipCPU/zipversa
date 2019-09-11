@@ -65,8 +65,8 @@ module	rtclight(i_clk, i_reset,
 	input	wire	[31:0]	i_wb_data;
 	input	wire	[3:0]	i_wb_sel;
 	//
-	output	reg		o_wb_ack;
 	output	wire		o_wb_stall;
+	output	reg		o_wb_ack;
 	output	reg	[31:0]	o_wb_data;
 	output	wire		o_interrupt, o_ppd;
 

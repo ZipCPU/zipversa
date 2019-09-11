@@ -44,7 +44,7 @@
 //
 module	wbubus(i_clk, i_rx_stb, i_rx_data, 
 		o_wb_cyc, o_wb_stb, o_wb_we, o_wb_addr, o_wb_data,
-		i_wb_ack, i_wb_stall, i_wb_err, i_wb_data,
+		i_wb_stall, i_wb_ack, i_wb_err, i_wb_data,
 		i_interrupt,
 		o_tx_stb, o_tx_data, i_tx_busy);
 	parameter	LGWATCHDOG=19,
@@ -55,7 +55,7 @@ module	wbubus(i_clk, i_rx_stb, i_rx_data,
 	input	wire	[7:0]	i_rx_data;
 	output	wire		o_wb_cyc, o_wb_stb, o_wb_we;
 	output	wire	[31:0]	o_wb_addr, o_wb_data;
-	input	wire		i_wb_ack, i_wb_stall, i_wb_err;
+	input	wire		i_wb_stall, i_wb_ack, i_wb_err;
 	input	wire	[31:0]	i_wb_data;
 	input	wire		i_interrupt;
 	output	wire		o_tx_stb;
@@ -102,7 +102,7 @@ module	wbubus(i_clk, i_rx_stb, i_rx_data,
 	// are pending.
 	wbuexec	runwb(i_clk, r_wdt_reset, fifo_in_stb, fifo_in_word, w_bus_busy,
 		o_wb_cyc, o_wb_stb, o_wb_we, o_wb_addr, o_wb_data,
-		i_wb_ack, i_wb_stall, i_wb_err, i_wb_data,
+		i_wb_stall, i_wb_ack, i_wb_err, i_wb_data,
 		exec_stb, exec_word);
 
 	wire		ofifo_err;

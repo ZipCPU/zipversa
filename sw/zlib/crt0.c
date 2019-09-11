@@ -115,6 +115,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 //
+#include <stdint.h>
 #include "zipcpu.h"
 #include "board.h"		// Our current board support file
 #include "bootloader.h"

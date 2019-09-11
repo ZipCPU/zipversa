@@ -48,7 +48,7 @@ module	wbddrsdram(i_clk, i_reset,
 		i_wb_cyc, i_wb_stb, i_wb_we, i_wb_addr, i_wb_data,
 			i_wb_sel,
 		// Wishbone outputs
-		o_wb_ack, o_wb_stall, o_wb_data,
+		o_wb_stall, o_wb_ack, o_wb_data,
 		// Memory command wires
 		o_ddr_reset_n, o_ddr_cke, // o_ddr_bus_oe,
 		o_ddr_cmd_a, o_ddr_cmd_b, o_ddr_cmd_c, o_ddr_cmd_d,
@@ -120,7 +120,7 @@ module	wbddrsdram(i_clk, i_reset,
 	input	wire	[DW-1:0]	i_wb_data;
 	input	wire	[DW/8-1:0]	i_wb_sel;
 	// Wishbone responses/outputs
-	output	reg			o_wb_ack, o_wb_stall;
+	output	reg			o_wb_stall, o_wb_ack;
 	output	reg	[DW-1:0]	o_wb_data;
 	// DDR memory command wires
 	output	reg		o_ddr_reset_n, o_ddr_cke;

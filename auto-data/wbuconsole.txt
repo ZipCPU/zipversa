@@ -83,7 +83,7 @@
 	// The bus-console depends upon the zip_dbg wires.  If there is no
 	// ZipCPU defining them, we'll need to define them here anyway.
 	//
-	wire		zip_dbg_ack, zip_dbg_stall;
+	wire		zip_dbg_stall, zip_dbg_ack;
 	wire	[31:0]	zip_dbg_data;
 `endif
 @$ZIP_ADDRESS_BIT=@$BUS_ADDRESS_WIDTH-1
@@ -119,7 +119,7 @@
 	wire	[31:0]	wbu_tmp_addr;
 	wbuconsole genbus(@$(CLOCK.WIRE), @$(PREFIX)_rx_stb, @$(PREFIX)_rx_data,
 			wbu_cyc, wbu_stb, wbu_we, wbu_tmp_addr, wbu_data,
-			wbu_ack, wbu_stall, wbu_err, wbu_idata,
+			wbu_stall, wbu_ack, wbu_err, wbu_idata,
 			w_bus_int,
 			@$(PREFIX)_tx_stb, @$(PREFIX)_tx_data, @$(PREFIX)_tx_busy,
 			//
@@ -165,10 +165,10 @@
 @INT.UARTTX.WIRE=uarttx_int
 @INT.UARTRXF.WIRE=uartrxf_int
 @INT.UARTTXF.WIRE=uarttxf_int
-@INT.UARTRX.PIC=
-@INT.UARTTX.PIC=
-@INT.UARTRXF.PIC=@$(SYSPIC)
-@INT.UARTTXF.PIC=@$(SYSPIC)
+## @INT.UARTRX.PIC=
+## @INT.UARTTX.PIC=
+@INT.UARTRXF.PIC=@$(SYSPIC) buspic
+@INT.UARTTXF.PIC=@$(SYSPIC) buspic
 @MAIN.DEFNS=
 	// Console definitions
 	wire	w_console_rx_stb, w_console_tx_stb, w_console_busy;
@@ -177,7 +177,7 @@
 	wbconsole #(.LGFLEN(6)) console(@$(SLAVE.BUS.CLOCK.WIRE), 1'b0,
  			wb_cyc, (wb_stb)&&(@$(PREFIX)_sel), wb_we,
 				wb_addr[1:0], wb_data,
- 			@$(PREFIX)_ack, @$(PREFIX)_stall, @$(PREFIX)_data,
+ 			@$(PREFIX)_stall, @$(PREFIX)_ack, @$(PREFIX)_data,
 			w_console_tx_stb, w_console_tx_data, w_console_busy,
 			w_console_rx_stb, w_console_rx_data,
 			uartrx_int, uarttx_int, uartrxf_int, uarttxf_int);

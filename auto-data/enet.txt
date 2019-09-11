@@ -57,7 +57,7 @@
 			(wb_cyc), (wb_stb)&&(@$(PREFIX)_sel),
 				(wb_we)&&(wb_addr[@$(MEMORY_ADDRESS_WIDTH)-1]),
 				wb_addr[@$(MEMORY_ADDRESS_WIDTH)-2:0], wb_data, wb_sel,
-				@$(PREFIX)_ack, @$(PREFIX)_stall, @$(PREFIX)_data);
+				@$(PREFIX)_stall, @$(PREFIX)_ack, @$(PREFIX)_data);
 
 `else
 
@@ -87,8 +87,8 @@ static volatile unsigned *const @$(BDEF.IONAME)tx = ((unsigned *)(@$[0x%08x](REG
 @$LGBUFSZ=@$(/LGPKTBUFSZB)
 @INT.NETRX.WIRE=@$(PREFIX)rx_int
 @INT.NETTX.WIRE=@$(PREFIX)tx_int
-@INT.NETRX.PIC=@$(SYSPIC)
-@INT.NETTX.PIC=@$(SYSPIC)
+@INT.NETRX.PIC=@$(SYSPIC) buspic
+@INT.NETTX.PIC=@$(SYSPIC) buspic
 @NADDR=8
 @SLAVE.TYPE=OTHER
 @SLAVE.BUS=wb
@@ -159,7 +159,7 @@ static volatile unsigned *const @$(BDEF.IONAME)tx = ((unsigned *)(@$[0x%08x](REG
 		@$(PREFIX)i(i_clk, i_reset,
 			wb_cyc,(wb_stb)&&((@$(PREFIX)_sel)||(@$(NETB)_sel)),
 			wb_we, { (@$(NETB)_sel), wb_addr[@$(MAWB)-2:0] }, wb_data, wb_sel,
-				@$(PREFIX)_ack, @$(PREFIX)_stall, @$(PREFIX)_data,
+				@$(PREFIX)_stall, @$(PREFIX)_ack, @$(PREFIX)_data,
 			o_@$(PREFIX)_reset_n,
 			i_@$(PREFIX)_rx_clk, i_@$(PREFIX)_rx_dv, i_@$(PREFIX)_rx_err, i_@$(PREFIX)_rxd,
 			// For some reason, this 125MHz clock isn't being
@@ -195,7 +195,7 @@ static volatile unsigned *const @$(BDEF.IONAME)tx = ((unsigned *)(@$[0x%08x](REG
 #define	ENET_RXMISS		0x010000
 #define	ENET_RXERR		0x020000
 #define	ENET_RXCRC		0x040000	// Set on a CRC error
-#define	ENET_RXLEN		rxcmd & 0x0ffff
+#define	ENET_RXLEN(CMD)		((CMD) & 0x0ffff)
 #define	ENET_RXCLR		0x004000
 #define	ENET_RXBROADCAST	0x080000
 #define	ENET_RXCLRERR		0x078000
@@ -216,20 +216,20 @@ static volatile unsigned *const @$(BDEF.IONAME)tx = ((unsigned *)(@$[0x%08x](REG
 #define	ENET_RXMISS		0x010000
 #define	ENET_RXERR		0x020000
 #define	ENET_RXCRC		0x040000	// Set on a CRC error
-#define	ENET_RXLEN		rxcmd & 0x0ffff
+#define	ENET_RXLEN(CMD)		((CMD) & 0x0ffff)
 #define	ENET_RXCLR		0x004000
 #define	ENET_RXBROADCAST	0x080000
 #define	ENET_RXCLRERR		0x078000
-#define	ENET_TXBUFLN(NET)	(1<<(NET.txcmd>>24))
-#define	ENET_RXBUFLN(NET)	(1<<(NET.rxcmd>>24))
+#define	ENET_TXBUFLN(NET)	(1<<(NET->n_txcmd>>24))
+#define	ENET_RXBUFLN(NET)	(1<<(NET->n_rxcmd>>24))
 typedef	struct ENETPACKET_S {
 	unsigned	n_rxcmd, n_txcmd;
-	unsigned long	n_mac;
+	uint64_t	n_mac;
 	unsigned	n_rxmiss, n_rxerr, n_rxcrc, n_txcol;
 } ENETPACKET;
 
-#define	SYSINT_ENETRX	SYSINT(@$(INT.NETRX.syspic.ID))
-#define	SYSINT_ENETTX	SYSINT(@$(INT.NETTX.syspic.ID))
+#define	SYSINT_ENETRX	SYSINT(@$(INT.NETRX.picorv.ID))
+#define	SYSINT_ENETTX	SYSINT(@$(INT.NETTX.picorv.ID))
 
 @SIM.CLOCK=clk_125mhz
 @SIM.TICK=

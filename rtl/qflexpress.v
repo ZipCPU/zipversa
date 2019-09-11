@@ -63,7 +63,7 @@
 // 290 raw, 372 w/ pipe, 410 cfg, 499 cfg w/pipe
 module	qflexpress(i_clk, i_reset,
 		i_wb_cyc, i_wb_stb, i_cfg_stb, i_wb_we, i_wb_addr, i_wb_data,
-			o_wb_ack, o_wb_stall, o_wb_data,
+			o_wb_stall, o_wb_ack, o_wb_data,
 		o_qspi_sck, o_qspi_cs_n, o_qspi_mod, o_qspi_dat, i_qspi_dat,
 		o_dbg_trigger, o_debug);
 	//
@@ -169,7 +169,7 @@ module	qflexpress(i_clk, i_reset,
 	input	wire	[(AW-1):0]	i_wb_addr;
 	input	wire	[(DW-1):0]	i_wb_data;
 	//
-	output	reg			o_wb_ack, o_wb_stall;
+	output	reg			o_wb_stall, o_wb_ack;
 	output	reg	[(DW-1):0]	o_wb_data;
 	//
 	output	reg		o_qspi_sck;

@@ -119,7 +119,7 @@
 			(wb_cyc), (wb_stb)&&(@$(PREFIX)_sel),
 			(wb_stb)&&(flashcfg_sel), wb_we,
 			wb_addr[(@$LGFLASHSZ-3):0], wb_data,
-			@$(PREFIX)_ack, @$(PREFIX)_stall, @$(PREFIX)_data,
+			@$(PREFIX)_stall, @$(PREFIX)_ack, @$(PREFIX)_data,
 			o_qspi_sck, o_qspi_cs_n, o_qspi_mod, o_qspi_dat, i_qspi_dat,
 			@$(PREFIX)_dbg_trigger, @$(PREFIX)_debug);
 @MAIN.ALT=
