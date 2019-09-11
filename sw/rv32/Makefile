@@ -37,7 +37,7 @@
 ##
 ##
 .PHONY: all
-PROGRAMS := gettysburg job
+PROGRAMS := gettysburg job pingtest
 all:	$(PROGRAMS)
 #
 #
@@ -53,7 +53,9 @@ SUBMAKE:= $(MAKE) --no-print-directory -C
 BAREMETAL:= -ffreestanding -nostdlib
 #
 #
-SOURCES := gettysburg.c txfns.c
+NETPROTO:= pkt.c ethproto.c arp.c ipproto.c ipcksum.c icmp.c udpproto.c
+NETLIB  := $(addprefix $(OBJDIR)/,$(subst .c,.o,$(NETPROTO)))
+SOURCES := gettysburg.c txfns.c pingtest.c $(NETPROTO)
 HEADERS := $(foreach hdr,$(subst .c,.o,$(SOURCES)),$(wildcard $(hdr))) board.h
 INCS    := -I../../rtl -I.
 LFLAGS  := -T board.ld
@@ -102,9 +104,9 @@ gettysburg: $(OBJDIR)/gettysburg.o $(OBJDIR)/txfns.o $(OBJDIR)/crt0.o board.ld
 job: $(OBJDIR)/job.o $(RVLIB)
 	$(CC) $(CFLAGS) $(LFLAGS) $(RVLIB) $(OBJDIR)/job.o -o $@
 
-simple_ping: $(OBJDIR)/simple_ping.o
-simple_ping: $(OBJDIR)/arp.o $(OBJDIR)/ipcksum.o
-	$(CC) -Wl,-Map=simple_ping.map $(CFLAGS) $(LFLAGS) $^ -o $@
+pingtest: $(OBJDIR)/pingtest.o
+pingtest: $(NETLIB)
+	$(CC) $(CFLAGS) $(LFLAGS) $(RVLIB) -Wl,-Map=$(OBJDIR)/pingtest.map $^ -o $@
 
 define	mk-objdir
 	@bash -c "if [ ! -e $(OBJDIR) ]; then mkdir -p $(OBJDIR)/; fi"
