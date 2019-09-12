@@ -137,7 +137,7 @@
 //
 module	enetpackets(i_wb_clk, i_reset,
 	i_wb_cyc, i_wb_stb, i_wb_we, i_wb_addr, i_wb_data, i_wb_sel,
-		o_wb_ack, o_wb_stall, o_wb_data,
+		o_wb_stall, o_wb_ack, o_wb_data,
 	//
 	o_net_reset_n, 
 	i_net_rx_clk, i_net_rx_dv, i_net_rx_err, i_net_rxd,
