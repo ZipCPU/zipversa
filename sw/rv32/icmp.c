@@ -106,6 +106,8 @@ void	icmp_reply(unsigned ipaddr, NET_PACKET *icmp_request) {
 
 NET_PACKET *new_icmp(unsigned ln) {
 	NET_PACKET	*pkt = new_ippkt(ln);
+	printf("ICMP:   ln =%3d, p_user = &p_raw[%3d]\n",
+		ln, pkt->p_user - pkt->p_raw);
 	return	pkt;
 }
 

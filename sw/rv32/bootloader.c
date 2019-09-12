@@ -97,7 +97,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 //
-// #include <stdint.h>
+#include <stdint.h>
 #include "board.h"		// Our current board support file
 #include "bootloader.h"
 // #include "txfns.h"

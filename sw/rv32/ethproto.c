@@ -57,6 +57,9 @@ NET_PACKET	*new_ethpkt(unsigned ln) {
 	NET_PACKET	*pkt;
 
 	pkt = new_pkt(ln+10);
+	printf("ETHPKT: ln = %2d, p_user = &p_raw[%3d]\n",
+		pkt->p_length, pkt->p_user - pkt->p_raw);
+		
 	pkt->p_length -= 10;
 	pkt->p_user += 8;
 	return pkt;

@@ -69,11 +69,19 @@ int	main(int argc, char **argv) {
 	*_buspic = CLEARPIC;
 	*_buspic = DISABLEINTS;
 
+	// Clear the network reset
+	_net1->n_txcmd = 0;
+
 	*_systimer = REPEATING_TIMER | (CLKFREQUENCYHZ / 10); // 10Hz interrupt
 
 	waiting_pkt = NULL;
 
-	printf("Starting up\n");
+	printf("\n\n\n"
+"+-----------------------------------------+\n"
+"+----       Starting Ping test        ----+\n"
+// "+----123456789               987654321----+\n"
+"+-----------------------------------------+\n"
+"\n\n\n");
 
 	// We can still use the interrupt controller, we'll just need to poll it
 	while(1) {
@@ -91,8 +99,8 @@ int	main(int argc, char **argv) {
 				lastping = now;
 			}
 
-			if ((now - lasthello) > 1200)
-				printf("Hello, World!\n");
+			if ((now - lasthello) > 3000)
+				printf("Hello, World! 0x%08x\n", *_pwrcount);
 
 			*_buspic = BUSPIC_TIMER;
 		}
@@ -105,9 +113,11 @@ int	main(int argc, char **argv) {
 
 			switch(ethpkt_ethtype(rcvd)) {
 			case ETHERTYPE_ARP:
+				printf("RXPKT - ARP\n");
 				rx_arp(rcvd);
 				break;
 			case ETHERTYPE_IP:
+				printf("RXPKT - IP\n");
 				rx_ethpkt(rcvd);
 				ipsrc = ippkt_src(rcvd);
 				ipdst = ippkt_dst(rcvd);
@@ -148,6 +158,7 @@ int	main(int argc, char **argv) {
 
 void	tx_busy(NET_PACKET *txpkt) {
 	if (waiting_pkt == NULL) {
+		// printf("TX-BUSY\n");
 		waiting_pkt = txpkt;
 	}
 }

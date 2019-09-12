@@ -48,6 +48,8 @@
 #include "arp.h"
 #include "etcnet.h"
 
+#include "board.h"
+
 uint32_t	my_ip_addr = DEFAULTIP,
 		my_ip_mask = LCLNETMASK;
 unsigned	ip_pktid = (unsigned)(BIG_PRIME * 241ll);
@@ -60,8 +62,11 @@ NET_PACKET *new_ippkt(unsigned ln) {
 	NET_PACKET	*pkt;
 
 	pkt = new_ethpkt(ln+20);
+	printf("IPPKT:  ln =%3d, p_user = &p_raw[%3d]\n",
+		pkt->p_length, pkt->p_user - pkt->p_raw);
 	pkt->p_length -= 20;
 	pkt->p_user += 20;
+	return pkt;
 }
 
 void	ip_set(NET_PACKET *pkt, unsigned subproto, unsigned src,
@@ -106,9 +111,14 @@ void	ip_set(NET_PACKET *pkt, unsigned subproto, unsigned src,
 
 void	tx_ippkt(NET_PACKET *pkt, unsigned subproto, unsigned src,
 		unsigned dest) {
-	if (pkt->p_user - pkt->p_raw <= 20+12) {
+	if (pkt->p_user - pkt->p_raw < 20+8) {
 		printf("ERR: IPPKT doesn't have enough room for its headers\n");
+		printf("ERR: p_user = &p_raw[%d]\n",
+			pkt->p_user - pkt->p_raw);
+		dump_ippkt(pkt);
 		free_pkt(pkt);
+
+		*_gpio = 0x0100010;
 		return;
 	}
 
@@ -116,9 +126,17 @@ void	tx_ippkt(NET_PACKET *pkt, unsigned subproto, unsigned src,
 	pkt->p_length += ip_headersize();
 	ip_set(pkt, subproto, src, dest);
 
+	printf("ARP-LOOKUP\n");
+
 	ETHERNET_MAC	mac;
-	if (arp_lookup(dest, &mac) == 0)
+	if (arp_lookup(dest, &mac) == 0) {
+		printf("ARP-LOOKUP SUCCESS: %02x:%02x:%02x:%02x:%02x:%02x\n",
+			((int)((mac>>40)&0x0ff)), ((int)((mac>>32)&0x0ff)),
+			((int)((mac>>28)&0x0ff)), ((int)((mac>>16)&0x0ff)),
+			((int)((mac>> 8)&0x0ff)), ((int)((mac    )&0x0ff)));
 		return tx_ethpkt(pkt, ETHERTYPE_IP, mac);
+	} else
+		free_pkt(pkt);
 	// return 1;
 }
 

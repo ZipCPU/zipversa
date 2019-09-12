@@ -87,7 +87,7 @@ static const char arp_packet[] = {
 		0x06, 0x04, 0x00, 0x01,	// Addr length(s x2), Operation (Req)
 		0, 0, 0, 0, 0, 0, 0, 0, 
 		0, 0, 0, 0, 0, 0, 0, 0, 
-		0, 0, 0, 0, 0, 0, 0, 0 };
+		0, 0, 0, 0 };
 
 
 void	init_arp_table(void) {
@@ -118,10 +118,20 @@ NET_PACKET *new_arp(void) {
 
 void	send_arp_request(int ipaddr) {
 	NET_PACKET *pkt;
+printf("Building ARP request\n");
 	pkt = new_arp();
+printf("Packet at 0x%08x, p_user = 0x%08x, p_raw = 0x%08x\n",
+	(unsigned)pkt,
+	(unsigned)pkt->p_user,
+	(unsigned)pkt->p_raw);
 
+if (pkt->p_length != sizeof(arp_packet)) {
+	printf("ERR: ARM-PACKET SIZE =%3d, new packet size of %3d\n",
+		(unsigned)sizeof(arp_packet), pkt->p_length);
+}
 	memcpy(pkt->p_user, arp_packet, sizeof(arp_packet));
 
+printf("Setting ARP packet\n");
 	pkt->p_user[ 7] = ARP_REQUEST;
 
 	// Initial ETHERTYPE_ARP is in the arp_packet array
@@ -154,8 +164,10 @@ void	send_arp_request(int ipaddr) {
 	pkt->p_user[26] = (ipaddr >>  8)&0x0ff;
 	pkt->p_user[27] = (ipaddr      )&0x0ff;
 
+printf("Calling tx_ethpkt()\n");
 	arp_requests_sent++;
 	ETHERNET_MAC broadcast = 0x0fffffffffffful;
+	printf("Requesting ARP packet\n");
 	tx_ethpkt(pkt, ETHERTYPE_ARP, broadcast);
 }
 
@@ -165,6 +177,7 @@ int	arp_lookup(unsigned ipaddr, ETHERNET_MAC *mac) {
 	if (((((ipaddr ^ my_ip_addr) & my_ip_mask) != 0)
 		|| (ipaddr == my_ip_router))
 			&&(router_mac_addr)) {
+printf("MAC ADDR is that of the router\n");
 		*mac = router_mac_addr;
 		return 0;
 	}
@@ -184,6 +197,8 @@ int	arp_lookup(unsigned ipaddr, ETHERNET_MAC *mac) {
 				arp_table[eid].age++;
 		}
 	}
+
+printf("NO MAC FOUND, SENDING ARP REQUEST\n");
 
 	send_arp_request(ipaddr);
 	return 1;

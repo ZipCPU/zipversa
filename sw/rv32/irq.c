@@ -93,6 +93,9 @@ uint32_t *irq(uint32_t *regs, uint32_t irqs)
 			if (r == 0) {
 				txstr("pc  ");
 			} else
+			if (r == 2) {
+				txstr("sp  ");
+			} else
 			if (r < 10) {
 				txchr('x');
 				txchr('0' + r);
@@ -123,6 +126,9 @@ uint32_t *irq(uint32_t *regs, uint32_t irqs)
 
 		txstr("------------------------------------------------------------\n");
 
+		{ extern int *heap;
+		txstr("Heap pointer: 0x"); txhex((unsigned)heap); txstr("\n");
+		}
 		txstr("Number of fast external IRQs counted: ");
 		txdecimal(ext_irq_4_count);
 		txstr("\n");

@@ -355,7 +355,7 @@ void *
 _sbrk_r(struct _reent *reent, int sz) {
 	int	*prev = heap;
 
-	heap += sz;
+	heap += (sz + sizeof(int)-1)/sizeof(int);
 	return	prev;
 }
 
