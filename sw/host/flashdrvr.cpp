@@ -93,6 +93,7 @@ const	bool	HIGH_SPEED = false;
 
 FLASHDRVR::FLASHDRVR(DEVBUS *fpga) : m_fpga(fpga),
 		m_debug(false), m_id(FLASH_UNKNOWN) {
+	m_debug = true;
 }
 
 unsigned FLASHDRVR::flashid(void) {
@@ -417,18 +418,45 @@ bool	FLASHDRVR::write(const unsigned addr, const unsigned len,
 			base = (addr>s)?addr:s;
 			ln=((addr+len>s+SECTORSZB)?(s+SECTORSZB):(addr+len))-base;
 			m_fpga->readi(base, ln>>2, (uint32_t *)sbuf);
+#ifndef	LITTLEENDIAN_CPU
 			byteswapbuf(ln>>2, (uint32_t *)sbuf);
+#warning "Byte-swapping flash data"
+#endif
 
 			dp = &data[base-addr];
 			SETSCOPE;
 			for(unsigned i=0; i<ln; i++) {
-				if ((sbuf[i]&dp[i]) != dp[i]) {
+				if (((sbuf[i]&dp[i])&0x0ff) != (dp[i]&0x0ff)) {
 					if (m_debug) {
-						printf("\nNEED-ERASE @0x%08x ... %08x != %08x (Goal)\n", 
-							i+base-addr, sbuf[i], dp[i]);
+						printf("\nNEED-ERASE @0x%08x ... %02x != %02x (Goal)\n", 
+							i+base-addr, (sbuf[i]&0x0ff), (dp[i]&0x0ff));
 					}
 					need_erase = true;
 					newv = (i&-4)+base;
+printf("Data word: %02x:%02x:%02x:%02x != %02x:%02x:%02x:%02x\n",
+sbuf[newv-base]&0x0ff,
+sbuf[newv-base+1]&0x0ff,
+sbuf[newv-base+2]&0x0ff,
+sbuf[newv-base+3]&0x0ff,
+dp[newv-base]&0x0ff,
+dp[newv-base+1]&0x0ff,
+dp[newv-base+2]&0x0ff,
+dp[newv-base+3]&0x0ff);
+printf("Data word[-4]: %02x:%02x:%02x:%02x != %02x:%02x:%02x:%02x\n",
+sbuf[newv-base-4]&0x0ff, sbuf[newv-base-3]&0x0ff,
+sbuf[newv-base-2]&0x0ff, sbuf[newv-base-1]&0x0ff,
+dp[newv-base-4]&0x0ff, dp[newv-base-3]&0x0ff,
+dp[newv-base-2]&0x0ff, dp[newv-base-1]&0x0ff);
+printf("Data word[-8]: %02x:%02x:%02x:%02x != %02x:%02x:%02x:%02x\n",
+sbuf[newv-base-8]&0x0ff, sbuf[newv-base-7]&0x0ff,
+sbuf[newv-base-6]&0x0ff, sbuf[newv-base-5]&0x0ff,
+dp[newv-base-8]&0x0ff, dp[newv-base-7]&0x0ff,
+dp[newv-base-6]&0x0ff, dp[newv-base-5]&0x0ff);
+printf("Data word[ 4]: %02x:%02x:%02x:%02x != %02x:%02x:%02x:%02x\n",
+sbuf[newv-base+4]&0x0ff, sbuf[newv-base+5]&0x0ff,
+sbuf[newv-base+6]&0x0ff, sbuf[newv-base+7]&0x0ff,
+dp[newv-base+4]&0x0ff, dp[newv-base+5]&0x0ff,
+dp[newv-base+6]&0x0ff, dp[newv-base+7]&0x0ff);
 					break;
 				} else if ((sbuf[i] != dp[i])&&(newv == 0))
 					newv = (i&-4)+base;
