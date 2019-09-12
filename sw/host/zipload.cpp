@@ -74,10 +74,10 @@ void	usage(void) {
 "\t-r\tStart the ZipCPU running from the address in the program file\n");
 #else
 	printf("USAGE: zipload [-h] <zip-program-file>\n");
+	printf("\n"
 "\tLoads a PicoRV program into the flash of the FPGA board.  Once done,\n"
 "\tthe PicoRV is automatically started.\n"
-	printf("\n"
-"\t-h\tDisplay this usage statement\n"
+"\t-h\tDisplay this usage statement\n");
 #endif
 }
 
@@ -381,7 +381,7 @@ int main(int argc, char **argv) {
 			printf("\n");
 		}
 #else
-	//	m_fpga->writeio(R_GPIO, (1<<GPIO_CPU_RESET));
+		m_fpga->writeio(R_GPIO, (GPIO_CPU_RESET << 16));
 #endif
 	} catch(BUSERR a) {
 		fprintf(stderr, "ARTY-BUS error: %08x\n", a.addr);
