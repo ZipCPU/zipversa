@@ -93,6 +93,7 @@ const	bool	HIGH_SPEED = false;
 
 FLASHDRVR::FLASHDRVR(DEVBUS *fpga) : m_fpga(fpga),
 		m_debug(false), m_id(FLASH_UNKNOWN) {
+	m_debug = true;
 }
 
 unsigned FLASHDRVR::flashid(void) {
