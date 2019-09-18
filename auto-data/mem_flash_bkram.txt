@@ -43,12 +43,14 @@
 @MASTER.TYPE=CPU
 @MASTER.BUS=@$(CPUBUS)
 @LD.FILE=board.ld
+@$ENDOFHEAP=@$(bkram.REGBASE)+3*@$(bkram.NADDR);
 @LD.DEFNS=
 /* LD.DEFNS from zipmaster.txt */
 _kram  = 0; /* No high-speed kernel RAM */
 _ram   = ORIGIN(bkram);
 _rom   = ORIGIN(flash);
 _top_of_stack = ORIGIN(bkram) + LENGTH(bkram);
+_end_of_heap = @$[0x%08x](ENDOFHEAP);
 
 @LD.ENTRY=@$(cpu.STARTSYM)
 @LD.SCRIPT=

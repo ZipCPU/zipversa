@@ -46,6 +46,7 @@
 #include <reent.h>
 #include <stdio.h>
 #include "board.h"
+#include "txfns.h"
 
 #ifdef	_BOARD_HAS_BUSCONSOLE
 #define	_ZIP_HAS_WBUART
@@ -349,12 +350,21 @@ _wait(int *status) {
 }
 
 extern int _top_of_heap[1];
+extern int _end_of_heap[1];
 int	*heap = (int *)_top_of_heap;
 
 void *
 _sbrk_r(struct _reent *reent, int sz) {
 	int	*prev = heap;
 
+txstr("SBRK: Allocating "); txdecimal(sz); txstr(" bytes\n");
+txstr("SBRK: Previous heap: "); txhex((unsigned)heap); txstr("\n");
+txstr("SBRK: Already allocated: "); txhex(sizeof(int)*(heap-_top_of_heap)); txstr(" bytes\n");
+	if ((NULL != _end_of_heap)
+			&& (heap + ((sz+sizeof(int)-1)/sizeof(int)) > _end_of_heap)) {
+		txstr("SBRK: OUT-OF-MEMORY!!\n");
+		return 	NULL;
+	}
 	heap += (sz + sizeof(int)-1)/sizeof(int);
 	return	prev;
 }

@@ -62,8 +62,6 @@ NET_PACKET *new_ippkt(unsigned ln) {
 	NET_PACKET	*pkt;
 
 	pkt = new_ethpkt(ln+20);
-	printf("IPPKT:  ln =%3d, p_user = &p_raw[%3d]\n",
-		pkt->p_length, pkt->p_user - pkt->p_raw);
 	pkt->p_length -= 20;
 	pkt->p_user += 20;
 	return pkt;
@@ -126,17 +124,25 @@ void	tx_ippkt(NET_PACKET *pkt, unsigned subproto, unsigned src,
 	pkt->p_length += ip_headersize();
 	ip_set(pkt, subproto, src, dest);
 
-	printf("ARP-LOOKUP\n");
-
 	ETHERNET_MAC	mac;
 	if (arp_lookup(dest, &mac) == 0) {
-		printf("ARP-LOOKUP SUCCESS: %02x:%02x:%02x:%02x:%02x:%02x\n",
+		/*
+		printf("ARP-LOOKUP SUCCESS: %3d.%3d.%3d.%3d is at %02x:%02x:%02x:%02x:%02x:%02x\n",
+			((dest>>24)&0x0ff), ((dest>>16)&0x0ff),
+			((dest>> 8)&0x0ff), ((dest    )&0x0ff),
+			//
 			((int)((mac>>40)&0x0ff)), ((int)((mac>>32)&0x0ff)),
 			((int)((mac>>28)&0x0ff)), ((int)((mac>>16)&0x0ff)),
 			((int)((mac>> 8)&0x0ff)), ((int)((mac    )&0x0ff)));
+		*/
 		return tx_ethpkt(pkt, ETHERTYPE_IP, mac);
-	} else
+	} else {
+		printf("ARP-LOOKUP failed: Could not find IP address for %3d.%3d.%3d.%3d\n",
+			((dest>>24)&0x0ff), ((dest>>16)&0x0ff),
+			((dest>> 8)&0x0ff), ((dest    )&0x0ff));
+
 		free_pkt(pkt);
+	}
 	// return 1;
 }
 
@@ -175,21 +181,38 @@ unsigned	ippkt_subproto(NET_PACKET *pkt) {
 }
 
 void	dump_ippkt(NET_PACKET *pkt) {
-	unsigned	ihl = (pkt->p_user[0] & 0x0f)*5, proto, cksum, calcsum;
+	unsigned	ihl = (pkt->p_user[0] & 0x0f)*4, proto, cksum, calcsum;
 
 	printf("IP VERSION: %d\n", (pkt->p_user[0] >> 4) & 0x0f);
 	printf("IP HDRLEN : %d bytes\n", ihl);
+	if (pkt->p_user[0] != 0x45) {
+		printf("IP -- SOMETHING\'S WRONG HERE ******\n");
+		for(unsigned k=pkt->p_user - pkt->p_raw; k<pkt->p_rawlen; k++) {
+			printf("%02x ", pkt->p_raw[k]&0x0ff);
+			if ((k & 7)==7)
+				printf("\n    ");
+		}
+		printf("\n\nDumping the raw packet now:\n    ");
+		for(unsigned k=0; k<pkt->p_rawlen; k++) {
+			printf("%02x ", pkt->p_raw[k]&0x0ff);
+			if ((k & 7)==7)
+				printf("\n    ");
+		} printf("\n");
+		for(;;) ;
+	}
+
 	unsigned pktln = ((pkt->p_user[2]&0x0ff)<< 8)
 		| (pkt->p_user[3] & 0x0ff);
 	printf("IP PKTLEN : %d", pktln);
 	if (pktln > pkt->p_length) {
 		printf(" --- LONGER THAN BUFFER!\n");
 		return;
-	} else if (pktln <= pkt->p_length)
+	} else if (pktln < pkt->p_length)
 		printf(" --- Smaller than buffer\n");
+	else
+		printf("\n");
 
-	printf("IP PKTLEN : %d", pktln);
-	printf("IP PKTTTL : %d", pkt->p_user[8] & 0x0ff);
+	printf("IP PKTTTL : %d\n", pkt->p_user[8] & 0x0ff);
 	proto = pkt->p_user[9] & 0x0ff;
 	printf("IP PROTO  : %d", pkt->p_user[9] & 0x0ff);
 	if (proto == IPPROTO_UDP)
@@ -199,11 +222,15 @@ void	dump_ippkt(NET_PACKET *pkt) {
 	else if (proto == IPPROTO_ICMP)
 		printf(" (ICMP)\n");
 	else
-		printf("\n");
+		printf(" (unknown)\n");
 	cksum = ((pkt->p_user[10] & 0x0ff) << 8)
 			| (pkt->p_user[11] & 0x0ff);
-	calcsum = ipcksum(ihl*4, pkt->p_user);
+	pkt->p_user[10] = 0;
+	pkt->p_user[11] = 0;
+	calcsum = ipcksum(ihl, pkt->p_user);
 	printf("IP CKSUM  : 0x%02x", cksum);
+	pkt->p_user[10] = (cksum >> 8)&0x0ff;
+	pkt->p_user[11] = (cksum     )&0x0ff;
 	if (cksum != calcsum)
 		printf(" -- NO-MATCH against %04x\n", calcsum);
 	else

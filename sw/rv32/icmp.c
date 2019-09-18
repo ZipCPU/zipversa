@@ -106,8 +106,6 @@ void	icmp_reply(unsigned ipaddr, NET_PACKET *icmp_request) {
 
 NET_PACKET *new_icmp(unsigned ln) {
 	NET_PACKET	*pkt = new_ippkt(ln);
-	printf("ICMP:   ln =%3d, p_user = &p_raw[%3d]\n",
-		ln, pkt->p_user - pkt->p_raw);
 	return	pkt;
 }
 
@@ -149,7 +147,6 @@ void	dump_icmp(NET_PACKET *pkt) {
 	unsigned 	cksum, pktsum;
 
 	printf("ICMP TYPE : 0x%02x", pkt->p_user[0] & 0x0ff);
-	printf("ICMP CODE : 0x%02x", pkt->p_user[1] & 0x0ff);
 	if (pkt->p_user[0] == ICMP_PING)
 		printf(" Ping request\n");
 	else if (pkt->p_user[0] == ICMP_ECHOREPLY)
@@ -157,9 +154,22 @@ void	dump_icmp(NET_PACKET *pkt) {
 	else
 		printf(" (Unknown ICMP)\n");
 
+	printf("ICMP CODE : 0x%02x", pkt->p_user[1] & 0x0ff);
+	if ((pkt->p_user[1] != 0)
+		&&((pkt->p_user[0] == ICMP_PING)
+			||((pkt->p_user[0] == ICMP_ECHOREPLY)))) {
+		printf(" -- Unexpected code\n");
+	} else
+		printf("\n");
+
+
 	pktsum = ((pkt->p_user[2] & 0x0ff) << 8)
 			| (pkt->p_user[3] & 0x0ff);
+	pkt->p_user[2] = 0;
+	pkt->p_user[3] = 0;
 	cksum = ipcksum(pkt->p_length, pkt->p_user);
+	pkt->p_user[2] = (pktsum >> 8) & 0x0ff;
+	pkt->p_user[3] = (pktsum     ) & 0x0ff;
 	printf("ICMP CKSUM: 0x%02x", pktsum);
 	if (cksum != pktsum)
 		printf(" -- NO-MATCH against %04x\n", cksum);

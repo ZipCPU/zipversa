@@ -55,7 +55,7 @@
 // First, the default MAC --- this is the MAC of the Versa board.  It was
 // generated using /dev/rand, and should probably be changed to something
 // else on your configuration.
-#define	DEFAULTMAC	0xa15345b6fb5eul
+#define	DEFAULTMAC	0xa25345b6fb5eul
 
 // Now, for the IP setup defaults
 //

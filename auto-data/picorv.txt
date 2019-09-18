@@ -61,6 +61,9 @@
 @MAIN.DEFNS=
 	wire		@$(TRAP);
 	wire	[29:0]	@$(BUSN)_addr_wide;
+	wire	[31:0]	@$(PREFIX)_buserr_insn,
+			@$(PREFIX)_buserr_addr,
+			@$(PREFIX)_active_irq;
 @MAIN.INSERT=
 	wb_picorv32 #(.PROGADDR_RESET(@$(RESET_ADDRESS)),
 			.PROGADDR_IRQ(@$(RESET_ADDRESS)+16),
@@ -71,7 +74,10 @@
 				@$(BUSN)_addr_wide, @$(BUSN)_data, @$(BUSN)_sel,
 			@$(BUSN)_stall, @$(BUSN)_ack, @$(BUSN)_idata,
 			@$(BUSN)_err,
-			@$(PREFIX)_int_vec);
+			@$(PREFIX)_int_vec,
+			@$(PREFIX)_buserr_insn,
+			@$(PREFIX)_buserr_addr,
+			@$(PREFIX)_active_irq);
 
 	assign	@$(BUSN)_addr = @$(BUSN)_addr_wide[@$(MASTER.BUS.AWID)-1:0];
 @ACCESS=@$(DEVID)_ACCESS
@@ -125,7 +131,44 @@
 @PREFIX=cpu_define
 @ACCESS=INCLUDE_CPU
 @DEPENDS=INCLUDE_PICORV
-#
+##
 @PREFIX=cpu
 @$RESET_ADDRESS=@$(picorv.RESET_ADDRESS)
 @STARTSYM=_rvboot
+##
+@PREFIX=cpu_buserr_addr
+@ACCESS=INCLUDE_CPU_BUSERR_ADDR
+@DEPENDS=INCLUDE_PICORV
+@SLAVE.TYPE=SINGLE
+@SLAVE.BUS=wb
+@CPUPREFIX=picorv
+@NADDR=1
+@MAIN.INSERT=
+	assign	@$(PREFIX)_data = picorv_buserr_addr;
+@REGS.N=1
+@REGS.0=0 R_BUSERR_ADDR	CPUBUSERR
+##
+@PREFIX=cpu_buserr_insn
+@ACCESS=INCLUDE_CPU_BUSERR_INSN
+@DEPENDS=INCLUDE_PICORV
+@SLAVE.TYPE=SINGLE
+@SLAVE.BUS=wb
+@CPUPREFIX=picorv
+@NADDR=1
+@MAIN.INSERT=
+	assign	@$(PREFIX)_data = picorv_buserr_insn;
+@REGS.N=1
+@REGS.0=0 R_BUSERR_PC	CPUBUSERRPC
+##
+##
+@PREFIX=cpu_active_irq
+@ACCESS=INCLUDE_CPU_ACTIVE_IRQ
+@DEPENDS=INCLUDE_PICORV
+@SLAVE.TYPE=SINGLE
+@SLAVE.BUS=wb
+@CPUPREFIX=picorv
+@NADDR=1
+@MAIN.INSERT=
+	assign	@$(PREFIX)_data = @$(CPUPREFIX)_active_irq;
+@REGS.N=1
+@REGS.0=0 R_ACTIVEIRQ	CPUACTIVEIRQ

@@ -40,6 +40,7 @@
 #include <stdint.h>
 #include "board.h"
 #include "pkt.h"
+#include "txfns.h"
 #include "ethproto.h"
 
 #ifndef	NULL
@@ -51,17 +52,27 @@ extern	void	tx_busy(NET_PACKET *);
 NET_PACKET	*rx_pkt(void) {
 #ifdef	NET1_ACCESS
 	if (_net1->n_rxcmd & ENET_RXAVAIL) {
-		NET_PACKET	*pkt = malloc(sizeof(pkt)
-			+ (ENET_RXLEN(_net1->n_rxcmd))+2);
+		unsigned	rxv;
+
+		rxv = _net1->n_rxcmd;
+		unsigned pktlen = ENET_RXLEN(rxv);
+
+		if ((rxv & ENET_RXCLRERR)||(pktlen > 2047)) {
+			_net1->n_rxcmd = ENET_RXCLRERR | ENET_RXCLR;
+			return NULL;
+		}
+
+		NET_PACKET	*pkt = malloc(sizeof(NET_PACKET)
+			+ pktlen +2);
 
 		pkt->p_usage_count = 1;
-		pkt->p_rawlen = (ENET_RXLEN(_net1->n_rxcmd))+2;
-		pkt->p_length = pkt->p_rawlen-2;
-		pkt->p_raw  = &pkt->p_raw[0];
+		pkt->p_rawlen = (ENET_RXLEN(_net1->n_rxcmd));
+		pkt->p_length = pkt->p_rawlen;
+		pkt->p_raw  = ((char *)pkt) + sizeof(NET_PACKET);
 		pkt->p_user = &pkt->p_raw[0];
-		memcpy(pkt->p_raw, (char *)_netbrx, pkt->p_rawlen);
+		memcpy(pkt->p_raw, (char *)_netbrx, pkt->p_rawlen+2);
 
-		_net1->n_rxcmd = ENET_RXCLRERR;
+		_net1->n_rxcmd = ENET_RXCLRERR | ENET_RXCLR;
 
 		return pkt;
 	}
@@ -82,9 +93,13 @@ void	tx_pkt(NET_PACKET *pkt) {
 	if (_net1->n_txcmd & ENET_TXBUSY)
 		tx_busy(pkt);
 	else {
+		unsigned	txcmd;
+
 		memcpy((char *)_netbtx, pkt->p_user, pkt->p_length);
-		_net1->n_txcmd = ENET_TXGO | pkt->p_length;
-		dump_ethpkt(pkt);
+		txcmd = ENET_TXGO | pkt->p_length;
+		txcmd |= ENET_NOHWIPCHK;
+		_net1->n_txcmd = txcmd;
+		// dump_ethpkt(pkt);
 		free_pkt(pkt);
 	}
 #else
@@ -96,9 +111,9 @@ NET_PACKET	*new_pkt(unsigned msglen) {
 	NET_PACKET	*pkt;
 	unsigned	pktlen;
 
-	pkt = (NET_PACKET *)malloc(sizeof(NET_PACKET) + sizeof(msglen));
+	pkt = (NET_PACKET *)malloc(sizeof(NET_PACKET) + msglen);
 	pkt->p_usage_count = 1;
-	pkt->p_raw = (char *)&pkt->p_raw;
+	pkt->p_raw  = ((char *)pkt) + sizeof(NET_PACKET);
 	pkt->p_user= pkt->p_raw;
 	pkt->p_rawlen = msglen;
 	pkt->p_length = pkt->p_rawlen;
@@ -113,4 +128,37 @@ void	free_pkt(NET_PACKET *pkt) {
 		pkt->p_usage_count --;
 	if (pkt->p_usage_count == 0)
 		free(pkt);
+}
+
+#include <stdio.h>
+
+void	dump_raw(NET_PACKET *pkt) {
+	unsigned	posn = 0;
+
+	printf("RAW-PACKET DUMP -----\n");
+	posn = 4;
+	if ((pkt->p_user != pkt->p_raw)
+		// && (pkt->p_user > pkt->p_raw)
+		// && (pkt->p_raw + pkt->p_rawlen > pkt->p_user)
+		) {
+		printf("(RAW)  "); posn = 7;
+		for(unsigned k=0; k < pkt->p_user - pkt->p_raw; k++) {
+			printf("%02x ", pkt->p_raw[k]); posn +=4;
+			if ((k&7) == 7) {
+				posn = 7; printf("\n%*s", posn, "");
+			}
+		} printf("\n(USER) ");
+		for(unsigned k=7; k<posn; k++)
+			printf(" ");
+	} else if (pkt->p_user == pkt->p_raw) {
+		printf("(RAW)  ");
+	} else
+		printf("(USER) ");
+
+	for(unsigned k=0; k < pkt->p_length; k++) {
+		printf("%02x ", pkt->p_user[k]); posn +=3;
+		if ((k&7) == 7) {
+			posn = 7; printf("\n%*s", posn, "");
+		}
+	} printf("\n");
 }

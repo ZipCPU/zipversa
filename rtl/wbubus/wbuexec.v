@@ -40,6 +40,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 //
+`default_nettype none
+//
 `define	WB_IDLE			3'b000
 `define	WB_READ_REQUEST		3'b001
 `define	WB_WRITE_REQUEST	3'b010

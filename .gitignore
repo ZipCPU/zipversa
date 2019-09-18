@@ -8,6 +8,8 @@ obj-rv32
 *.o
 *.a
 *.vcd
+*.fst
+*.vcd.hier
 .swp
 .*.swp
 .*.swo

@@ -45,7 +45,7 @@ unsigned	ipcksum(int len, char *ptr) {
 	unsigned char	*ucp = (unsigned char *)ptr;
 
 	for(int i=0; i<len; i+=2) {
-		checksum = checksum + ((ucp[i]<<16) & 0x0ff)
+		checksum = checksum + ((ucp[i] & 0x0ff)<<8)
 			+ (ucp[i+1] & 0x0ff);
 	}
 	while(checksum & ~0x0ffff)

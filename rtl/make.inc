@@ -39,37 +39,39 @@
 ################################################################################
 ##
 ##
-SCOPC := wbscopc.v
+RVCPUD := picorv
+RVCPU  := $(addprefix $(RVCPUD)/,picorv32.v wb_picorv32.v)
+GPIO := wbgpio.v
 
-ENETD := enet
-ENET  := $(addprefix $(ENETD)/,enetpackets.v addecrc.v addemac.v addepad.v addepreamble.v txespeed.v txeaddr.v rxecrc.v rxehwmac.v rxeipchk.v rxemin.v rxepreambl.v rxewrite.v ecpiddr.v ecpoddr.v)
-ENETMDIO := enetctrl.v
+FLASH := qflexpress.v
 
-BKRAM := memdev.v
+WBUBUSD := wbubus
+WBUBUS  := $(addprefix $(WBUBUSD)/,wbuconsole.v wbufifo.v wbucompactlines.v wbucompress.v wbudecompress.v wbudeword.v wbuexec.v wbuidleint.v wbuinput.v wbuoutput.v wbureadcw.v wbusixchar.v wbutohex.v wbconsole.v)
+NETDELAY := ecpnetdly.v
 
-CONSOLED := wbubus
-CONSOLE  := $(addprefix $(CONSOLED)/,txuartlite.v rxuartlite.v ufifo.v)
-SPIO := spio.v debouncer.v ledbouncer.v
-
-TFRVALUE := tfrvalue.v
-
-SCOPE := wbscope.v
-
+FFTD := fft
+FFT  := $(addprefix $(FFTD)/,wbfft.v bimpy.v butterfly.v convround.v fftmain.v fftstage.v hwbfly.v laststage.v longbimpy.v qtrstage.v shiftaddmpy.v)
 BUSPICD := cpu
 BUSPIC  := $(addprefix $(BUSPICD)/,icontrol.v)
 ZIPTIMERD := cpu
 ZIPTIMER  := $(addprefix $(ZIPTIMERD)/,ziptimer.v)
-WBUBUSD := wbubus
-WBUBUS  := $(addprefix $(WBUBUSD)/,wbuconsole.v wbufifo.v wbucompactlines.v wbucompress.v wbudecompress.v wbudeword.v wbuexec.v wbuidleint.v wbuinput.v wbuoutput.v wbureadcw.v wbusixchar.v wbutohex.v wbconsole.v)
-GPIO := wbgpio.v
+TFRVALUE := tfrvalue.v
+
+SPIO := spio.v debouncer.v ledbouncer.v
+
+CONSOLED := wbubus
+CONSOLE  := $(addprefix $(CONSOLED)/,txuartlite.v rxuartlite.v ufifo.v)
+BKRAM := memdev.v
+
+ENETMDIO := enetctrl.v
 
 BUSDLYD := cpu
 BUSDLY  := $(addprefix $(BUSDLYD)/,busdelay.v wbpriarbiter.v)
-FLASH := qflexpress.v
+SCOPE := wbscope.v
 
-RVCPUD := picorv
-RVCPU  := $(addprefix $(RVCPUD)/,picorv32.v wb_picorv32.v)
-FFTD := fft
-FFT  := $(addprefix $(FFTD)/,wbfft.v bimpy.v butterfly.v convround.v fftmain.v fftstage.v hwbfly.v laststage.v longbimpy.v qtrstage.v shiftaddmpy.v)
-VFLIST := main.v  $(SCOPC) $(ENET) $(ENETMDIO) $(BKRAM) $(CONSOLE) $(SPIO) $(TFRVALUE) $(SCOPE) $(BUSPIC) $(ZIPTIMER) $(WBUBUS) $(GPIO) $(BUSDLY) $(FLASH) $(RVCPU) $(FFT)
-AUTOVDIRS :=  -y enet -y wbubus -y cpu -y picorv -y fft
+ENETD := enet
+ENET  := $(addprefix $(ENETD)/,enetpackets.v addecrc.v addemac.v addepad.v addepreamble.v txespeed.v txeaddr.v rxecrc.v rxehwmac.v rxeipchk.v rxemin.v rxepreambl.v rxewrite.v ecpiddr.v ecpoddr.v)
+SCOPC := wbscopc.v
+
+VFLIST := main.v  $(RVCPU) $(GPIO) $(FLASH) $(WBUBUS) $(NETDELAY) $(FFT) $(BUSPIC) $(ZIPTIMER) $(TFRVALUE) $(SPIO) $(CONSOLE) $(BKRAM) $(ENETMDIO) $(BUSDLY) $(SCOPE) $(ENET) $(SCOPC)
+AUTOVDIRS :=  -y picorv -y wbubus -y fft -y cpu -y enet

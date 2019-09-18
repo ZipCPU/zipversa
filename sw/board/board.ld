@@ -59,16 +59,17 @@ MEMORY
 */
 _bkram    = ORIGIN(bkram);
 _flash    = ORIGIN(flash);
-_uart = 4194304;
+_gpio = 6291480;
 
 /* LD.DEFNS from zipmaster.txt */
 _kram  = 0; /* No high-speed kernel RAM */
 _ram   = ORIGIN(bkram);
 _rom   = ORIGIN(flash);
 _top_of_stack = ORIGIN(bkram) + LENGTH(bkram);
+_end_of_heap = 0x00a0c000;
 
 
-_gpio = 6291468;
+_uart = 0x00400000;
 
 /* LD.SCRIPT from zipmaster.txt */
 SECTIONS

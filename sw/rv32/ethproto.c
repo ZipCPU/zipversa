@@ -46,6 +46,8 @@
 #include "ipproto.h"
 #include "arp.h"
 #include "etcnet.h"
+#include "txfns.h"
+#include "protoconst.h"
 
 ETHERNET_MAC	my_mac_addr = DEFAULTMAC;
 
@@ -56,11 +58,9 @@ unsigned eth_headersize() {
 NET_PACKET	*new_ethpkt(unsigned ln) {
 	NET_PACKET	*pkt;
 
-	pkt = new_pkt(ln+10);
-	printf("ETHPKT: ln = %2d, p_user = &p_raw[%3d]\n",
-		pkt->p_length, pkt->p_user - pkt->p_raw);
-		
-	pkt->p_length -= 10;
+	pkt = new_pkt(ln+8);
+
+	pkt->p_length -= 8;
 	pkt->p_user += 8;
 	return pkt;
 }
@@ -91,9 +91,8 @@ extern	void	rx_ethpkt(NET_PACKET *pkt) {
 
 void	dump_ethpkt(NET_PACKET *pkt) {
 	pkt_reset(pkt);
-
-	printf("ETH PROTO: %02x%02x\n", pkt->p_user[8] & 0x0ff,
-			pkt->p_user[9] & 0x0ff);
+txstr("DUMP: ETHPKT\nPKT : "); txhex((unsigned)pkt); txstr(" - "); txhex((unsigned)pkt->p_raw); txstr("\n");
+	printf("ETH PROTO: %04x\n", ethpkt_ethtype(pkt));
 	printf("ETH MAC  : %02x:%02x:%02x:%02x:%02x:%02x\n",
 			pkt->p_user[0] & 0x0ff,
 			pkt->p_user[1] & 0x0ff,
@@ -102,12 +101,18 @@ void	dump_ethpkt(NET_PACKET *pkt) {
 			pkt->p_user[4] & 0x0ff,
 			pkt->p_user[5] & 0x0ff);
 
-	pkt->p_user += 8; pkt->p_length -= 8;
-	dump_ippkt(pkt);
-	pkt->p_user -= 8; pkt->p_length += 8;
-	printf("ETH CRC  : %02x%02x\n",
-			pkt->p_user[pkt->p_length] & 0x0ff,
-			pkt->p_user[pkt->p_length+1] & 0x0ff);
+	if (ethpkt_ethtype(pkt) == ETHERTYPE_IP) {
+		pkt->p_user += 8; pkt->p_length -= 8;
+		dump_ippkt(pkt);
+		pkt->p_user -= 8; pkt->p_length += 8;
+	} else if (ethpkt_ethtype(pkt) == ETHERTYPE_ARP) {
+		pkt->p_user += 8; pkt->p_length -= 8;
+		dump_arppkt(pkt);
+		pkt->p_user -= 8; pkt->p_length += 8;
+	}
+	// printf("ETH CRC  : %02x%02x\n",
+	//		pkt->p_user[pkt->p_length] & 0x0ff,
+	//		pkt->p_user[pkt->p_length+1] & 0x0ff);
 }
 
 extern	void	ethpkt_mac(NET_PACKET *pkt, ETHERNET_MAC *mac) {
@@ -125,7 +130,7 @@ extern	void	ethpkt_mac(NET_PACKET *pkt, ETHERNET_MAC *mac) {
 
 unsigned ethpkt_ethtype(NET_PACKET *pkt) {
 	unsigned	v;
-	v = (pkt->p_user[6] & 0x0ff) << 6;
+	v = (pkt->p_user[6] & 0x0ff) << 8;
 	v = v | (pkt->p_user[7] & 0x0ff);
 
 	return v;

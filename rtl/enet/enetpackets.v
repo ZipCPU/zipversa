@@ -674,7 +674,7 @@ module	enetpackets(i_wb_clk, i_reset,
 `ifdef	RX_HW_IPCHECK
 	// Check: if this packet is an IP packet, is the IP header checksum
 	// valid?
-	rxeipchk rxipci(i_net_rx_clk, ((n_rx_reset)||(n_rx_net_err)),
+	rxeipchk rxipci(i_net_rx_clk, (n_rx_reset||n_rx_net_err),
 			rx_ce, n_rx_config_ip_check,
 			w_rxcrc, w_rxcrcd, w_iperr);
 `else
@@ -686,7 +686,7 @@ module	enetpackets(i_wb_clk, i_reset,
 	wire	[31:0]		w_rxdata;
 	wire	[(MAW+1):0]	w_rxlen;
 
-	rxewrite #(MAW) rxememi(i_net_rx_clk, ((n_rx_reset)||(n_rx_net_err)),
+	rxewrite #(MAW) rxememi(i_net_rx_clk, (n_rx_reset||n_rx_net_err),
 			rx_ce, w_rxmac, w_rxmacd,
 			w_rxwr, w_rxaddr, w_rxdata, w_rxlen);
 
@@ -794,18 +794,21 @@ module	enetpackets(i_wb_clk, i_reset,
 	end
 
 
+	initial	counter_rx_miss = 0;
 	always @(posedge i_wb_clk)
 	if (o_net_reset_n)
 		counter_rx_miss <= 32'h0;
 	else if (rx_miss_stb)
 		counter_rx_miss <= counter_rx_miss + 32'h1;
 
+	initial	counter_rx_err = 0;
 	always @(posedge i_wb_clk)
 	if (o_net_reset_n)
 		counter_rx_err <= 32'h0;
 	else if (rx_err_stb)
 		counter_rx_err <= counter_rx_err + 32'h1;
 
+	initial	counter_rx_crc = 0;
 	always @(posedge i_wb_clk)
 	if (o_net_reset_n)
 		counter_rx_crc <= 32'h0;

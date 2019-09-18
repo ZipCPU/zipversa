@@ -46,50 +46,50 @@
 // from within our main.v file, let's include:
 #include <design.h>
 
-#ifndef WBSCOPE_H
-#define WBSCOPE_H
+//
+// GPIO input wires
+//
+#define	GPIO_IN(WIRE)	(((WIRE)>>16)&1)
+//
+// GPIO output wires
+//
+#define	GPIO_SET(WIRE)	(((WIRE)<<16)|(WIRE))
+#define	GPIO_CLR(WIRE)	 ((WIRE)<<16)
 
-#define WBSCOPE_NO_RESET        0x80000000u
-#define WBSCOPE_TRIGGER         (WBSCOPE_NO_RESET|0x08000000u)
-#define WBSCOPE_MANUAL          (WBSCOPE_TRIGGER)
-#define WBSCOPE_DISABLE         0x04000000u
+#define GPIO_ICLK_SDA		1
+#define GPIO_ICLK_SCL		2
+#define GPIO_ICLK_LOCKED	4
+#define GPIO_ICLK_RESET		4
+#define GPIO_HALT		8
+#define GPIO_SIMHALT		GPIO_SET(GPIO_HALT)
+#define GPIO_CPU_RESET		16
+//
+//
 
-typedef struct WBSCOPE_S {
-        unsigned s_ctrl, s_data;
-} WBSCOPE;
-#endif
+
+#define BUSPIC(X) (1<<X)
 
 
-// Network packet interface
-#define	ENET_TXGO		0x004000
-#define	ENET_TXBUSY		0x004000
-#define	ENET_NOHWCRC		0x008000
-#define	ENET_NOHWMAC		0x010000
-#define	ENET_RESET		0x020000
-#define	ENET_NOHWIPCHK		0x040000
-#define	ENET_TXCMD(LEN)		((LEN)|ENET_TXGO)
-#define	ENET_TXCLR		0x038000
-#define	ENET_TXCANCEL		0x000000
-#define	ENET_RXAVAIL		0x004000
-#define	ENET_RXBUSY		0x008000
-#define	ENET_RXMISS		0x010000
-#define	ENET_RXERR		0x020000
-#define	ENET_RXCRC		0x040000	// Set on a CRC error
-#define	ENET_RXLEN(CMD)		((CMD) & 0x0ffff)
-#define	ENET_RXCLR		0x004000
-#define	ENET_RXBROADCAST	0x080000
-#define	ENET_RXCLRERR		0x078000
-#define	ENET_TXBUFLN(NET)	(1<<(NET->n_txcmd>>24))
-#define	ENET_RXBUFLN(NET)	(1<<(NET->n_rxcmd>>24))
-typedef	struct ENETPACKET_S {
-	unsigned	n_rxcmd, n_txcmd;
-	uint64_t	n_mac;
-	unsigned	n_rxmiss, n_rxerr, n_rxcrc, n_txcol;
-} ENETPACKET;
+#define	CLKFREQHZ 50000000
+#define	CLKFREQUENCYHZ 50000000
 
-#define	SYSINT_ENETRX	SYSINT(1)
-#define	SYSINT_ENETTX	SYSINT(0)
 
+//
+// ZIPTIMER input wires
+//
+//
+//
+
+
+
+
+typedef struct  CONSOLE_S {
+	unsigned	u_setup;
+	unsigned	u_fifo;
+	unsigned	u_rx, u_tx;
+} CONSOLE;
+
+#define	_uart_txbusy	((_uart->u_fifo & 0x10000)==0)
 
 
 //
@@ -126,14 +126,56 @@ typedef struct ENETMDIO_S {
 
 
 
-typedef struct  CONSOLE_S {
-	unsigned	u_setup;
-	unsigned	u_fifo;
-	unsigned	u_rx, u_tx;
-} CONSOLE;
+#ifndef WBSCOPE_H
+#define WBSCOPE_H
 
-#define	_uart_txbusy	((_uart->u_fifo & 0x10000)==0)
+#define WBSCOPE_NO_RESET        0x80000000u
+#define WBSCOPE_TRIGGER         (WBSCOPE_NO_RESET|0x08000000u)
+#define WBSCOPE_MANUAL          (WBSCOPE_TRIGGER)
+#define WBSCOPE_DISABLE         0x04000000u
 
+typedef struct WBSCOPE_S {
+        unsigned s_ctrl, s_data;
+} WBSCOPE;
+#endif
+
+
+// Network packet interface
+// Ethernet transmit macros
+//   Transmit status
+#define	ENET_TXBUSY		0x004000
+//   Transmit command(s)
+#define	ENET_TXGO		0x004000
+#define	ENET_NOHWCRC		0x008000
+#define	ENET_NOHWMAC		0x010000
+#define	ENET_RESET		0x020000
+#define	ENET_NOHWIPCHK		0x040000
+#define	ENET_TXCMD(LEN)		((LEN)|ENET_TXGO)
+#define	ENET_TXCLR		0x038000
+#define	ENET_TXCANCEL		0x000000
+// Ethernet receive macros
+//   Receive status
+#define	ENET_RXLEN(CMD)		((CMD) & 0x03fff)
+#define	ENET_RXAVAIL		0x004000
+#define	ENET_RXBUSY		0x008000
+#define	ENET_RXMISS		0x010000
+#define	ENET_RXERR		0x020000
+#define	ENET_RXCRC		0x040000	// Set on a CRC error
+#define	ENET_RXBROADCAST	0x080000
+#define	ENET_RXCLR		0x004000
+//   Receive commands
+#define	ENET_RXCLRERR		(ENET_RXMISS|ENET_RXERR|ENET_RXCRC|ENET_RXBUSY)
+// Buffer sizes
+#define	ENET_TXBUFLN(NET)	(1<<(NET->n_txcmd>>24))
+#define	ENET_RXBUFLN(NET)	(1<<(NET->n_rxcmd>>24))
+typedef	struct ENETPACKET_S {
+	unsigned	n_rxcmd, n_txcmd;
+	uint64_t	n_mac;
+	unsigned	n_rxmiss, n_rxerr, n_rxcrc, n_txcol;
+} ENETPACKET;
+
+#define	SYSINT_ENETRX	SYSINT(5)
+#define	SYSINT_ENETTX	SYSINT(4)
 
 
 
@@ -151,45 +193,59 @@ typedef struct WBSCOPE_S {
 #endif
 
 
-#define	CLKFREQHZ 50000000
-#define	CLKFREQUENCYHZ 50000000
-
-
-#define BUSPIC(X) (1<<X)
-
-
-//
-// ZIPTIMER input wires
-//
-//
-//
-
-
-//
-// GPIO input wires
-//
-#define	GPIO_IN(WIRE)	(((WIRE)>>16)&1)
-//
-// GPIO output wires
-//
-#define	GPIO_SET(WIRE)	(((WIRE)<<16)|(WIRE))
-#define	GPIO_CLR(WIRE)	 ((WIRE)<<16)
-
-#define GPIO_ICLK_SDA		1
-#define GPIO_ICLK_SCL		2
-#define GPIO_ICLK_LOCKED	4
-#define GPIO_ICLK_RESET		4
-#define GPIO_HALT		8
-#define GPIO_SIMHALT		GPIO_SET(GPIO_HALT)
-#define GPIO_CPU_RESET		16
-//
-//
-
-
-#ifdef	FLASHSCOPE_SCOPC
-#define	_BOARD_HAS_FLASHSCOPE
-static volatile WBSCOPE *const _flashdbg = ((WBSCOPE *)0x00300000);
-#endif	// FLASHSCOPE_SCOPC
+#ifdef	GPIO_ACCESS
+#define	_BOARD_HAS_GPIO
+static volatile unsigned *const _gpio = ((unsigned *)6291480);
+#endif	// GPIO_ACCESS
+#ifdef	FLASHCFG_ACCESS
+#define	_BOARD_HAS_FLASHCFG
+static volatile unsigned * const _flashcfg = ((unsigned *)(0x00100000));
+#endif	// FLASHCFG_ACCESS
+#define	_BOARD_HAS_BUSERR
+static volatile unsigned *const _buserr = ((unsigned *)6291460);
+#define	_BOARD_HAS_NET1DLY
+static volatile unsigned *const _net1dly = ((unsigned *)0x0060001c);
+#ifdef	WBFFT_ACCESS
+#define	_BOARD_HAS_WBFFT
+extern int _wbfft[1];
+#endif	// WBFFT_ACCESS
+#ifdef	PWRCOUNT_ACCESS
+static volatile unsigned *const _pwrcount = ((unsigned *)0x00600020);
+#endif	// PWRCOUNT_ACCESS
+#ifdef	BUSPIC_ACCESS
+#define	_BOARD_HAS_BUSPIC
+static volatile unsigned *const _buspic = ((unsigned *)0x00600008);
+#endif	// BUSPIC_ACCESS
+#define	_BOARD_HAS_BUILDTIME
+#ifdef	FLASH_ACCESS
+#define	_BOARD_HAS_FLASH
+extern int _flash[1];
+#endif	// FLASH_ACCESS
+#ifdef	ZIPTIMER_ACCESS
+#define	_BOARD_HAS_ZIPTIMER
+static volatile unsigned *const _systimer = ((unsigned *)6291496);
+#endif	// ZIPTIMER_ACCESS
+#ifdef	SPIO_ACCESS
+#define	_BOARD_HAS_SPIO
+static volatile unsigned *const _spio = ((unsigned *)6291492);
+#endif	// SPIO_ACCESS
+#ifdef	BUSCONSOLE_ACCESS
+#define	_BOARD_HAS_BUSCONSOLE
+static volatile CONSOLE *const _uart = ((CONSOLE *)4194304);
+#endif	// BUSCONSOLE_ACCESS
+#ifdef	BKRAM_ACCESS
+#define	_BOARD_HAS_BKRAM
+extern char	_bkram[0x00010000];
+#endif	// BKRAM_ACCESS
+#define	_BOARD_HAS_VERSION
+#ifdef	NETCTRL1_ACCESS
+#define	_BOARD_HAS_NETMDIO1
+static volatile ENETMDIO *const _mdio1 = ((ENETMDIO *)7340032);
+#endif	// NETCTRL1_ACCESS
+#ifdef	NETSCOPE_SCOPE
+#define	_BOARD_HAS_NETSCOPE
+static volatile WBSCOPE *const _enetscope = ((WBSCOPE *)0x00200000);
+#endif	// NETSCOPE_SCOPE
 #define	_BOARD_HAS_ENETB
 static volatile unsigned *const _netbrx = ((unsigned *)0x00800000);
 static volatile unsigned *const _netbtx = ((unsigned *)(0x00800000 + (0x0400<<1)));
@@ -197,74 +253,27 @@ static volatile unsigned *const _netbtx = ((unsigned *)(0x00800000 + (0x0400<<1)
 #define	_BOARD_HAS_ENETP
 static volatile ENETPACKET *const _net1 = ((ENETPACKET *)0x00500000);
 #endif	// NET1_ACCESS
-#ifdef	NETCTRL1_ACCESS
-#define	_BOARD_HAS_NETMDIO1
-static volatile ENETMDIO *const _mdio1 = ((ENETMDIO *)7340032);
-#endif	// NETCTRL1_ACCESS
-#ifdef	BKRAM_ACCESS
-#define	_BOARD_HAS_BKRAM
-extern char	_bkram[0x00010000];
-#endif	// BKRAM_ACCESS
-#ifdef	BUSCONSOLE_ACCESS
-#define	_BOARD_HAS_BUSCONSOLE
-static volatile CONSOLE *const _uart = ((CONSOLE *)4194304);
-#endif	// BUSCONSOLE_ACCESS
-#ifdef	SPIO_ACCESS
-#define	_BOARD_HAS_SPIO
-static volatile unsigned *const _spio = ((unsigned *)6291476);
-#endif	// SPIO_ACCESS
-#ifdef	FLASH_ACCESS
-#define	_BOARD_HAS_FLASH
-extern int _flash[1];
-#endif	// FLASH_ACCESS
-#define	_BOARD_HAS_BUILDTIME
-#ifdef	NETSCOPE_SCOPE
-#define	_BOARD_HAS_NETSCOPE
-static volatile WBSCOPE *const _enetscope = ((WBSCOPE *)0x00200000);
-#endif	// NETSCOPE_SCOPE
-#ifdef	BUSPIC_ACCESS
-#define	_BOARD_HAS_BUSPIC
-static volatile unsigned *const _buspic = ((unsigned *)0x00600008);
-#endif	// BUSPIC_ACCESS
-#ifdef	PWRCOUNT_ACCESS
-static volatile unsigned *const _pwrcount = ((unsigned *)0x00600010);
-#endif	// PWRCOUNT_ACCESS
-#ifdef	ZIPTIMER_ACCESS
-#define	_BOARD_HAS_ZIPTIMER
-static volatile unsigned *const _systimer = ((unsigned *)6291480);
-#endif	// ZIPTIMER_ACCESS
-#define	_BOARD_HAS_BUSERR
-static volatile unsigned *const _buserr = ((unsigned *)6291460);
-#ifdef	GPIO_ACCESS
-#define	_BOARD_HAS_GPIO
-static volatile unsigned *const _gpio = ((unsigned *)6291468);
-#endif	// GPIO_ACCESS
-#ifdef	FLASHCFG_ACCESS
-#define	_BOARD_HAS_FLASHCFG
-static volatile unsigned * const _flashcfg = ((unsigned *)(0x00100000));
-#endif	// FLASHCFG_ACCESS
-#define	_BOARD_HAS_VERSION
-#ifdef	WBFFT_ACCESS
-#define	_BOARD_HAS_WBFFT
-extern int _wbfft[1];
-#endif	// WBFFT_ACCESS
+#ifdef	FLASHSCOPE_SCOPC
+#define	_BOARD_HAS_FLASHSCOPE
+static volatile WBSCOPE *const _flashdbg = ((WBSCOPE *)0x00300000);
+#endif	// FLASHSCOPE_SCOPC
 //
 // Interrupt assignments (2 PICs)
 //
-// PIC: buspic
-#define	BUSPIC_FLASHDBG	BUSPIC(0)
-#define	BUSPIC_NETTX	BUSPIC(1)
-#define	BUSPIC_NETRX	BUSPIC(2)
-#define	BUSPIC_UARTTXF	BUSPIC(3)
-#define	BUSPIC_UARTRXF	BUSPIC(4)
-#define	BUSPIC_SPIO	BUSPIC(5)
-#define	BUSPIC_ENETSCOPE	BUSPIC(6)
-#define	BUSPIC_TIMER	BUSPIC(7)
 // PIC: picorv
-#define	PICORV_NETTX	PICORV(0)
-#define	PICORV_NETRX	PICORV(1)
+#define	PICORV_GPIO	PICORV(0)
+#define	PICORV_TIMER	PICORV(1)
 #define	PICORV_UARTTXF	PICORV(2)
 #define	PICORV_UARTRXF	PICORV(3)
-#define	PICORV_TIMER	PICORV(4)
-#define	PICORV_GPIO	PICORV(5)
+#define	PICORV_NETTX	PICORV(4)
+#define	PICORV_NETRX	PICORV(5)
+// PIC: buspic
+#define	BUSPIC_TIMER	BUSPIC(0)
+#define	BUSPIC_SPIO	BUSPIC(1)
+#define	BUSPIC_UARTTXF	BUSPIC(2)
+#define	BUSPIC_UARTRXF	BUSPIC(3)
+#define	BUSPIC_ENETSCOPE	BUSPIC(4)
+#define	BUSPIC_NETTX	BUSPIC(5)
+#define	BUSPIC_NETRX	BUSPIC(6)
+#define	BUSPIC_FLASHDBG	BUSPIC(7)
 #endif	// BOARD_H

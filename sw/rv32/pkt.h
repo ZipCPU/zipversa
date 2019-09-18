@@ -50,5 +50,6 @@ extern	void		pkt_reset(NET_PACKET *pkt);
 extern	void		tx_pkt(NET_PACKET *pkt);
 extern	NET_PACKET	*new_pkt(unsigned msglen);
 extern	void		free_pkt(NET_PACKET *pkt);
+extern	void		dump_raw(NET_PACKET *pkt);
 
 #endif

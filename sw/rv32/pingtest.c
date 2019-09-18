@@ -45,6 +45,7 @@
 #include "protoconst.h"
 #include "etcnet.h"
 #include "ethproto.h"
+#include "txfns.h"
 
 
 // Acknowledge all interrupts, and shut all interrupt sources off
@@ -71,6 +72,19 @@ int	main(int argc, char **argv) {
 
 	// Clear the network reset
 	_net1->n_txcmd = 0;
+	{ // Set the MAC address
+		char *macp = (char *)&_net1->n_mac;
+
+		ETHERNET_MAC upper = DEFAULTMAC >> 32;
+		unsigned	upper32 = (unsigned) upper;
+
+		macp[1] = (upper32 >>  8) & 0x0ff;
+		macp[0] = (upper32      ) & 0x0ff;
+		macp[7] = (DEFAULTMAC >> 24) & 0x0ff;
+		macp[6] = (DEFAULTMAC >> 16) & 0x0ff;
+		macp[5] = (DEFAULTMAC >>  8) & 0x0ff;
+		macp[4] = (DEFAULTMAC      ) & 0x0ff;
+	}
 
 	*_systimer = REPEATING_TIMER | (CLKFREQUENCYHZ / 10); // 10Hz interrupt
 
@@ -83,6 +97,8 @@ int	main(int argc, char **argv) {
 "+-----------------------------------------+\n"
 "\n\n\n");
 
+	icmp_send_ping(host_ip);
+
 	// We can still use the interrupt controller, we'll just need to poll it
 	while(1) {
 		heartbeats++;
@@ -93,54 +109,78 @@ int	main(int argc, char **argv) {
 			// We've received a timer interrupt
 			now++;
 
-			if ((now - lastping > 2)&&(waiting_pkt == NULL)) {
+			if ((now - lastping >= 20)&&(waiting_pkt == NULL)) {
 				icmp_send_ping(host_ip);
 
 				lastping = now;
 			}
 
-			if ((now - lasthello) > 3000)
-				printf("Hello, World! 0x%08x\n", *_pwrcount);
+			if ((now - lasthello) >= 3000) {
+				printf("\n\nHello, World! Ticks since startup = 0x%08x\n\n", *_pwrcount);
+				lasthello = now;
+			}
 
 			*_buspic = BUSPIC_TIMER;
 		}
 
 		if (pic & BUSPIC_NETRX) {
 			unsigned	ipsrc, ipdst;
+
 			// We've received a packet
 			rcvd = rx_pkt();
 			*_buspic = BUSPIC_NETRX;
+			if (NULL != rcvd) {
+
+			// Don't let the subsystem free this packet (yet)
+			rcvd->p_usage_count++;
 
 			switch(ethpkt_ethtype(rcvd)) {
 			case ETHERTYPE_ARP:
 				printf("RXPKT - ARP\n");
+				rx_ethpkt(rcvd);
 				rx_arp(rcvd);
 				break;
-			case ETHERTYPE_IP:
+			case ETHERTYPE_IP: {
+				unsigned	subproto;
+
 				printf("RXPKT - IP\n");
 				rx_ethpkt(rcvd);
+
 				ipsrc = ippkt_src(rcvd);
 				ipdst = ippkt_dst(rcvd);
+				subproto = ippkt_subproto(rcvd);
 				rx_ippkt(rcvd);
-				switch(ippkt_subproto(rcvd)) {
+
+				if (ipdst == my_ip_addr) {
+				switch(subproto) {
 					case IPPROTO_ICMP:
 						if (rcvd->p_user[0] == ICMP_PING)							icmp_reply(ipsrc, rcvd);
 						else
-							printf("RX PING\n");
+							printf("RX PING <<------ SUCCESS!!!\n");
 						break;
 					default:
-						rcvd->p_user = rcvd->p_raw;
-						rcvd->p_length = rcvd->p_rawlen;
+						printf("UNKNOWN-IP -----\n");
 						pkt_reset(rcvd);
 						dump_ethpkt(rcvd);
+						printf("\n");
 						break;
-				}
+				}}}
 				break;
 			default:
+				printf("Received unknown ether-type %d (0x%04x)\n",
+					ethpkt_ethtype(rcvd),
+					ethpkt_ethtype(rcvd));
 				pkt_reset(rcvd);
 				dump_ethpkt(rcvd);
+				printf("\n");
 				break;
-			} free_pkt(rcvd);
+			}
+
+			// Now we can free the packet ourselves
+			free_pkt(rcvd);
+		}} else if (_net1->n_rxcmd & ENET_RXCLRERR) {
+			printf("Network has detected an error, %08x\n", _net1->n_rxcmd);
+			_net1->n_rxcmd = ENET_RXCLRERR | ENET_RXCLR;
 		}
 
 		if (pic & BUSPIC_NETTX) {
@@ -148,6 +188,7 @@ int	main(int argc, char **argv) {
 			// See if another's waiting, and then transmit that.a
 			if (waiting_pkt != NULL) {
 				NET_PACKET	*pkt = waiting_pkt;
+txstr("Re-transmitting the busy packet\n");
 				waiting_pkt = NULL;
 				tx_pkt(pkt);
 				*_buspic = BUSPIC_NETTX;
@@ -159,6 +200,10 @@ int	main(int argc, char **argv) {
 void	tx_busy(NET_PACKET *txpkt) {
 	if (waiting_pkt == NULL) {
 		// printf("TX-BUSY\n");
+		waiting_pkt = txpkt;
+	} else if (txpkt != waiting_pkt) {
+txstr("Busy collision--deleting waiting packet\n");
+		free_pkt(waiting_pkt);
 		waiting_pkt = txpkt;
 	}
 }

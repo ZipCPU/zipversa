@@ -54,12 +54,12 @@
 #include "design.h"
 #include "regdefs.h"
 #include "testb.h"
-#include "enetctrlsim.h"
-#include "byteswap.h"
-#include "flashsim.h"
-#include "dbluartsim.h"
 #include "zipelf.h"
 
+#include "dbluartsim.h"
+#include "flashsim.h"
+#include "byteswap.h"
+#include "enetctrlsim.h"
 //
 // SIM.DEFINES
 //
@@ -84,13 +84,13 @@ public:
 		// SIM.DEFNS tag to have those components defined here
 		// as part of the main_tb.cpp function.
 // Looking for string: SIM.DEFNS
-#ifdef	NETCTRL1_ACCESS
-	ENETCTRLSIM	*m_mdio1;
-#endif // NETCTRL1_ACCESS
+	DBLUARTSIM	*m_wbu;
 #ifdef	FLASH_ACCESS
 	FLASHSIM	*m_flash;
 #endif // FLASH_ACCESS
-	DBLUARTSIM	*m_wbu;
+#ifdef	NETCTRL1_ACCESS
+	ENETCTRLSIM	*m_mdio1;
+#endif // NETCTRL1_ACCESS
 	MAINTB(void) {
 		// SIM.INIT
 		//
@@ -98,18 +98,18 @@ public:
 		// create a SIM.INIT tag.  That tag's value will be pasted
 		// here.
 		//
-		// From mdio1
-#ifdef	NETCTRL1_ACCESS
-		m_mdio1 = new ENETCTRLSIM;
-#endif // NETCTRL1_ACCESS
+		// From picorv
+		// From wbu
+		m_wbu = new DBLUARTSIM();
+		m_wbu->setup(50);
 		// From flash
 #ifdef	FLASH_ACCESS
 		m_flash = new FLASHSIM(FLASHLGLEN, false, 0, 2);
 #endif // FLASH_ACCESS
-		// From wbu
-		m_wbu = new DBLUARTSIM();
-		m_wbu->setup(50);
-		// From picorv
+		// From mdio1
+#ifdef	NETCTRL1_ACCESS
+		m_mdio1 = new ENETCTRLSIM;
+#endif // NETCTRL1_ACCESS
 	}
 
 	void	reset(void) {
@@ -147,15 +147,22 @@ public:
 	}
 
 
-	// Evaluating clock net1_rx_clk
+	// Evaluating clock clk
 
-	// sim_net1_rx_clk_tick() will be called from TESTB<Vmain>::tick()
-	//   following any falling edge of clock net1_rx_clk
-	virtual	void	sim_net1_rx_clk_tick(void) {
+	// sim_clk_tick() will be called from TESTB<Vmain>::tick()
+	//   following any falling edge of clock clk
+	virtual	void	sim_clk_tick(void) {
 		// Default clock tick
 		//
-		// SIM.TICK tags go here for SIM.CLOCK=net1_rx_clk
+		// SIM.TICK tags go here for SIM.CLOCK=clk
 		//
+		// SIM.TICK from picorv
+	m_core->i_reset = 0;
+		// SIM.TICK from gpio
+	if (m_core->o_gpio & GPIO_HALT)
+		m_done = true;
+		// SIM.TICK from wbu
+		m_core->i_wbu_uart_rx = (*m_wbu)(m_core->o_wbu_uart_tx);
 		// SIM.TICK from flash
 #ifdef	FLASH_ACCESS
 		m_core->i_qspi_dat = m_flash->simtick(
@@ -164,16 +171,6 @@ public:
 			m_core->o_qspi_dat,
 			m_core->o_qspi_mod);
 #endif // FLASH_ACCESS
-	}
-
-	// Evaluating clock clk
-
-	// sim_clk_tick() will be called from TESTB<Vmain>::tick()
-	//   following any falling edge of clock clk
-	virtual	void	sim_clk_tick(void) {
-		//
-		// SIM.TICK tags go here for SIM.CLOCK=clk
-		//
 		// SIM.TICK from mdio1
 #ifdef	NETCTRL1_ACCESS
 		m_core->i_mdio1 = (*m_mdio1)(0, m_core->o_net1_mdc,
@@ -181,13 +178,6 @@ public:
 #else
 		m_core->i_mdio1 = ((m_core->o_mdio1_we)&&(!m_core->o_mdio1))?0:1;
 #endif // NETCTRL1_ACCESS
-		// SIM.TICK from wbu
-		m_core->i_wbu_uart_rx = (*m_wbu)(m_core->o_wbu_uart_tx);
-		// SIM.TICK from gpio
-	if (m_core->o_gpio & GPIO_HALT)
-		m_done = true;
-		// SIM.TICK from picorv
-	m_core->i_reset = 0;
 	}
 
 	// Evaluating clock clk_125mhz
@@ -204,20 +194,23 @@ public:
 		m_core->i_net1_rxd    = m_core->o_net1_txd;
 
 	}
-	//
-	// Step until clock net1_rx_clk ticks
-	//
-	virtual	void	tick_net1_rx_clk(void) {
-		// Advance until the default clock ticks
-		do {
-			tick();
-		} while(!m_net1_rx_clk.rising_edge());
-	}
 
+	// Evaluating clock net1_rx_clk
+
+	// sim_net1_rx_clk_tick() will be called from TESTB<Vmain>::tick()
+	//   following any falling edge of clock net1_rx_clk
+	virtual	void	sim_net1_rx_clk_tick(void) {
+		//
+		// SIM.TICK tags go here for SIM.CLOCK=net1_rx_clk
+		//
+		// No SIM.TICK tags defined
+		m_changed = false;
+	}
 	//
 	// Step until clock clk ticks
 	//
 	virtual	void	tick_clk(void) {
+		// Advance until the default clock ticks
 		do {
 			tick();
 		} while(!m_clk.rising_edge());
@@ -233,6 +226,15 @@ public:
 	}
 
 	//
+	// Step until clock net1_rx_clk ticks
+	//
+	virtual	void	tick_net1_rx_clk(void) {
+		do {
+			tick();
+		} while(!m_net1_rx_clk.rising_edge());
+	}
+
+	//
 	// The load function
 	//
 	// This function is required by designs that need the flash or memory
@@ -242,6 +244,37 @@ public:
 	//
 	bool	load(uint32_t addr, const char *buf, uint32_t len) {
 		uint32_t	start, offset, wlen, base, adrln;
+
+		//
+		// Loading the flash component
+		//
+		base  = 0x01000000; // in octets
+		adrln = 0x01000000;
+
+		if ((addr >= base)&&(addr < base + adrln)) {
+			// If the start access is in flash
+			start = (addr > base) ? (addr-base) : 0;
+			offset = (start + base) - addr;
+			wlen = (len-offset > adrln - start)
+				? (adrln - start) : len - offset;
+#ifdef	FLASH_ACCESS
+			// FROM flash.SIM.LOAD
+#ifdef	FLASH_ACCESS
+			m_flash->load(start, &buf[offset], wlen);
+#endif // FLASH_ACCESS
+			// AUTOFPGA::Now clean up anything else
+			// Was there more to write than we wrote?
+			if (addr + len > base + adrln)
+				return load(base + adrln, &buf[offset+wlen], len-wlen);
+			return true;
+#else	// FLASH_ACCESS
+			return false;
+#endif	// FLASH_ACCESS
+		//
+		// End of components with a SIM.LOAD tag, and a
+		// non-zero number of addresses (NADDR)
+		//
+		}
 
 		//
 		// Loading the bkram component
@@ -274,37 +307,6 @@ public:
 #else	// BKRAM_ACCESS
 			return false;
 #endif	// BKRAM_ACCESS
-		//
-		// End of components with a SIM.LOAD tag, and a
-		// non-zero number of addresses (NADDR)
-		//
-		}
-
-		//
-		// Loading the flash component
-		//
-		base  = 0x01000000; // in octets
-		adrln = 0x01000000;
-
-		if ((addr >= base)&&(addr < base + adrln)) {
-			// If the start access is in flash
-			start = (addr > base) ? (addr-base) : 0;
-			offset = (start + base) - addr;
-			wlen = (len-offset > adrln - start)
-				? (adrln - start) : len - offset;
-#ifdef	FLASH_ACCESS
-			// FROM flash.SIM.LOAD
-#ifdef	FLASH_ACCESS
-			m_flash->load(start, &buf[offset], wlen);
-#endif // FLASH_ACCESS
-			// AUTOFPGA::Now clean up anything else
-			// Was there more to write than we wrote?
-			if (addr + len > base + adrln)
-				return load(base + adrln, &buf[offset+wlen], len-wlen);
-			return true;
-#else	// FLASH_ACCESS
-			return false;
-#endif	// FLASH_ACCESS
 		//
 		// End of components with a SIM.LOAD tag, and a
 		// non-zero number of addresses (NADDR)

@@ -92,6 +92,7 @@ static volatile unsigned *const @$(BDEF.IONAME)tx = ((unsigned *)(@$[0x%08x](REG
 @NADDR=8
 @SLAVE.TYPE=OTHER
 @SLAVE.BUS=wb
+@DLYPREFIX=@$(PREFIX)dly
 @TOP.PORTLIST=
 		// Ethernet control (packets) lines
 		o_@$(PREFIX)_reset_n,
@@ -120,11 +121,11 @@ static volatile unsigned *const @$(BDEF.IONAME)tx = ((unsigned *)(@$[0x%08x](REG
 		i_@$(PREFIX)_rx_clk, w_@$(PREFIX)_rxdv,  w_@$(PREFIX)_rxdv ^ w_@$(PREFIX)_rxerr, w_@$(PREFIX)_rxd,
 		w_@$(PREFIX)_tx_clk, w_@$(PREFIX)_txctl, w_@$(PREFIX)_txd
 @TOP.INSERT=
-	ecpiddr	rx0(i_@$(PREFIX)_rx_clk, i_@$(PREFIX)_rxd[0], { w_@$(PREFIX)_rxd[4], w_@$(PREFIX)_rxd[0] });
-	ecpiddr	rx1(i_@$(PREFIX)_rx_clk, i_@$(PREFIX)_rxd[1], { w_@$(PREFIX)_rxd[5], w_@$(PREFIX)_rxd[1] });
-	ecpiddr	rx2(i_@$(PREFIX)_rx_clk, i_@$(PREFIX)_rxd[2], { w_@$(PREFIX)_rxd[6], w_@$(PREFIX)_rxd[2] });
-	ecpiddr	rx3(i_@$(PREFIX)_rx_clk, i_@$(PREFIX)_rxd[3], { w_@$(PREFIX)_rxd[7], w_@$(PREFIX)_rxd[3] });
-	ecpiddr	rxc(i_@$(PREFIX)_rx_clk, i_@$(PREFIX)_rx_ctl, { w_@$(PREFIX)_rxdv,   w_@$(PREFIX)_rxerr });
+	ecpiddr	rx0(i_@$(PREFIX)_rx_clk, w_@$(DLYPREFIX)_rxd[0], { w_@$(PREFIX)_rxd[4], w_@$(PREFIX)_rxd[0] });
+	ecpiddr	rx1(i_@$(PREFIX)_rx_clk, w_@$(DLYPREFIX)_rxd[1], { w_@$(PREFIX)_rxd[5], w_@$(PREFIX)_rxd[1] });
+	ecpiddr	rx2(i_@$(PREFIX)_rx_clk, w_@$(DLYPREFIX)_rxd[2], { w_@$(PREFIX)_rxd[6], w_@$(PREFIX)_rxd[2] });
+	ecpiddr	rx3(i_@$(PREFIX)_rx_clk, w_@$(DLYPREFIX)_rxd[3], { w_@$(PREFIX)_rxd[7], w_@$(PREFIX)_rxd[3] });
+	ecpiddr	rxc(i_@$(PREFIX)_rx_clk, w_@$(DLYPREFIX)_rx_ctl, { w_@$(PREFIX)_rxdv,   w_@$(PREFIX)_rxerr });
 
 	ecpoddr	tx0(s_clk_125mhz, { w_@$(PREFIX)_txd[0], w_@$(PREFIX)_txd[4] }, o_@$(PREFIX)_txd[0]);
 	ecpoddr	tx1(s_clk_125mhz, { w_@$(PREFIX)_txd[1], w_@$(PREFIX)_txd[5] }, o_@$(PREFIX)_txd[1]);
@@ -190,20 +191,24 @@ static volatile unsigned *const @$(BDEF.IONAME)tx = ((unsigned *)(@$[0x%08x](REG
 #define	ENET_TXCMD(LEN)		((LEN)|ENET_TXGO)
 #define	ENET_TXCLR		0x038000
 #define	ENET_TXCANCEL		0x000000
+// Ethernet receive macros
+#define	ENET_RXLEN(CMD)		((CMD) & 0x03fff)
 #define	ENET_RXAVAIL		0x004000
 #define	ENET_RXBUSY		0x008000
 #define	ENET_RXMISS		0x010000
 #define	ENET_RXERR		0x020000
 #define	ENET_RXCRC		0x040000	// Set on a CRC error
-#define	ENET_RXLEN(CMD)		((CMD) & 0x0ffff)
 #define	ENET_RXCLR		0x004000
 #define	ENET_RXBROADCAST	0x080000
-#define	ENET_RXCLRERR		0x078000
+#define	ENET_RXCLRERR		(ENET_RXMISS|ENET_RXERR|ENET_RXCRC|ENET_RXBUSY)
 
 @BDEF.DEFN=
 // Network packet interface
-#define	ENET_TXGO		0x004000
+// Ethernet transmit macros
+//   Transmit status
 #define	ENET_TXBUSY		0x004000
+//   Transmit command(s)
+#define	ENET_TXGO		0x004000
 #define	ENET_NOHWCRC		0x008000
 #define	ENET_NOHWMAC		0x010000
 #define	ENET_RESET		0x020000
@@ -211,15 +216,19 @@ static volatile unsigned *const @$(BDEF.IONAME)tx = ((unsigned *)(@$[0x%08x](REG
 #define	ENET_TXCMD(LEN)		((LEN)|ENET_TXGO)
 #define	ENET_TXCLR		0x038000
 #define	ENET_TXCANCEL		0x000000
+// Ethernet receive macros
+//   Receive status
+#define	ENET_RXLEN(CMD)		((CMD) & 0x03fff)
 #define	ENET_RXAVAIL		0x004000
 #define	ENET_RXBUSY		0x008000
 #define	ENET_RXMISS		0x010000
 #define	ENET_RXERR		0x020000
 #define	ENET_RXCRC		0x040000	// Set on a CRC error
-#define	ENET_RXLEN(CMD)		((CMD) & 0x0ffff)
-#define	ENET_RXCLR		0x004000
 #define	ENET_RXBROADCAST	0x080000
-#define	ENET_RXCLRERR		0x078000
+#define	ENET_RXCLR		0x004000
+//   Receive commands
+#define	ENET_RXCLRERR		(ENET_RXMISS|ENET_RXERR|ENET_RXCRC|ENET_RXBUSY)
+// Buffer sizes
 #define	ENET_TXBUFLN(NET)	(1<<(NET->n_txcmd>>24))
 #define	ENET_RXBUFLN(NET)	(1<<(NET->n_rxcmd>>24))
 typedef	struct ENETPACKET_S {
@@ -230,12 +239,6 @@ typedef	struct ENETPACKET_S {
 
 #define	SYSINT_ENETRX	SYSINT(@$(INT.NETRX.picorv.ID))
 #define	SYSINT_ENETTX	SYSINT(@$(INT.NETTX.picorv.ID))
-
-@SIM.CLOCK=clk_125mhz
-@SIM.TICK=
-		m_core->i_@$(PREFIX)_rx_dv  = m_core->o_@$(PREFIX)_tx_ctl;
-		m_core->i_@$(PREFIX)_rx_err = 0;
-		m_core->i_@$(PREFIX)_rxd    = m_core->o_@$(PREFIX)_txd;
 
 @BDEF.IONAME=io_enet
 @BDEF.IOTYPE=ENETPACKET
@@ -262,7 +265,66 @@ set_max_delay -datapath_only -from [get_cells -hier -filter {NAME=~ *netctrl/n_s
 set_max_delay -datapath_only -from [get_cells -hier -filter {NAME=~ *netctrl/txspdi/o_ck*}]    -to [get_cells -hier -filter {NAME=~*txck/ODDRi*}]          8.0
 set_max_delay -datapath_only -from [get_cells -hier -filter {NAME=~ *o_sys_reset*}]            -to [get_cells -hier -filter {NAME=~*netctrl/q_tx_reset*}]          8.0
 set_max_delay -datapath_only -from [get_cells -hier -filter {NAME=~ *o_sys_reset*}]            -to [get_cells -hier -filter {NAME=~*netctrl/q_rx_reset*}]          8.0
-#
+@SIM.CLOCK=clk_125mhz
+@SIM.TICK=
+		m_core->i_@$(PREFIX)_rx_dv  = m_core->o_@$(PREFIX)_tx_ctl;
+		m_core->i_@$(PREFIX)_rx_err = 0;
+		m_core->i_@$(PREFIX)_rxd    = m_core->o_@$(PREFIX)_txd;
+
+##
+##
 @PREFIX=tfr
-@RTL.MAKE.GROUP=TFRVALUE
 @RTL.MAKE.FILES= tfrvalue.v
+@RTL.MAKE.GROUP=TFRVALUE
+##
+##
+##
+@PREFIX=net1dly
+@DEVID=NET1DLY
+@SLAVE.TYPE=SINGLE
+@SLAVE-BUS=wb
+@NADDR=1
+@TOP.PORTLIST=
+@TOP.IODECL=
+@TOP.DEFNS=
+	wire	[15:0]	w_@$(PREFIX)_delay, w_@$(PREFIX)_command;
+	wire	[3:0]	w_@$(PREFIX)_rxd;
+	wire		w_@$(PREFIX)_rx_ctl;
+@TOP.INSERT=
+	//
+	// The network interface requires that the incoming wires be delayed.
+	// The ecpnetdly controller is built around the DELAYF interface and
+	// offers a programmable delay capability to meet this need.
+	//
+	ecpnetdly #(.NP(5), .NBITS(16))
+	@$(PREFIX)i(s_clk, s_reset, w_@$(PREFIX)_command, w_@$(PREFIX)_delay,
+		{ i_net1_rxd, i_net1_rx_ctl },
+		{ w_@$(PREFIX)_rxd, w_@$(PREFIX)_rx_ctl });
+@TOP.MAIN=
+		w_@$(PREFIX)_delay, w_@$(PREFIX)_command
+@MAIN.PORTLIST=
+		// Network receive delay controller
+		i_@$(PREFIX)_data, o_@$(PREFIX)_data
+@MAIN.IODECL=
+	input	wire	[15:0]	i_@$(PREFIX)_data;
+	output	reg	[15:0]	o_@$(PREFIX)_data;
+@MAIN.INSERT=
+	initial	o_@$(PREFIX)_data = 0;
+	always @(posedge i_clk)
+	if (wb_stb && @$(PREFIX)_sel)
+	begin
+		if (wb_sel[0])
+			o_@$(PREFIX)_data[7:0] <= wb_data[7:0];
+		if (wb_sel[1])
+			o_@$(PREFIX)_data[15:8] <= wb_data[15:8];
+	end
+
+	assign	@$(PREFIX)_data = { i_@$(PREFIX)_data, o_@$(PREFIX)_data };
+@REGS.N=1
+@REGS.0= 0 R_@$(DEVID) @$(DEVID)
+@BDEF.IONAME=_@$(PREFIX)
+@BDEF.IOTYPE=unsigned
+@BDEF.OSDEF=_BOARD_HAS_@$(DEVID)
+@BDEF.OSVAL=static volatile @$(BDEF.IOTYPE) *const @$(BDEF.IONAME) = ((@$(BDEF.IOTYPE) *)@$[0x%08x](REGBASE));
+@RTL.MAKE.FILES= ecpnetdly.v
+@RTL.MAKE.GROUP=NETDELAY

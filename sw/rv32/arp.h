@@ -50,5 +50,6 @@ extern	int	arp_lookup(unsigned ipaddr, ETHERNET_MAC *mac);
 // extern	void	arp_table_add(unsigned ipaddr, unsigned long mac);
 extern	void	send_arp_reply(ETHERNET_MAC dest_mac_addr, unsigned dest_ip_addr);
 extern	void	rx_arp(NET_PACKET *pkt);
+extern	void	dump_arppkt(NET_PACKET *pkt);
 
 #endif

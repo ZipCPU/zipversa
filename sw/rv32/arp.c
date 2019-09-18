@@ -118,20 +118,10 @@ NET_PACKET *new_arp(void) {
 
 void	send_arp_request(int ipaddr) {
 	NET_PACKET *pkt;
-printf("Building ARP request\n");
 	pkt = new_arp();
-printf("Packet at 0x%08x, p_user = 0x%08x, p_raw = 0x%08x\n",
-	(unsigned)pkt,
-	(unsigned)pkt->p_user,
-	(unsigned)pkt->p_raw);
 
-if (pkt->p_length != sizeof(arp_packet)) {
-	printf("ERR: ARM-PACKET SIZE =%3d, new packet size of %3d\n",
-		(unsigned)sizeof(arp_packet), pkt->p_length);
-}
 	memcpy(pkt->p_user, arp_packet, sizeof(arp_packet));
 
-printf("Setting ARP packet\n");
 	pkt->p_user[ 7] = ARP_REQUEST;
 
 	// Initial ETHERTYPE_ARP is in the arp_packet array
@@ -164,10 +154,15 @@ printf("Setting ARP packet\n");
 	pkt->p_user[26] = (ipaddr >>  8)&0x0ff;
 	pkt->p_user[27] = (ipaddr      )&0x0ff;
 
-printf("Calling tx_ethpkt()\n");
 	arp_requests_sent++;
 	ETHERNET_MAC broadcast = 0x0fffffffffffful;
-	printf("Requesting ARP packet\n");
+	/*
+	printf("tx_ethpkt: Requesting ARP of %3d.%3d.%3d.%3d\n",
+		pkt->p_user[24]&0x0ff,
+		pkt->p_user[25]&0x0ff,
+		pkt->p_user[26]&0x0ff,
+		pkt->p_user[27]&0x0ff);
+	*/
 	tx_ethpkt(pkt, ETHERTYPE_ARP, broadcast);
 }
 
@@ -177,7 +172,6 @@ int	arp_lookup(unsigned ipaddr, ETHERNET_MAC *mac) {
 	if (((((ipaddr ^ my_ip_addr) & my_ip_mask) != 0)
 		|| (ipaddr == my_ip_router))
 			&&(router_mac_addr)) {
-printf("MAC ADDR is that of the router\n");
 		*mac = router_mac_addr;
 		return 0;
 	}
@@ -198,7 +192,11 @@ printf("MAC ADDR is that of the router\n");
 		}
 	}
 
-printf("NO MAC FOUND, SENDING ARP REQUEST\n");
+	printf("ARP lookup for %3d.%3d.%3d.%3d failed, sending ARP request\n",
+		(ipaddr >> 24)&0x0ff,
+		(ipaddr >> 16)&0x0ff,
+		(ipaddr >>  8)&0x0ff,
+		(ipaddr      )&0x0ff);
 
 	send_arp_request(ipaddr);
 	return 1;
@@ -290,8 +288,19 @@ void	rx_arp(NET_PACKET *pkt) {
 	for(unsigned k=0; k<6; k++) {
 		// Ignore any malformed packets
 		if (pkt->p_user[k] != arp_packet[k]) {
-			printf("Ignoring ARP packet\n");
+			printf("Mismatch, (p_user[%d] = %02x) != (arp_packet[%d] = %02x)\n",
+				k, pkt->p_user[k]&0x0ff, k,arp_packet[k]&0x0ff);
+			printf("p_user = p_raw + %d\n",
+				pkt->p_user - pkt->p_raw);
+			printf("Ignoring ARP packet -- dump follows\n");
+			dump_raw(pkt);
+			pkt_reset(pkt);
+			dump_ethpkt(pkt);
 			free_pkt(pkt);
+			/*
+
+			for(;;) ;
+			*/
 			return;
 		}
 	}
@@ -321,4 +330,45 @@ void	rx_arp(NET_PACKET *pkt) {
 	}
 
 	free_pkt(pkt);
+}
+
+void	dump_arppkt(NET_PACKET *pkt) {
+	printf("DUMP: ARP");
+	if (pkt->p_user[7] == ARP_REQUEST)
+		printf("-REQUEST\n");
+	else if (pkt->p_user[7] == ARP_REPLY)
+		printf("-REPLY\n");
+	else
+		printf(" ... unknown ARP packet type\n");
+	printf("  ARP-HDR: %02x:%02x:%02x:%02x:%02x:%02x : %02x%02x\n",
+			pkt->p_user[0]&0x0ff, pkt->p_user[1]&0x0ff,
+			pkt->p_user[2]&0x0ff, pkt->p_user[3]&0x0ff,
+			pkt->p_user[4]&0x0ff, pkt->p_user[5]&0x0ff,
+			pkt->p_user[6]&0x0ff, pkt->p_user[7]&0x0ff);
+			
+	printf("  SRC MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
+			pkt->p_user[8]&0x0ff,
+			pkt->p_user[9]&0x0ff,
+			pkt->p_user[10]&0x0ff,
+			pkt->p_user[11]&0x0ff,
+			pkt->p_user[12]&0x0ff,
+			pkt->p_user[13]&0x0ff);
+	printf("  SRC IP: %3d.%3d.%3d.%3d\n",
+			pkt->p_user[14]&0x0ff,
+			pkt->p_user[15]&0x0ff,
+			pkt->p_user[16]&0x0ff,
+			pkt->p_user[17]&0x0ff);
+
+	printf("  DST MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
+			pkt->p_user[18]&0x0ff,
+			pkt->p_user[19]&0x0ff,
+			pkt->p_user[20]&0x0ff,
+			pkt->p_user[21]&0x0ff,
+			pkt->p_user[22]&0x0ff,
+			pkt->p_user[23]&0x0ff);
+	printf("  DST IP: %3d.%3d.%3d.%3d\n",
+			pkt->p_user[24]&0x0ff,
+			pkt->p_user[25]&0x0ff,
+			pkt->p_user[26]&0x0ff,
+			pkt->p_user[27]&0x0ff);
 }

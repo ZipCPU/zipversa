@@ -76,13 +76,13 @@ module	wbubus(i_clk, i_rx_stb, i_rx_data,
 
 	generate
 	if (LGINPUT_FIFO < 2)
-	begin
+	begin : NO_INPUT_FIFO
 
 	assign	fifo_in_stb = in_stb;
 	assign	fifo_in_word = in_word;
 	assign	w_bus_reset = 1'b0;
 
-	end else begin
+	end else begin : INPUT_FIFO
 
 		wire		ififo_empty_n, ififo_err;
 		assign	fifo_in_stb = (~w_bus_busy)&&(ififo_empty_n);

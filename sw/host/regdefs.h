@@ -81,16 +81,24 @@
 #define	R_BUSERR        	0x00600004	// 00600004, wbregs names: BUSERR
 #define	R_PIC           	0x00600008	// 00600008, wbregs names: PIC
 #define	R_PIC           	0x00600008	// 00600008, wbregs names: PIC
-#define	R_GPIO          	0x0060000c	// 0060000c, wbregs names: GPIO, GPI, GPO
-#define	R_GPIO          	0x0060000c	// 0060000c, wbregs names: GPIO, GPI, GPO
-#define	R_PWRCOUNT      	0x00600010	// 00600010, wbregs names: PWRCOUNT
-#define	R_PWRCOUNT      	0x00600010	// 00600010, wbregs names: PWRCOUNT
-#define	R_SPIO          	0x00600014	// 00600014, wbregs names: SPIO
-#define	R_SPIO          	0x00600014	// 00600014, wbregs names: SPIO
-#define	R_ZIPTIMER      	0x00600018	// 00600018, wbregs names: ZIPTIMER, TIMER, SYSTIMER
-#define	R_ZIPTIMER      	0x00600018	// 00600018, wbregs names: ZIPTIMER, TIMER, SYSTIMER
-#define	R_VERSION       	0x0060001c	// 0060001c, wbregs names: VERSION
-#define	R_VERSION       	0x0060001c	// 0060001c, wbregs names: VERSION
+#define	R_ACTIVEIRQ     	0x0060000c	// 0060000c, wbregs names: CPUACTIVEIRQ
+#define	R_ACTIVEIRQ     	0x0060000c	// 0060000c, wbregs names: CPUACTIVEIRQ
+#define	R_BUSERR_ADDR   	0x00600010	// 00600010, wbregs names: CPUBUSERR
+#define	R_BUSERR_ADDR   	0x00600010	// 00600010, wbregs names: CPUBUSERR
+#define	R_BUSERR_PC     	0x00600014	// 00600014, wbregs names: CPUBUSERRPC
+#define	R_BUSERR_PC     	0x00600014	// 00600014, wbregs names: CPUBUSERRPC
+#define	R_GPIO          	0x00600018	// 00600018, wbregs names: GPIO, GPI, GPO
+#define	R_GPIO          	0x00600018	// 00600018, wbregs names: GPIO, GPI, GPO
+#define	R_NET1DLY       	0x0060001c	// 0060001c, wbregs names: NET1DLY
+#define	R_NET1DLY       	0x0060001c	// 0060001c, wbregs names: NET1DLY
+#define	R_PWRCOUNT      	0x00600020	// 00600020, wbregs names: PWRCOUNT
+#define	R_PWRCOUNT      	0x00600020	// 00600020, wbregs names: PWRCOUNT
+#define	R_SPIO          	0x00600024	// 00600024, wbregs names: SPIO
+#define	R_SPIO          	0x00600024	// 00600024, wbregs names: SPIO
+#define	R_ZIPTIMER      	0x00600028	// 00600028, wbregs names: ZIPTIMER, TIMER, SYSTIMER
+#define	R_ZIPTIMER      	0x00600028	// 00600028, wbregs names: ZIPTIMER, TIMER, SYSTIMER
+#define	R_VERSION       	0x0060002c	// 0060002c, wbregs names: VERSION
+#define	R_VERSION       	0x0060002c	// 0060002c, wbregs names: VERSION
 // Ethernet configuration MDIO1 port
 #define	R_MDIO1_BMCR    	0x00700000	// 00700000, wbregs names: BMCR
 #define	R_MDIO1_BMSR    	0x00700004	// 00700000, wbregs names: BMSR
@@ -113,23 +121,14 @@
 // The @REGDEFS.H.DEFNS tag
 //
 // @REGDEFS.H.DEFNS for masters
-#define	CLKFREQHZ 50000000
-#define	CLKFREQUENCYHZ 50000000
 #ifdef	INCLUDE_ZIPCPU
 #define	R_ZIPCTRL	0x01000000
 #define	R_ZIPDATA	0x01000004
 #endif
 #define	BAUDRATE	1000000
+#define	CLKFREQHZ 50000000
+#define	CLKFREQUENCYHZ 50000000
 // @REGDEFS.H.DEFNS for peripherals
-#define	BKRAMBASE	0x00a00000
-#define	BKRAMLEN	0x00010000
-#define	FLASHBASE	0x01000000
-#define	FLASHLEN	0x01000000
-#define	FLASHLGLEN	24
-//
-#define	FLASH_RDDELAY	0
-#define	FLASH_NDUMMY	2
-//
 //
 // GPIO input wires
 //
@@ -151,6 +150,15 @@
 //
 #define	WBFFTBASE	0x00900000
 //
+#define	FLASHBASE	0x01000000
+#define	FLASHLEN	0x01000000
+#define	FLASHLGLEN	24
+//
+#define	FLASH_RDDELAY	0
+#define	FLASH_NDUMMY	2
+//
+#define	BKRAMBASE	0x00a00000
+#define	BKRAMLEN	0x00010000
 // @REGDEFS.H.DEFNS at the top level
 // End of definitions from REGDEFS.H.DEFNS
 //
@@ -160,26 +168,6 @@
 #define	RESET_ADDRESS	16777216
 #define	LITTLEENDIAN_CPU	1
 // @REGDEFS.H.INSERT for peripherals
-// Network packet interface
-#define	ENET_TXGO		0x004000
-#define	ENET_TXBUSY		0x004000
-#define	ENET_NOHWCRC		0x008000
-#define	ENET_NOHWMAC		0x010000
-#define	ENET_RESET		0x020000
-#define	ENET_NOHWIPCHK		0x040000
-#define	ENET_TXCMD(LEN)		((LEN)|ENET_TXGO)
-#define	ENET_TXCLR		0x038000
-#define	ENET_TXCANCEL		0x000000
-#define	ENET_RXAVAIL		0x004000
-#define	ENET_RXBUSY		0x008000
-#define	ENET_RXMISS		0x010000
-#define	ENET_RXERR		0x020000
-#define	ENET_RXCRC		0x040000	// Set on a CRC error
-#define	ENET_RXLEN(CMD)		((CMD) & 0x0ffff)
-#define	ENET_RXCLR		0x004000
-#define	ENET_RXBROADCAST	0x080000
-#define	ENET_RXCLRERR		0x078000
-
 // Flash control constants
 #define	QSPI_FLASH	// This core and hardware support a Quad SPI flash
 #define	SZPAGEB		256
@@ -193,6 +181,27 @@
 #define	SECTOROF(A)	((A) & (-1<<16))
 #define	SUBSECTOROF(A)	((A) & (-1<<12))
 #define	PAGEOF(A)	((A) & (-1<<8))
+
+// Network packet interface
+#define	ENET_TXGO		0x004000
+#define	ENET_TXBUSY		0x004000
+#define	ENET_NOHWCRC		0x008000
+#define	ENET_NOHWMAC		0x010000
+#define	ENET_RESET		0x020000
+#define	ENET_NOHWIPCHK		0x040000
+#define	ENET_TXCMD(LEN)		((LEN)|ENET_TXGO)
+#define	ENET_TXCLR		0x038000
+#define	ENET_TXCANCEL		0x000000
+// Ethernet receive macros
+#define	ENET_RXLEN(CMD)		((CMD) & 0x03fff)
+#define	ENET_RXAVAIL		0x004000
+#define	ENET_RXBUSY		0x008000
+#define	ENET_RXMISS		0x010000
+#define	ENET_RXERR		0x020000
+#define	ENET_RXCRC		0x040000	// Set on a CRC error
+#define	ENET_RXCLR		0x004000
+#define	ENET_RXBROADCAST	0x080000
+#define	ENET_RXCLRERR		(ENET_RXMISS|ENET_RXERR|ENET_RXCRC|ENET_RXBUSY)
 
 // @REGDEFS.H.INSERT from the top level
 typedef	struct {

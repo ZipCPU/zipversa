@@ -42,7 +42,13 @@ module wb_picorv32 #(
 	input	wire	[31:0]	i_wb_data,
 	input	wire		i_wb_err,
 	// IRQ interface
-	input	wire	[31:0] irq
+	input	wire	[31:0] irq,
+	//
+	// Bus error debugging
+	output	reg	[31:0]	o_last_insn_addr,
+	output	reg	[31:0]	o_last_err_addr,
+	// Estimate CPU state with the currently active IRQs
+	output	wire	[31:0]	o_active_irq
 );
 	// This is an option to swap endianness.  It is neither fully supported,
 	// nor does what little is supported work (properly).
@@ -167,6 +173,14 @@ module wb_picorv32 #(
 		o_wb_stb <= 1;
 	end
 
+	always @(posedge i_clk)
+	if (mem_valid && mem_instr && i_wb_ack && !r_irq[2])
+		o_last_insn_addr <= mem_addr;
+
+	always @(posedge i_clk)
+	if (mem_ready && pico_irq[2] && !r_irq[2])
+		o_last_err_addr <= mem_addr;
+
 	integer	ik;
 	always @(posedge i_clk)
 	if (!o_wb_cyc)
@@ -226,6 +240,9 @@ module wb_picorv32 #(
 		r_irq <= 0;
 	else
 		r_irq <= (r_irq & ~eoi) | pico_irq;
+
+	assign	o_active_irq = r_irq;
+
 
 	// Verilator lint_off UNUSED
 	wire	unused;

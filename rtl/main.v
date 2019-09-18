@@ -53,20 +53,20 @@
 // be listed here.
 //
 // First, the independent access fields for any bus masters
-`define	WBUBUS_MASTER
 `define	INCLUDE_PICORV
+`define	WBUBUS_MASTER
 // And then for the independent peripherals
-`define	NET1_ACCESS
-`define	NETCTRL1_ACCESS
-`define	BKRAM_ACCESS
-`define	BUSCONSOLE_ACCESS
-`define	SPIO_ACCESS
-`define	FLASH_ACCESS
-`define	BUSPIC_ACCESS
-`define	PWRCOUNT_ACCESS
-`define	ZIPTIMER_ACCESS
 `define	GPIO_ACCESS
 `define	WBFFT_ACCESS
+`define	PWRCOUNT_ACCESS
+`define	BUSPIC_ACCESS
+`define	FLASH_ACCESS
+`define	ZIPTIMER_ACCESS
+`define	SPIO_ACCESS
+`define	BUSCONSOLE_ACCESS
+`define	BKRAM_ACCESS
+`define	NETCTRL1_ACCESS
+`define	NET1_ACCESS
 //
 //
 // The list of those things that have @DEPENDS tags
@@ -77,14 +77,23 @@
 // Any core with both an @ACCESS and a @DEPENDS tag will show up here.
 // The @DEPENDS tag will turn into a series of ifdef's, with the @ACCESS
 // being defined only if all of the ifdef's are true//
+`ifdef	INCLUDE_PICORV
+`define	INCLUDE_CPU_BUSERR_ADDR
+`endif	// INCLUDE_PICORV
+`ifdef	INCLUDE_PICORV
+`define	INCLUDE_CPU
+`endif	// INCLUDE_PICORV
 `ifdef	FLASH_ACCESS
 `define	FLASHCFG_ACCESS
 `endif	// FLASH_ACCESS
+`ifdef	INCLUDE_PICORV
+`define	INCLUDE_CPU_ACTIVE_IRQ
+`endif	// INCLUDE_PICORV
 `ifdef	FLASH_ACCESS
 `define	FLASHSCOPE_SCOPC
 `endif	// FLASH_ACCESS
 `ifdef	INCLUDE_PICORV
-`define	INCLUDE_CPU
+`define	INCLUDE_CPU_BUSERR_INSN
 `endif	// INCLUDE_PICORV
 `ifdef	NET1_ACCESS
 `define	NETSCOPE_SCOPE
@@ -102,24 +111,26 @@
 // from the fields given by @MAIN.PORTLIST
 //
 module	main(i_clk, i_reset,
+		// GPIO ports
+		i_gpio, o_gpio,
+		// UART/host to wishbone interface
+		i_wbu_uart_rx, o_wbu_uart_tx,
+		// Network receive delay controller
+		i_net1dly_data, o_net1dly_data,
+		// Network clock at 125MHz
+		i_clk_125mhz,
+		// The Universal QSPI Flash
+		o_qspi_cs_n, o_qspi_sck, o_qspi_dat, i_qspi_dat, o_qspi_mod,
+		// SPIO interface
+		i_sw, i_btn, o_led,
+		// The ethernet MDIO1 wires
+		o_net1_mdc, o_mdio1, o_mdio1_we, i_mdio1,
 		// Ethernet control (packets) lines
 		o_net1_reset_n,
 		// eth_int_b	// Interrupt, leave floating
 		// eth_pme_b	// Power management event, leave floating
 		i_net1_rx_clk, i_net1_rx_dv, i_net1_rx_err, i_net1_rxd,
-		o_net1_tx_clk, o_net1_tx_ctl, o_net1_txd,
-		// The ethernet MDIO1 wires
-		o_net1_mdc, o_mdio1, o_mdio1_we, i_mdio1,
-		// SPIO interface
-		i_sw, i_btn, o_led,
-		// The Universal QSPI Flash
-		o_qspi_cs_n, o_qspi_sck, o_qspi_dat, i_qspi_dat, o_qspi_mod,
-		// Network clock at 125MHz
-		i_clk_125mhz,
-		// UART/host to wishbone interface
-		i_wbu_uart_rx, o_wbu_uart_tx,
-		// GPIO ports
-		i_gpio, o_gpio);
+		o_net1_tx_clk, o_net1_tx_ctl, o_net1_txd);
 //
 // Any parameter definitions
 //
@@ -141,6 +152,28 @@ module	main(i_clk, i_reset,
 	// verilator lint_off UNUSED
 	input	wire		i_reset;
 	// verilator lint_on UNUSED
+	localparam	NGPI = 2, NGPO=5;
+	// GPIO ports
+	input		[(NGPI-1):0]	i_gpio;
+	output	wire	[(NGPO-2):0]	o_gpio;
+	input	wire		i_wbu_uart_rx;
+	output	wire		o_wbu_uart_tx;
+	input	wire	[15:0]	i_net1dly_data;
+	output	reg	[15:0]	o_net1dly_data;
+		// Extra clocks
+	input	wire		i_clk_125mhz;
+	// The Universal QSPI flash
+	output	wire		o_qspi_cs_n, o_qspi_sck;
+	output	wire	[3:0]	o_qspi_dat;
+	input	wire	[3:0]	i_qspi_dat;
+	output	wire	[1:0]	o_qspi_mod;
+	// SPIO interface
+	input	wire	[8-1:0]	i_sw;
+	input	wire	[1-1:0]	i_btn;
+	output	wire	[8-1:0]	o_led;
+	// Ethernet control (MDIO1)
+	output	wire		o_net1_mdc, o_mdio1, o_mdio1_we;
+	input	wire		i_mdio1;
 	// Ethernet (RGMII) control
 	output	wire		o_net1_reset_n;
 	input	wire		i_net1_rx_clk, i_net1_rx_dv, i_net1_rx_err;
@@ -148,26 +181,6 @@ module	main(i_clk, i_reset,
 	output	wire	[1:0]	o_net1_tx_clk;
 	output	wire		o_net1_tx_ctl;
 	output	wire	[7:0]	o_net1_txd;
-	// Ethernet control (MDIO1)
-	output	wire		o_net1_mdc, o_mdio1, o_mdio1_we;
-	input	wire		i_mdio1;
-	// SPIO interface
-	input	wire	[8-1:0]	i_sw;
-	input	wire	[1-1:0]	i_btn;
-	output	wire	[8-1:0]	o_led;
-	// The Universal QSPI flash
-	output	wire		o_qspi_cs_n, o_qspi_sck;
-	output	wire	[3:0]	o_qspi_dat;
-	input	wire	[3:0]	i_qspi_dat;
-	output	wire	[1:0]	o_qspi_mod;
-		// Extra clocks
-	input	wire		i_clk_125mhz;
-	input	wire		i_wbu_uart_rx;
-	output	wire		o_wbu_uart_tx;
-	localparam	NGPI = 2, NGPO=5;
-	// GPIO ports
-	input		[(NGPI-1):0]	i_gpio;
-	output	wire	[(NGPO-2):0]	o_gpio;
 	// Make Verilator happy ... defining bus wires for lots of components
 	// often ends up with unused wires lying around.  We'll turn off
 	// Ver1lator's lint warning here that checks for unused wires.
@@ -181,17 +194,17 @@ module	main(i_clk, i_reset,
 	// These declarations come from the various components values
 	// given under the @INT.<interrupt name>.WIRE key.
 	//
-	wire	flashdbg_int;	// flashdbg.INT.FLASHDBG.WIRE
-	wire	net1tx_int;	// net1.INT.NETTX.WIRE
-	wire	net1rx_int;	// net1.INT.NETRX.WIRE
+	wire	gpio_int;	// gpio.INT.GPIO.WIRE
+	wire	systimer_int;	// systimer.INT.TIMER.WIRE
+	wire	spio_int;	// spio.INT.SPIO.WIRE
 	wire	uarttxf_int;	// uart.INT.UARTTXF.WIRE
 	wire	uartrxf_int;	// uart.INT.UARTRXF.WIRE
 	wire	uarttx_int;	// uart.INT.UARTTX.WIRE
 	wire	uartrx_int;	// uart.INT.UARTRX.WIRE
-	wire	spio_int;	// spio.INT.SPIO.WIRE
 	wire	enetscope_int;	// enetscope.INT.ENETSCOPE.WIRE
-	wire	systimer_int;	// systimer.INT.TIMER.WIRE
-	wire	gpio_int;	// gpio.INT.GPIO.WIRE
+	wire	net1tx_int;	// net1.INT.NETTX.WIRE
+	wire	net1rx_int;	// net1.INT.NETRX.WIRE
+	wire	flashdbg_int;	// flashdbg.INT.FLASHDBG.WIRE
 
 
 	//
@@ -201,23 +214,13 @@ module	main(i_clk, i_reset,
 	// various components comprising the design.
 	//
 // Looking for string: MAIN.DEFNS
-	//
-	wire		net1_debug_clk;
-	wire	[31:0]	net1_debug;
-	// Console definitions
-	wire	w_console_rx_stb, w_console_tx_stb, w_console_busy;
-	wire	[6:0]	w_console_rx_data, w_console_tx_data;
-	wire	[8-1:0]	w_led;
-	// Definitions for the flash debug port
-	wire		flash_dbg_trigger;
-	wire	[31:0]	flash_debug;
-// BUILDTIME doesnt need to include builddate.v a second time
-// `include "builddate.v"
-	wire	net1_dbg_trigger;
-	wire	w_bus_int;
-	reg	[31:0]	r_pwrcount_data;
-	wire	i_net_tx_clk;
-	reg	[23-1:0]	r_buserr_addr;
+	wire		picorv_trap;
+	wire	[29:0]	cpu_addr_wide;
+	wire	[31:0]	picorv_buserr_insn,
+			picorv_buserr_addr,
+			picorv_active_irq;
+	wire	[NGPO-1:0]	w_gpio;
+	wire			cpu_reset;
 	//
 	//
 	// UART interface
@@ -243,18 +246,31 @@ module	main(i_clk, i_reset,
 	wire		zip_dbg_stall, zip_dbg_ack;
 	wire	[31:0]	zip_dbg_data;
 `endif
-	wire	[NGPO-1:0]	w_gpio;
-	wire			cpu_reset;
+	reg	[23-1:0]	r_buserr_addr;
+	wire	i_net_tx_clk;
+	wire		wbfft_int;
+	reg	[31:0]	r_pwrcount_data;
+	wire	w_bus_int;
+// BUILDTIME doesnt need to include builddate.v a second time
+// `include "builddate.v"
+	// Definitions for the flash debug port
+	wire		flash_dbg_trigger;
+	wire	[31:0]	flash_debug;
+	wire	[8-1:0]	w_led;
+	// Console definitions
+	wire	w_console_rx_stb, w_console_tx_stb, w_console_busy;
+	wire	[6:0]	w_console_rx_data, w_console_tx_data;
+`include "builddate.v"
 	// Bus arbiter's internal lines
 	wire		wbu_delayi_cyc, wbu_delayi_stb, wbu_delayi_we,
 			wbu_delayi_stall, wbu_delayi_ack, wbu_delayi_err;
 	wire	[(23-1):0]	wbu_delayi_addr;
 	wire	[(32-1):0]	wbu_delayi_odata, wbu_delayi_idata;
 	wire	[(4-1):0]	wbu_delayi_sel;
-`include "builddate.v"
-	wire		picorv_trap;
-	wire	[29:0]	cpu_addr_wide;
-	wire		wbfft_int;
+	wire	net1_dbg_trigger;
+	//
+	wire		net1_debug_clk;
+	wire	[31:0]	net1_debug;
 
 
 	//
@@ -263,8 +279,8 @@ module	main(i_clk, i_reset,
 	// These declarations come from the various components having
 	// PIC and PIC.MAX keys.
 	//
-	wire	[14:0]	bus_int_vector;
 	wire	[31:0]	picorv_int_vec;
+	wire	[14:0]	bus_int_vector;
 	//
 	//
 	// Define bus wires
@@ -294,9 +310,25 @@ module	main(i_clk, i_reset,
 	wire		buspic_sel, buspic_stall, buspic_ack;
 	wire	[31:0]	buspic_data;
 
+	// Wishbone slave definitions for bus wb(SIO), slave cpu_active_irq
+	wire		cpu_active_irq_sel, cpu_active_irq_stall, cpu_active_irq_ack;
+	wire	[31:0]	cpu_active_irq_data;
+
+	// Wishbone slave definitions for bus wb(SIO), slave cpu_buserr_addr
+	wire		cpu_buserr_addr_sel, cpu_buserr_addr_stall, cpu_buserr_addr_ack;
+	wire	[31:0]	cpu_buserr_addr_data;
+
+	// Wishbone slave definitions for bus wb(SIO), slave cpu_buserr_insn
+	wire		cpu_buserr_insn_sel, cpu_buserr_insn_stall, cpu_buserr_insn_ack;
+	wire	[31:0]	cpu_buserr_insn_data;
+
 	// Wishbone slave definitions for bus wb(SIO), slave gpio
 	wire		gpio_sel, gpio_stall, gpio_ack;
 	wire	[31:0]	gpio_data;
+
+	// Wishbone slave definitions for bus wb(SIO), slave net1dly
+	wire		net1dly_sel, net1dly_stall, net1dly_ack;
+	wire	[31:0]	net1dly_data;
 
 	// Wishbone slave definitions for bus wb(SIO), slave pwrcount
 	wire		pwrcount_sel, pwrcount_stall, pwrcount_ack;
@@ -402,20 +434,24 @@ module	main(i_clk, i_reset,
 	//
 	//
 	
-	assign	   buildtime_sel = ((wb_sio_sel)&&(wb_addr[ 2: 0] ==  3'h0));  // 0x000000
-	assign	      buserr_sel = ((wb_sio_sel)&&(wb_addr[ 2: 0] ==  3'h1));  // 0x000004
-	assign	      buspic_sel = ((wb_sio_sel)&&(wb_addr[ 2: 0] ==  3'h2));  // 0x000008
-	assign	        gpio_sel = ((wb_sio_sel)&&(wb_addr[ 2: 0] ==  3'h3));  // 0x00000c
-	assign	    pwrcount_sel = ((wb_sio_sel)&&(wb_addr[ 2: 0] ==  3'h4));  // 0x000010
-	assign	        spio_sel = ((wb_sio_sel)&&(wb_addr[ 2: 0] ==  3'h5));  // 0x000014
-	assign	    systimer_sel = ((wb_sio_sel)&&(wb_addr[ 2: 0] ==  3'h6));  // 0x000018
-	assign	     version_sel = ((wb_sio_sel)&&(wb_addr[ 2: 0] ==  3'h7));  // 0x00001c
+	assign	   buildtime_sel = ((wb_sio_sel)&&(wb_addr[ 3: 0] ==  4'h0));  // 0x000000
+	assign	      buserr_sel = ((wb_sio_sel)&&(wb_addr[ 3: 0] ==  4'h1));  // 0x000004
+	assign	      buspic_sel = ((wb_sio_sel)&&(wb_addr[ 3: 0] ==  4'h2));  // 0x000008
+	assign	cpu_active_irq_sel = ((wb_sio_sel)&&(wb_addr[ 3: 0] ==  4'h3));  // 0x00000c
+	assign	cpu_buserr_addr_sel = ((wb_sio_sel)&&(wb_addr[ 3: 0] ==  4'h4));  // 0x000010
+	assign	cpu_buserr_insn_sel = ((wb_sio_sel)&&(wb_addr[ 3: 0] ==  4'h5));  // 0x000014
+	assign	        gpio_sel = ((wb_sio_sel)&&(wb_addr[ 3: 0] ==  4'h6));  // 0x000018
+	assign	     net1dly_sel = ((wb_sio_sel)&&(wb_addr[ 3: 0] ==  4'h7));  // 0x00001c
+	assign	    pwrcount_sel = ((wb_sio_sel)&&(wb_addr[ 3: 0] ==  4'h8));  // 0x000020
+	assign	        spio_sel = ((wb_sio_sel)&&(wb_addr[ 3: 0] ==  4'h9));  // 0x000024
+	assign	    systimer_sel = ((wb_sio_sel)&&(wb_addr[ 3: 0] ==  4'ha));  // 0x000028
+	assign	     version_sel = ((wb_sio_sel)&&(wb_addr[ 3: 0] ==  4'hb));  // 0x00002c
 	assign	    flashcfg_sel = ((wb_addr[22:18] &  5'h1f) ==  5'h01); // 0x100000
 	assign	   enetscope_sel = ((wb_addr[22:18] &  5'h1f) ==  5'h02); // 0x200000 - 0x200007
 	assign	    flashdbg_sel = ((wb_addr[22:18] &  5'h1f) ==  5'h03); // 0x300000 - 0x300007
 	assign	        uart_sel = ((wb_addr[22:18] &  5'h1f) ==  5'h04); // 0x400000 - 0x40000f
 	assign	        net1_sel = ((wb_addr[22:18] &  5'h1f) ==  5'h05); // 0x500000 - 0x50001f
-	assign	      wb_sio_sel = ((wb_addr[22:18] &  5'h1f) ==  5'h06); // 0x600000 - 0x60001f
+	assign	      wb_sio_sel = ((wb_addr[22:18] &  5'h1f) ==  5'h06); // 0x600000 - 0x60003f
 //x2	Was a master bus as well
 	assign	       mdio1_sel = ((wb_addr[22:18] &  5'h1f) ==  5'h07); // 0x700000 - 0x70007f
 	assign	        netb_sel = ((wb_addr[22:18] &  5'h1f) ==  5'h08); // 0x800000 - 0x800fff
@@ -519,14 +555,18 @@ module	main(i_clk, i_reset,
 	assign	wb_sio_ack = r_wb_sio_ack;
 
 	always	@(posedge i_clk)
-	casez( wb_addr[2:0] )
-		3'h0: r_wb_sio_data <= buildtime_data;
-		3'h1: r_wb_sio_data <= buserr_data;
-		3'h2: r_wb_sio_data <= buspic_data;
-		3'h3: r_wb_sio_data <= gpio_data;
-		3'h4: r_wb_sio_data <= pwrcount_data;
-		3'h5: r_wb_sio_data <= spio_data;
-		3'h6: r_wb_sio_data <= systimer_data;
+	casez( wb_addr[3:0] )
+		4'h0: r_wb_sio_data <= buildtime_data;
+		4'h1: r_wb_sio_data <= buserr_data;
+		4'h2: r_wb_sio_data <= buspic_data;
+		4'h3: r_wb_sio_data <= cpu_active_irq_data;
+		4'h4: r_wb_sio_data <= cpu_buserr_addr_data;
+		4'h5: r_wb_sio_data <= cpu_buserr_insn_data;
+		4'h6: r_wb_sio_data <= gpio_data;
+		4'h7: r_wb_sio_data <= net1dly_data;
+		4'h8: r_wb_sio_data <= pwrcount_data;
+		4'h9: r_wb_sio_data <= spio_data;
+		4'ha: r_wb_sio_data <= systimer_data;
 		default: r_wb_sio_data <= version_data;
 	endcase
 	assign	wb_sio_data = r_wb_sio_data;
@@ -678,23 +718,6 @@ module	main(i_clk, i_reset,
 	// exists, then your interrupt will be assigned to the position given
 	// by the ID# in that tag.
 	//
-	assign	bus_int_vector = {
-		1'b0,
-		1'b0,
-		1'b0,
-		1'b0,
-		1'b0,
-		1'b0,
-		1'b0,
-		systimer_int,
-		enetscope_int,
-		spio_int,
-		uartrxf_int,
-		uarttxf_int,
-		net1rx_int,
-		net1tx_int,
-		flashdbg_int
-	};
 	assign	picorv_int_vec = {
 		1'b0,
 		1'b0,
@@ -722,12 +745,29 @@ module	main(i_clk, i_reset,
 		1'b0,
 		1'b0,
 		1'b0,
-		gpio_int,
-		systimer_int,
+		net1rx_int,
+		net1tx_int,
 		uartrxf_int,
 		uarttxf_int,
+		systimer_int,
+		gpio_int
+	};
+	assign	bus_int_vector = {
+		1'b0,
+		1'b0,
+		1'b0,
+		1'b0,
+		1'b0,
+		1'b0,
+		1'b0,
+		flashdbg_int,
 		net1rx_int,
-		net1tx_int
+		net1tx_int,
+		enetscope_int,
+		uartrxf_int,
+		uarttxf_int,
+		spio_int,
+		systimer_int
 	};
 
 
@@ -745,267 +785,78 @@ module	main(i_clk, i_reset,
 	// or making sure all of the various interrupt wires are set to
 	// zero if the component is not included.
 	//
-`ifdef	FLASHSCOPE_SCOPC
-	wbscopc #(.LGMEM(13),
-		.SYNCHRONOUS(1))
-	flashdbgi(i_clk, 1'b1, flash_dbg_trigger, flash_debug[30:0],
-		i_clk, wb_cyc, (wb_stb)&&(flashdbg_sel), wb_we,
-		wb_addr[0], wb_data, flashdbg_stall, flashdbg_ack,
-		flashdbg_data, flashdbg_int);
-`else	// FLASHSCOPE_SCOPC
-	assign	flashdbg_int = 0;
+`ifdef	INCLUDE_PICORV
+	wb_picorv32 #(.PROGADDR_RESET(16777216),
+			.PROGADDR_IRQ(16777216+16),
+			.STACKADDR(10551296))
+		picorvi(picorv_trap,
+			i_clk, i_reset | cpu_reset,
+			cpu_cyc, cpu_stb, cpu_we,
+				cpu_addr_wide, cpu_data, cpu_sel,
+			cpu_stall, cpu_ack, cpu_idata,
+			cpu_err,
+			picorv_int_vec,
+			picorv_buserr_insn,
+			picorv_buserr_addr,
+			picorv_active_irq);
 
-	// In the case that there is no flashdbg peripheral responding on the wb bus
-	assign	flashdbg_stall = 0;
-	assign	flashdbg_data  = 0;
-	assign	flashdbg_ack   = (wb_stb) && (flashdbg_sel);
+	assign	cpu_addr = cpu_addr_wide[23-1:0];
+`else	// INCLUDE_PICORV
 
-	assign	flashdbg_int = 1'b0;	// flashdbg.INT.FLASHDBG.WIRE
-`endif	// FLASHSCOPE_SCOPC
+	// In the case that nothing drives the cpu bus ...
+	assign	cpu_cyc = 1'b0;
+	assign	cpu_stb = 1'b0;
+	assign	cpu_we  = 1'b0;
+	assign	cpu_sel = 0;
+	assign	cpu_addr= 0;
+	assign	cpu_data= 0;
+	// verilator lint_off UNUSED
+	wire	unused_bus_cpu;
+	assign	unused_bus_cpu = &{ 1'b0, cpu_stall, cpu_ack, cpu_err, cpu_data };
+	// verilator lint_on  UNUSED
 
-`ifndef	NET1_ACCESS
-	// Ethernet packet memory declaration
+`endif	// INCLUDE_PICORV
+
+`ifdef	GPIO_ACCESS
 	//
-	// The only time this needs to be defined is when the ethernet module
-	// itself isnt defined.  Otherwise, the access is accomplished by the
-	// ethernet module
-
-	memdev #(11)
-		enet_buffers(i_clk,
-			(wb_cyc), (wb_stb)&&(netb_sel),
-				(wb_we)&&(wb_addr[11-1]),
-				wb_addr[11-2:0], wb_data, wb_sel,
-				netb_stall, netb_ack, netb_data);
-
-`else
-
-	assign	netb_ack   = 1'b0;
-	assign	netb_stall = 1'b0;
-	assign	netb_data  = net1_data;
-
-`endif
-
-`ifdef	NET1_ACCESS
-	enetpackets	#(.MEMORY_ADDRESS_WIDTH(11),
-			.OPT_ENDIANSWAP(!OPT_BIGENDIAN))
-		net1i(i_clk, i_reset,
-			wb_cyc,(wb_stb)&&((net1_sel)||(netb_sel)),
-			wb_we, { (netb_sel), wb_addr[11-2:0] }, wb_data, wb_sel,
-				net1_stall, net1_ack, net1_data,
-			o_net1_reset_n,
-			i_net1_rx_clk, i_net1_rx_dv, i_net1_rx_err, i_net1_rxd,
-			// For some reason, this 125MHz clock isn't being
-			// generated (??)
-			//
-			// i_clk_125mhz,
-			i_net1_rx_clk,
-			o_net1_tx_clk, o_net1_tx_ctl, o_net1_txd,
-			net1rx_int, net1tx_int, net1_debug_clk, net1_debug);
-
-`else	// NET1_ACCESS
-
-	// In the case that there is no net1 peripheral responding on the wb bus
-	assign	net1_stall = 0;
-	assign	net1_data  = 0;
-	assign	net1_ack   = (wb_stb) && (net1_sel);
-
-	assign	net1tx_int = 1'b0;	// net1.INT.NETTX.WIRE
-	assign	net1rx_int = 1'b0;	// net1.INT.NETRX.WIRE
-`endif	// NET1_ACCESS
-
-`ifdef	NETCTRL1_ACCESS
-	wire[31:0]	mdio1_debug;
-	enetctrl #(.CLKBITS(2), .PHYADDR(5'h00))
-		mdio1i(i_clk, i_reset, wb_cyc, (wb_stb)&&(mdio1_sel), wb_we,
-				wb_addr[4:0], wb_data[15:0],
-			mdio1_stall, mdio1_ack, mdio1_data,
-			o_net1_mdc, o_mdio1, i_mdio1, o_mdio1_we, mdio1_debug);
-`else	// NETCTRL1_ACCESS
-	assign	o_net1_mdc = 1'b1;
-	assign	o_mdio1  = 1'b1;
-	assign	o_mdio1_we  = 1'b0;
-
-	// In the case that there is no mdio1 peripheral responding on the wb bus
-	assign	mdio1_stall = 0;
-	assign	mdio1_data  = 0;
-	assign	mdio1_ack   = (wb_stb) && (mdio1_sel);
-
-`endif	// NETCTRL1_ACCESS
-
-`ifdef	BKRAM_ACCESS
-	memdev #(.LGMEMSZ(16), .EXTRACLOCK(1))
-		bkrami(i_clk, i_reset,
-			(wb_cyc), (wb_stb)&&(bkram_sel), wb_we,
-				wb_addr[(16-3):0], wb_data, wb_sel,
-				bkram_stall, bkram_ack, bkram_data);
-`else	// BKRAM_ACCESS
-
-	// In the case that there is no bkram peripheral responding on the wb bus
-	assign	bkram_stall = 0;
-	assign	bkram_data  = 0;
-	assign	bkram_ack   = (wb_stb) && (bkram_sel);
-
-`endif	// BKRAM_ACCESS
-
-`ifdef	BUSCONSOLE_ACCESS
-	wbconsole #(.LGFLEN(6)) console(i_clk, 1'b0,
- 			wb_cyc, (wb_stb)&&(uart_sel), wb_we,
-				wb_addr[1:0], wb_data,
- 			uart_stall, uart_ack, uart_data,
-			w_console_tx_stb, w_console_tx_data, w_console_busy,
-			w_console_rx_stb, w_console_rx_data,
-			uartrx_int, uarttx_int, uartrxf_int, uarttxf_int);
-`else	// BUSCONSOLE_ACCESS
-
-	// In the case that there is no uart peripheral responding on the wb bus
-	assign	uart_stall = 0;
-	assign	uart_data  = 0;
-	assign	uart_ack   = (wb_stb) && (uart_sel);
-
-	assign	uarttxf_int = 1'b0;	// uart.INT.UARTTXF.WIRE
-	assign	uartrxf_int = 1'b0;	// uart.INT.UARTRXF.WIRE
-	assign	uarttx_int = 1'b0;	// uart.INT.UARTTX.WIRE
-	assign	uartrx_int = 1'b0;	// uart.INT.UARTRX.WIRE
-`endif	// BUSCONSOLE_ACCESS
-
-`ifdef	SPIO_ACCESS
+	// GPIO
 	//
-	// Special purpose I/O driver (buttons, LEDs, and switches)
+	// This interface should allow us to control up to 16 GPIO inputs, and
+	// another 16 GPIO outputs.  The interrupt trips when any of the inputs
+	// changes.  (Sorry, which input isn't (yet) selectable.)
 	//
+	localparam	INITIAL_GPIO = 5'h3;
+	wbgpio	#(NGPI, NGPO, INITIAL_GPIO)
+		gpioi(i_clk, 1'b1, (wb_stb)&&(gpio_sel), wb_we,
+			wb_data, gpio_data, i_gpio, w_gpio,
+			gpio_int);
+	assign	o_gpio = w_gpio[NGPO-2:0];
+	assign	cpu_reset = w_gpio[NGPO-1];
+`else	// GPIO_ACCESS
 
-	spio #(.NBTN(1), .NLEDS(8), .NSW(8)) spioi(i_clk,
-		wb_cyc, (wb_stb)&&(spio_sel), wb_we, wb_data, wb_sel,
-			spio_stall, spio_ack, spio_data,
-		i_sw, i_btn, w_led, spio_int);
+	// In the case that there is no gpio peripheral responding on the wb bus
+	assign	gpio_stall = 0;
+	assign	gpio_data  = 0;
+	assign	gpio_ack   = (wb_stb) && (gpio_sel);
 
-	assign	o_led = w_led;
+	assign	gpio_int = 1'b0;	// gpio.INT.GPIO.WIRE
+`endif	// GPIO_ACCESS
 
-`else	// SPIO_ACCESS
-	assign	w_btn = 0;
-	assign	o_led = 0;
-
-	// In the case that there is no spio peripheral responding on the wb bus
-	assign	spio_stall = 0;
-	assign	spio_data  = 0;
-	assign	spio_ack   = (wb_stb) && (spio_sel);
-
-	assign	spio_int = 1'b0;	// spio.INT.SPIO.WIRE
-`endif	// SPIO_ACCESS
-
-`ifdef	FLASH_ACCESS
-	qflexpress #(.LGFLASHSZ(24), .OPT_CLKDIV(1),
-		.NDUMMY(2), .RDDELAY(0),
-		.OPT_ENDIANSWAP(!OPT_BIGENDIAN),
-		.OPT_STARTUP_FILE("micron.hex"),
 `ifdef	FLASHCFG_ACCESS
-		.OPT_CFG(1'b1)
-`else
-		.OPT_CFG(1'b0)
-`endif
-		)
-		flashi(i_clk, i_reset,
-			(wb_cyc), (wb_stb)&&(flash_sel),
-			(wb_stb)&&(flashcfg_sel), wb_we,
-			wb_addr[(24-3):0], wb_data,
-			flash_stall, flash_ack, flash_data,
-			o_qspi_sck, o_qspi_cs_n, o_qspi_mod, o_qspi_dat, i_qspi_dat,
-			flash_dbg_trigger, flash_debug);
-`else	// FLASH_ACCESS
-	assign	o_qspi_sck  = 1'b1;
-	assign	o_qspi_cs_n = 1'b1;
-	assign	o_qspi_mod  = 2'b01;
-	assign	o_qspi_dat  = 4'b1111;
+	// The Flash control interface result comes back together with the
+	// flash interface itself.  Hence, we always return zero here.
+	assign	flashcfg_ack   = 1'b0;
+	assign	flashcfg_stall = 1'b0;
+	assign	flashcfg_data  = flash_data;
+`else	// FLASHCFG_ACCESS
 
-	// In the case that there is no flash peripheral responding on the wb bus
-	assign	flash_stall = 0;
-	assign	flash_data  = 0;
-	assign	flash_ack   = (wb_stb) && (flash_sel);
+	// In the case that there is no flashcfg peripheral responding on the wb bus
+	assign	flashcfg_stall = 0;
+	assign	flashcfg_data  = 0;
+	assign	flashcfg_ack   = (wb_stb) && (flashcfg_sel);
 
-`endif	// FLASH_ACCESS
+`endif	// FLASHCFG_ACCESS
 
-	assign	buildtime_data = `BUILDTIME;
-	assign	buildtime_ack = wb_stb && buildtime_sel;
-	assign	buildtime_stall = 1'b0;
-`ifdef	NETSCOPE_SCOPE
-   	wbscope #(.LGMEM(9),
-		.SYNCHRONOUS(0))
-	enetscopei(net1_debug_clk, 1'b1, net1_dbg_trigger, net1_debug,
-		i_clk, wb_cyc, (wb_stb)&&(enetscope_sel), wb_we,
-		wb_addr[0], wb_data, enetscope_stall, enetscope_ack,
-		enetscope_data, enetscope_int);
-
-
-	assign	net1_dbg_trigger = net1_debug[31];
-`else	// NETSCOPE_SCOPE
-	assign	enetscope_int = 0;
-
-	// In the case that there is no enetscope peripheral responding on the wb bus
-	assign	enetscope_stall = 0;
-	assign	enetscope_data  = 0;
-	assign	enetscope_ack   = (wb_stb) && (enetscope_sel);
-
-	assign	enetscope_int = 1'b0;	// enetscope.INT.ENETSCOPE.WIRE
-`endif	// NETSCOPE_SCOPE
-
-`ifdef	BUSPIC_ACCESS
-	//
-	// The BUS Interrupt controller
-	//
-	icontrol #(15)	buspici(i_clk, 1'b0,
-			(wb_stb)&&(buspic_sel), wb_we, wb_data,
-			buspic_stall, buspic_ack, buspic_data,
-			bus_int_vector, w_bus_int);
-`else	// BUSPIC_ACCESS
-
-	// In the case that there is no buspic peripheral responding on the wb bus
-	assign	buspic_stall = 0;
-	assign	buspic_data  = 0;
-	assign	buspic_ack   = (wb_stb) && (buspic_sel);
-
-`endif	// BUSPIC_ACCESS
-
-`ifdef	PWRCOUNT_ACCESS
-	initial	r_pwrcount_data = 32'h0;
-	always @(posedge i_clk)
-	if (r_pwrcount_data[31])
-		r_pwrcount_data[30:0] <= r_pwrcount_data[30:0] + 1'b1;
-	else
-		r_pwrcount_data[31:0] <= r_pwrcount_data[31:0] + 1'b1;
-	assign	pwrcount_data = r_pwrcount_data;
-`else	// PWRCOUNT_ACCESS
-
-	// In the case that there is no pwrcount peripheral responding on the wb bus
-	assign	pwrcount_stall = 0;
-	assign	pwrcount_data  = 0;
-	assign	pwrcount_ack   = (wb_stb) && (pwrcount_sel);
-
-`endif	// PWRCOUNT_ACCESS
-
-`ifdef	ZIPTIMER_ACCESS
-	//
-	// ZIPTIMER
-	//
-	ziptimer #(.RELOADABLE(1))
-		systimeri(i_clk, 1'b0, 1'b1, wb_cyc,
-			(wb_stb)&&(systimer_sel), wb_we, wb_data,
-			systimer_stall, systimer_ack, systimer_data,
-			systimer_int);
-`else	// ZIPTIMER_ACCESS
-
-	// In the case that there is no systimer peripheral responding on the wb bus
-	assign	systimer_stall = 0;
-	assign	systimer_data  = 0;
-	assign	systimer_ack   = (wb_stb) && (systimer_sel);
-
-	assign	systimer_int = 1'b0;	// systimer.INT.TIMER.WIRE
-`endif	// ZIPTIMER_ACCESS
-
-	assign	i_net_tx_clk = i_clk_125mhz;
-	always @(posedge i_clk)
-		if (wb_err)
-			r_buserr_addr <= wb_addr;
-	assign	buserr_data = { {(32-2-23){1'b0}},
-			r_buserr_addr, 2'b00 };
 `ifdef	WBUBUS_MASTER
 	localparam	DBGBUSBITS = $clog2(BUSUART);
 	// The Host USB interface, to be used by the WB-UART bus
@@ -1060,30 +911,237 @@ module	main(i_clk, i_reset,
 
 `endif	// WBUBUS_MASTER
 
-`ifdef	GPIO_ACCESS
-	//
-	// GPIO
-	//
-	// This interface should allow us to control up to 16 GPIO inputs, and
-	// another 16 GPIO outputs.  The interrupt trips when any of the inputs
-	// changes.  (Sorry, which input isn't (yet) selectable.)
-	//
-	localparam	INITIAL_GPIO = 5'h3;
-	wbgpio	#(NGPI, NGPO, INITIAL_GPIO)
-		gpioi(i_clk, 1'b1, (wb_stb)&&(gpio_sel), wb_we,
-			wb_data, gpio_data, i_gpio, w_gpio,
-			gpio_int);
-	assign	o_gpio = w_gpio[NGPO-2:0];
-	assign	cpu_reset = w_gpio[NGPO-1];
-`else	// GPIO_ACCESS
+	always @(posedge i_clk)
+		if (wb_err)
+			r_buserr_addr <= wb_addr;
+	assign	buserr_data = { {(32-2-23){1'b0}},
+			r_buserr_addr, 2'b00 };
+`ifdef	INCLUDE_CPU_ACTIVE_IRQ
+	assign	cpu_active_irq_data = picorv_active_irq;
+`else	// INCLUDE_CPU_ACTIVE_IRQ
 
-	// In the case that there is no gpio peripheral responding on the wb bus
-	assign	gpio_stall = 0;
-	assign	gpio_data  = 0;
-	assign	gpio_ack   = (wb_stb) && (gpio_sel);
+	// In the case that there is no cpu_active_irq peripheral responding on the wb bus
+	assign	cpu_active_irq_stall = 0;
+	assign	cpu_active_irq_data  = 0;
+	assign	cpu_active_irq_ack   = (wb_stb) && (cpu_active_irq_sel);
 
-	assign	gpio_int = 1'b0;	// gpio.INT.GPIO.WIRE
-`endif	// GPIO_ACCESS
+`endif	// INCLUDE_CPU_ACTIVE_IRQ
+
+	initial	o_net1dly_data = 0;
+	always @(posedge i_clk)
+	if (wb_stb && net1dly_sel)
+	begin
+		if (wb_sel[0])
+			o_net1dly_data[7:0] <= wb_data[7:0];
+		if (wb_sel[1])
+			o_net1dly_data[15:8] <= wb_data[15:8];
+	end
+
+	assign	net1dly_data = { i_net1dly_data, o_net1dly_data };
+	assign	i_net_tx_clk = i_clk_125mhz;
+`ifdef	WBFFT_ACCESS
+	wbfft fft(i_clk, i_reset, wb_cyc, (wb_stb)&&(wbfft_sel), wb_we,
+			wb_addr[10:0], wb_data, wbfft_stall,
+			wbfft_ack, wbfft_data, wbfft_int);
+`else	// WBFFT_ACCESS
+
+	// In the case that there is no wbfft peripheral responding on the wb bus
+	assign	wbfft_stall = 0;
+	assign	wbfft_data  = 0;
+	assign	wbfft_ack   = (wb_stb) && (wbfft_sel);
+
+`endif	// WBFFT_ACCESS
+
+`ifdef	PWRCOUNT_ACCESS
+	initial	r_pwrcount_data = 32'h0;
+	always @(posedge i_clk)
+	if (r_pwrcount_data[31])
+		r_pwrcount_data[30:0] <= r_pwrcount_data[30:0] + 1'b1;
+	else
+		r_pwrcount_data[31:0] <= r_pwrcount_data[31:0] + 1'b1;
+	assign	pwrcount_data = r_pwrcount_data;
+`else	// PWRCOUNT_ACCESS
+
+	// In the case that there is no pwrcount peripheral responding on the wb bus
+	assign	pwrcount_stall = 0;
+	assign	pwrcount_data  = 0;
+	assign	pwrcount_ack   = (wb_stb) && (pwrcount_sel);
+
+`endif	// PWRCOUNT_ACCESS
+
+`ifdef	BUSPIC_ACCESS
+	//
+	// The BUS Interrupt controller
+	//
+	icontrol #(15)	buspici(i_clk, 1'b0,
+			(wb_stb)&&(buspic_sel), wb_we, wb_data,
+			buspic_stall, buspic_ack, buspic_data,
+			bus_int_vector, w_bus_int);
+`else	// BUSPIC_ACCESS
+
+	// In the case that there is no buspic peripheral responding on the wb bus
+	assign	buspic_stall = 0;
+	assign	buspic_data  = 0;
+	assign	buspic_ack   = (wb_stb) && (buspic_sel);
+
+`endif	// BUSPIC_ACCESS
+
+	assign	buildtime_data = `BUILDTIME;
+	assign	buildtime_ack = wb_stb && buildtime_sel;
+	assign	buildtime_stall = 1'b0;
+`ifdef	FLASH_ACCESS
+	qflexpress #(.LGFLASHSZ(24), .OPT_CLKDIV(1),
+		.NDUMMY(2), .RDDELAY(0),
+		.OPT_ENDIANSWAP(!OPT_BIGENDIAN),
+		.OPT_STARTUP_FILE("micron.hex"),
+`ifdef	FLASHCFG_ACCESS
+		.OPT_CFG(1'b1)
+`else
+		.OPT_CFG(1'b0)
+`endif
+		)
+		flashi(i_clk, i_reset,
+			(wb_cyc), (wb_stb)&&(flash_sel),
+			(wb_stb)&&(flashcfg_sel), wb_we,
+			wb_addr[(24-3):0], wb_data,
+			flash_stall, flash_ack, flash_data,
+			o_qspi_sck, o_qspi_cs_n, o_qspi_mod, o_qspi_dat, i_qspi_dat,
+			flash_dbg_trigger, flash_debug);
+`else	// FLASH_ACCESS
+	assign	o_qspi_sck  = 1'b1;
+	assign	o_qspi_cs_n = 1'b1;
+	assign	o_qspi_mod  = 2'b01;
+	assign	o_qspi_dat  = 4'b1111;
+
+	// In the case that there is no flash peripheral responding on the wb bus
+	assign	flash_stall = 0;
+	assign	flash_data  = 0;
+	assign	flash_ack   = (wb_stb) && (flash_sel);
+
+`endif	// FLASH_ACCESS
+
+`ifdef	ZIPTIMER_ACCESS
+	//
+	// ZIPTIMER
+	//
+	ziptimer #(.RELOADABLE(1))
+		systimeri(i_clk, 1'b0, 1'b1, wb_cyc,
+			(wb_stb)&&(systimer_sel), wb_we, wb_data,
+			systimer_stall, systimer_ack, systimer_data,
+			systimer_int);
+`else	// ZIPTIMER_ACCESS
+
+	// In the case that there is no systimer peripheral responding on the wb bus
+	assign	systimer_stall = 0;
+	assign	systimer_data  = 0;
+	assign	systimer_ack   = (wb_stb) && (systimer_sel);
+
+	assign	systimer_int = 1'b0;	// systimer.INT.TIMER.WIRE
+`endif	// ZIPTIMER_ACCESS
+
+`ifdef	INCLUDE_CPU_BUSERR_INSN
+	assign	cpu_buserr_insn_data = picorv_buserr_insn;
+`else	// INCLUDE_CPU_BUSERR_INSN
+
+	// In the case that there is no cpu_buserr_insn peripheral responding on the wb bus
+	assign	cpu_buserr_insn_stall = 0;
+	assign	cpu_buserr_insn_data  = 0;
+	assign	cpu_buserr_insn_ack   = (wb_stb) && (cpu_buserr_insn_sel);
+
+`endif	// INCLUDE_CPU_BUSERR_INSN
+
+`ifdef	SPIO_ACCESS
+	//
+	// Special purpose I/O driver (buttons, LEDs, and switches)
+	//
+
+	spio #(.NBTN(1), .NLEDS(8), .NSW(8)) spioi(i_clk,
+		wb_cyc, (wb_stb)&&(spio_sel), wb_we, wb_data, wb_sel,
+			spio_stall, spio_ack, spio_data,
+		i_sw, i_btn, w_led, spio_int);
+
+	assign	o_led = w_led;
+
+`else	// SPIO_ACCESS
+	assign	w_btn = 0;
+	assign	o_led = 0;
+
+	// In the case that there is no spio peripheral responding on the wb bus
+	assign	spio_stall = 0;
+	assign	spio_data  = 0;
+	assign	spio_ack   = (wb_stb) && (spio_sel);
+
+	assign	spio_int = 1'b0;	// spio.INT.SPIO.WIRE
+`endif	// SPIO_ACCESS
+
+`ifdef	BUSCONSOLE_ACCESS
+	wbconsole #(.LGFLEN(6)) console(i_clk, 1'b0,
+ 			wb_cyc, (wb_stb)&&(uart_sel), wb_we,
+				wb_addr[1:0], wb_data,
+ 			uart_stall, uart_ack, uart_data,
+			w_console_tx_stb, w_console_tx_data, w_console_busy,
+			w_console_rx_stb, w_console_rx_data,
+			uartrx_int, uarttx_int, uartrxf_int, uarttxf_int);
+`else	// BUSCONSOLE_ACCESS
+
+	// In the case that there is no uart peripheral responding on the wb bus
+	assign	uart_stall = 0;
+	assign	uart_data  = 0;
+	assign	uart_ack   = (wb_stb) && (uart_sel);
+
+	assign	uarttxf_int = 1'b0;	// uart.INT.UARTTXF.WIRE
+	assign	uartrxf_int = 1'b0;	// uart.INT.UARTRXF.WIRE
+	assign	uarttx_int = 1'b0;	// uart.INT.UARTTX.WIRE
+	assign	uartrx_int = 1'b0;	// uart.INT.UARTRX.WIRE
+`endif	// BUSCONSOLE_ACCESS
+
+`ifdef	INCLUDE_CPU_BUSERR_ADDR
+	assign	cpu_buserr_addr_data = picorv_buserr_addr;
+`else	// INCLUDE_CPU_BUSERR_ADDR
+
+	// In the case that there is no cpu_buserr_addr peripheral responding on the wb bus
+	assign	cpu_buserr_addr_stall = 0;
+	assign	cpu_buserr_addr_data  = 0;
+	assign	cpu_buserr_addr_ack   = (wb_stb) && (cpu_buserr_addr_sel);
+
+`endif	// INCLUDE_CPU_BUSERR_ADDR
+
+`ifdef	BKRAM_ACCESS
+	memdev #(.LGMEMSZ(16), .EXTRACLOCK(1))
+		bkrami(i_clk, i_reset,
+			(wb_cyc), (wb_stb)&&(bkram_sel), wb_we,
+				wb_addr[(16-3):0], wb_data, wb_sel,
+				bkram_stall, bkram_ack, bkram_data);
+`else	// BKRAM_ACCESS
+
+	// In the case that there is no bkram peripheral responding on the wb bus
+	assign	bkram_stall = 0;
+	assign	bkram_data  = 0;
+	assign	bkram_ack   = (wb_stb) && (bkram_sel);
+
+`endif	// BKRAM_ACCESS
+
+	assign	version_data = `DATESTAMP;
+	assign	version_ack = wb_stb && version_sel;
+	assign	version_stall = 1'b0;
+`ifdef	NETCTRL1_ACCESS
+	wire[31:0]	mdio1_debug;
+	enetctrl #(.CLKBITS(2), .PHYADDR(5'h00))
+		mdio1i(i_clk, i_reset, wb_cyc, (wb_stb)&&(mdio1_sel), wb_we,
+				wb_addr[4:0], wb_data[15:0],
+			mdio1_stall, mdio1_ack, mdio1_data,
+			o_net1_mdc, o_mdio1, i_mdio1, o_mdio1_we, mdio1_debug);
+`else	// NETCTRL1_ACCESS
+	assign	o_net1_mdc = 1'b1;
+	assign	o_mdio1  = 1'b1;
+	assign	o_mdio1_we  = 1'b0;
+
+	// In the case that there is no mdio1 peripheral responding on the wb bus
+	assign	mdio1_stall = 0;
+	assign	mdio1_data  = 0;
+	assign	mdio1_ack   = (wb_stb) && (mdio1_sel);
+
+`endif	// NETCTRL1_ACCESS
 
 `ifdef	INCLUDE_CPU
 	//
@@ -1154,65 +1212,94 @@ module	main(i_clk, i_reset,
 `ifdef	INCLUDE_CPU
 	assign	cpu_delay_data = wbu_delayi_idata;
 `endif
-`ifdef	FLASHCFG_ACCESS
-	// The Flash control interface result comes back together with the
-	// flash interface itself.  Hence, we always return zero here.
-	assign	flashcfg_ack   = 1'b0;
-	assign	flashcfg_stall = 1'b0;
-	assign	flashcfg_data  = flash_data;
-`else	// FLASHCFG_ACCESS
+`ifdef	NETSCOPE_SCOPE
+   	wbscope #(.LGMEM(9),
+		.SYNCHRONOUS(0))
+	enetscopei(net1_debug_clk, 1'b1, net1_dbg_trigger, net1_debug,
+		i_clk, wb_cyc, (wb_stb)&&(enetscope_sel), wb_we,
+		wb_addr[0], wb_data, enetscope_stall, enetscope_ack,
+		enetscope_data, enetscope_int);
 
-	// In the case that there is no flashcfg peripheral responding on the wb bus
-	assign	flashcfg_stall = 0;
-	assign	flashcfg_data  = 0;
-	assign	flashcfg_ack   = (wb_stb) && (flashcfg_sel);
 
-`endif	// FLASHCFG_ACCESS
+	assign	net1_dbg_trigger = net1_debug[31];
+`else	// NETSCOPE_SCOPE
+	assign	enetscope_int = 0;
 
-	assign	version_data = `DATESTAMP;
-	assign	version_ack = wb_stb && version_sel;
-	assign	version_stall = 1'b0;
-`ifdef	INCLUDE_PICORV
-	wb_picorv32 #(.PROGADDR_RESET(16777216),
-			.PROGADDR_IRQ(16777216+16),
-			.STACKADDR(10551296))
-		picorvi(picorv_trap,
-			i_clk, i_reset | cpu_reset,
-			cpu_cyc, cpu_stb, cpu_we,
-				cpu_addr_wide, cpu_data, cpu_sel,
-			cpu_stall, cpu_ack, cpu_idata,
-			cpu_err,
-			picorv_int_vec);
+	// In the case that there is no enetscope peripheral responding on the wb bus
+	assign	enetscope_stall = 0;
+	assign	enetscope_data  = 0;
+	assign	enetscope_ack   = (wb_stb) && (enetscope_sel);
 
-	assign	cpu_addr = cpu_addr_wide[23-1:0];
-`else	// INCLUDE_PICORV
+	assign	enetscope_int = 1'b0;	// enetscope.INT.ENETSCOPE.WIRE
+`endif	// NETSCOPE_SCOPE
 
-	// In the case that nothing drives the cpu bus ...
-	assign	cpu_cyc = 1'b0;
-	assign	cpu_stb = 1'b0;
-	assign	cpu_we  = 1'b0;
-	assign	cpu_sel = 0;
-	assign	cpu_addr= 0;
-	assign	cpu_data= 0;
-	// verilator lint_off UNUSED
-	wire	unused_bus_cpu;
-	assign	unused_bus_cpu = &{ 1'b0, cpu_stall, cpu_ack, cpu_err, cpu_data };
-	// verilator lint_on  UNUSED
+`ifndef	NET1_ACCESS
+	// Ethernet packet memory declaration
+	//
+	// The only time this needs to be defined is when the ethernet module
+	// itself isnt defined.  Otherwise, the access is accomplished by the
+	// ethernet module
 
-`endif	// INCLUDE_PICORV
+	memdev #(11)
+		enet_buffers(i_clk,
+			(wb_cyc), (wb_stb)&&(netb_sel),
+				(wb_we)&&(wb_addr[11-1]),
+				wb_addr[11-2:0], wb_data, wb_sel,
+				netb_stall, netb_ack, netb_data);
 
-`ifdef	WBFFT_ACCESS
-	wbfft fft(i_clk, i_reset, wb_cyc, (wb_stb)&&(wbfft_sel), wb_we,
-			wb_addr[10:0], wb_data, wbfft_stall,
-			wbfft_ack, wbfft_data, wbfft_int);
-`else	// WBFFT_ACCESS
+`else
 
-	// In the case that there is no wbfft peripheral responding on the wb bus
-	assign	wbfft_stall = 0;
-	assign	wbfft_data  = 0;
-	assign	wbfft_ack   = (wb_stb) && (wbfft_sel);
+	assign	netb_ack   = 1'b0;
+	assign	netb_stall = 1'b0;
+	assign	netb_data  = net1_data;
 
-`endif	// WBFFT_ACCESS
+`endif
+
+`ifdef	NET1_ACCESS
+	enetpackets	#(.MEMORY_ADDRESS_WIDTH(11),
+			.OPT_ENDIANSWAP(!OPT_BIGENDIAN))
+		net1i(i_clk, i_reset,
+			wb_cyc,(wb_stb)&&((net1_sel)||(netb_sel)),
+			wb_we, { (netb_sel), wb_addr[11-2:0] }, wb_data, wb_sel,
+				net1_stall, net1_ack, net1_data,
+			o_net1_reset_n,
+			i_net1_rx_clk, i_net1_rx_dv, i_net1_rx_err, i_net1_rxd,
+			// For some reason, this 125MHz clock isn't being
+			// generated (??)
+			//
+			// i_clk_125mhz,
+			i_net1_rx_clk,
+			o_net1_tx_clk, o_net1_tx_ctl, o_net1_txd,
+			net1rx_int, net1tx_int, net1_debug_clk, net1_debug);
+
+`else	// NET1_ACCESS
+
+	// In the case that there is no net1 peripheral responding on the wb bus
+	assign	net1_stall = 0;
+	assign	net1_data  = 0;
+	assign	net1_ack   = (wb_stb) && (net1_sel);
+
+	assign	net1tx_int = 1'b0;	// net1.INT.NETTX.WIRE
+	assign	net1rx_int = 1'b0;	// net1.INT.NETRX.WIRE
+`endif	// NET1_ACCESS
+
+`ifdef	FLASHSCOPE_SCOPC
+	wbscopc #(.LGMEM(13),
+		.SYNCHRONOUS(1))
+	flashdbgi(i_clk, 1'b1, flash_dbg_trigger, flash_debug[30:0],
+		i_clk, wb_cyc, (wb_stb)&&(flashdbg_sel), wb_we,
+		wb_addr[0], wb_data, flashdbg_stall, flashdbg_ack,
+		flashdbg_data, flashdbg_int);
+`else	// FLASHSCOPE_SCOPC
+	assign	flashdbg_int = 0;
+
+	// In the case that there is no flashdbg peripheral responding on the wb bus
+	assign	flashdbg_stall = 0;
+	assign	flashdbg_data  = 0;
+	assign	flashdbg_ack   = (wb_stb) && (flashdbg_sel);
+
+	assign	flashdbg_int = 1'b0;	// flashdbg.INT.FLASHDBG.WIRE
+`endif	// FLASHSCOPE_SCOPC
 
 
 

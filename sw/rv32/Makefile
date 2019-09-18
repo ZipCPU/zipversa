@@ -104,9 +104,9 @@ gettysburg: $(OBJDIR)/gettysburg.o $(OBJDIR)/txfns.o $(OBJDIR)/crt0.o board.ld
 job: $(OBJDIR)/job.o $(RVLIB)
 	$(CC) $(CFLAGS) $(LFLAGS) $(RVLIB) $(OBJDIR)/job.o -o $@
 
-pingtest: $(OBJDIR)/pingtest.o
+pingtest: $(OBJDIR)/pingtest.o $(RVLIB)
 pingtest: $(NETLIB)
-	$(CC) $(CFLAGS) $(LFLAGS) $(RVLIB) -Wl,-Map=$(OBJDIR)/pingtest.map $^ -o $@
+	$(CC) $(CFLAGS) $(LFLAGS) -Wl,-Map=$(OBJDIR)/pingtest.map $^ -o $@
 
 define	mk-objdir
 	@bash -c "if [ ! -e $(OBJDIR) ]; then mkdir -p $(OBJDIR)/; fi"

@@ -56,27 +56,27 @@
 // also appear in this list
 //
 module	toplevel(i_clk, i_clk_125mhz,
+		// GPIO ports
+		// i_gpio, o_gpio
+		o_gpio_clk_reset_n,
+		// i_gpio_clk_locked,
+		io_gpio_clk_scl,
+		io_gpio_clk_sda,
+		// UART/host to wishbone interface
+		i_wbu_uart_rx, o_wbu_uart_tx,
+		// Top level Quad-SPI I/O ports
+		o_qspi_cs_n, io_qspi_dat,
+		// SPIO interface
+		i_sw, i_btn, o_led,
+		// Toplevel ethernet MDIO1 ports
+		o_net1_mdc, io_net1_mdio,
 		// Ethernet control (packets) lines
 		o_net1_reset_n,
 		// eth_int_b	// Interrupt, leave floating
 		// eth_pme_b	// Power management event, leave floating
 		i_net1_rx_clk, i_net1_rx_ctl, i_net1_rxd,
 		o_net1_tx_clk, o_net1_tx_ctl, o_net1_txd,
-		o_net1_config,
-		// Toplevel ethernet MDIO1 ports
-		o_net1_mdc, io_net1_mdio,
-		// SPIO interface
-		i_sw, i_btn, o_led,
-		// Top level Quad-SPI I/O ports
-		o_qspi_cs_n, io_qspi_dat,
-		// UART/host to wishbone interface
-		i_wbu_uart_rx, o_wbu_uart_tx,
-		// GPIO ports
-		// i_gpio, o_gpio
-		o_gpio_clk_reset_n,
-		// i_gpio_clk_locked,
-		io_gpio_clk_scl,
-		io_gpio_clk_sda);
+		o_net1_config);
 	//
 	// Declaring our input and output ports.  We listed these above,
 	// now we are declaring them here.
@@ -91,25 +91,6 @@ module	toplevel(i_clk, i_clk_125mhz,
 	//
 	input	wire		i_clk;
 	input	wire		i_clk_125mhz;
-	// Ethernet (RGMII) port wires
-	output	wire		o_net1_reset_n;
-	input	wire		i_net1_rx_clk, i_net1_rx_ctl;
-	input	wire	[3:0]	i_net1_rxd;
-	output	wire		o_net1_tx_clk, o_net1_tx_ctl;
-	output	wire	[3:0]	o_net1_txd;
-	output	wire		o_net1_config;
-	// Ethernet control (MDIO1)
-	output	wire		o_net1_mdc;
-	inout	wire		io_net1_mdio;
-	// SPIO interface
-	input	wire	[8-1:0]	i_sw;
-	input	wire	[1-1:0]	i_btn;
-	output	wire	[8-1:0]	o_led;
-	// Quad SPI flash
-	output	wire		o_qspi_cs_n;
-	inout	wire	[3:0]	io_qspi_dat;
-	input	wire		i_wbu_uart_rx;
-	output	wire		o_wbu_uart_tx;
 	// GPIO wires
 	localparam	NGPI = 2, NGPO=5;
 	// GPIO ports
@@ -122,6 +103,25 @@ module	toplevel(i_clk, i_clk_125mhz,
 	// suggest that it would.
 	// input	wire	i_gpio_clk_locked;
 	inout	wire	io_gpio_clk_scl, io_gpio_clk_sda;
+	input	wire		i_wbu_uart_rx;
+	output	wire		o_wbu_uart_tx;
+	// Quad SPI flash
+	output	wire		o_qspi_cs_n;
+	inout	wire	[3:0]	io_qspi_dat;
+	// SPIO interface
+	input	wire	[8-1:0]	i_sw;
+	input	wire	[1-1:0]	i_btn;
+	output	wire	[8-1:0]	o_led;
+	// Ethernet control (MDIO1)
+	output	wire		o_net1_mdc;
+	inout	wire		io_net1_mdio;
+	// Ethernet (RGMII) port wires
+	output	wire		o_net1_reset_n;
+	input	wire		i_net1_rx_clk, i_net1_rx_ctl;
+	input	wire	[3:0]	i_net1_rxd;
+	output	wire		o_net1_tx_clk, o_net1_tx_ctl;
+	output	wire	[3:0]	o_net1_txd;
+	output	wire		o_net1_config;
 
 
 	//
@@ -130,25 +130,28 @@ module	toplevel(i_clk, i_clk_125mhz,
 	// These declarations just copy data from the @TOP.DEFNS key
 	// within the component data files.
 	//
+	wire	w_gpio_clk_reset;
+	wire	w_gpio_clk_scl, w_gpio_clk_sda,
+		w_gpio_halt_sim;
+	wire	[15:0]	w_net1dly_delay, w_net1dly_command;
+	wire	[3:0]	w_net1dly_rxd;
+	wire		w_net1dly_rx_ctl;
+	// Network clock at 125MHz
+	wire		s_clk_125mhz, s_clk_125d;
+	// Master clock input and reset
+	wire	s_clk;
+	reg	s_reset;
+	wire		w_qspi_sck, w_qspi_cs_n;
+	wire	[3:0]	qspi_dat, i_qspi_dat;
+	wire	[1:0]	qspi_bmod;
+	// Ethernet control (MDIO1)
+	wire		w_mdio1_dat, w_mdio1_we;
+	wire		i_mdio1;
 	// Ethernet (RGMII) port wires
 	wire	[7:0]		w_net1_rxd,  w_net1_txd;
 	wire			w_net1_rxdv, w_net1_rxerr,
 				w_net1_txctl;
 	wire	[1:0]		w_net1_tx_clk;
-	// Ethernet control (MDIO1)
-	wire		w_mdio1_dat, w_mdio1_we;
-	wire		i_mdio1;
-	wire		w_qspi_sck, w_qspi_cs_n;
-	wire	[3:0]	qspi_dat, i_qspi_dat;
-	wire	[1:0]	qspi_bmod;
-	// Master clock input and reset
-	wire	s_clk;
-	reg	s_reset;
-	// Network clock at 125MHz
-	wire		s_clk_125mhz, s_clk_125d;
-	wire	w_gpio_clk_reset;
-	wire	w_gpio_clk_scl, w_gpio_clk_sda,
-		w_gpio_halt_sim;
 
 
 	//
@@ -167,25 +170,26 @@ module	toplevel(i_clk, i_clk_125mhz,
 	//
 
 	main	thedesign(s_clk, s_reset,
-		// Ethernet (RGMII) connections
-		o_net1_reset_n,
-		i_net1_rx_clk, w_net1_rxdv,  w_net1_rxdv ^ w_net1_rxerr, w_net1_rxd,
-		w_net1_tx_clk, w_net1_txctl, w_net1_txd,
-		o_net1_mdc, w_mdio1_dat, w_mdio1_we, i_mdio1,
-		// SPIO interface
-		i_sw, i_btn, o_led,
-		// Quad SPI flash
-		w_qspi_cs_n, w_qspi_sck, qspi_dat, i_qspi_dat, qspi_bmod,
-		// Network clock at 125MHz
-		s_clk_125mhz,
-		// UART/host to wishbone interface
-		i_wbu_uart_rx, o_wbu_uart_tx,
 		// GPIO wires
 		// 2 Inputs first
 		{ io_gpio_clk_scl, io_gpio_clk_sda },
 		// Then the 5-1 outputs
 		{ w_gpio_halt_sim, w_gpio_clk_reset,
-			w_gpio_clk_scl, w_gpio_clk_sda });
+			w_gpio_clk_scl, w_gpio_clk_sda },
+		// UART/host to wishbone interface
+		i_wbu_uart_rx, o_wbu_uart_tx,
+		w_net1dly_delay, w_net1dly_command,
+		// Network clock at 125MHz
+		s_clk_125mhz,
+		// Quad SPI flash
+		w_qspi_cs_n, w_qspi_sck, qspi_dat, i_qspi_dat, qspi_bmod,
+		// SPIO interface
+		i_sw, i_btn, o_led,
+		o_net1_mdc, w_mdio1_dat, w_mdio1_we, i_mdio1,
+		// Ethernet (RGMII) connections
+		o_net1_reset_n,
+		i_net1_rx_clk, w_net1_rxdv,  w_net1_rxdv ^ w_net1_rxerr, w_net1_rxd,
+		w_net1_tx_clk, w_net1_txctl, w_net1_txd);
 
 
 	//
@@ -195,28 +199,36 @@ module	toplevel(i_clk, i_clk_125mhz,
 	//
 
 
-	ecpiddr	rx0(i_net1_rx_clk, i_net1_rxd[0], { w_net1_rxd[4], w_net1_rxd[0] });
-	ecpiddr	rx1(i_net1_rx_clk, i_net1_rxd[1], { w_net1_rxd[5], w_net1_rxd[1] });
-	ecpiddr	rx2(i_net1_rx_clk, i_net1_rxd[2], { w_net1_rxd[6], w_net1_rxd[2] });
-	ecpiddr	rx3(i_net1_rx_clk, i_net1_rxd[3], { w_net1_rxd[7], w_net1_rxd[3] });
-	ecpiddr	rxc(i_net1_rx_clk, i_net1_rx_ctl, { w_net1_rxdv,   w_net1_rxerr });
+	assign	o_gpio_clk_reset_n= !w_gpio_clk_reset;
+	// assign	io_gpio_clk_scl = w_gpio_clk_scl ? 1'bz : 1'b0;
+	// assign	io_gpio_clk_sda = w_gpio_clk_sda ? 1'bz : 1'b0;
+	BB gpio_clk_scli(.I(1'b0), .T(w_gpio_clk_scl),
+		.O(io_gpio_clk_scl));
+	BB gpio_clk_sdai(.I(1'b0), .T(w_gpio_clk_sda),
+		.O(io_gpio_clk_sda));
 
-	ecpoddr	tx0(s_clk_125mhz, { w_net1_txd[0], w_net1_txd[4] }, o_net1_txd[0]);
-	ecpoddr	tx1(s_clk_125mhz, { w_net1_txd[1], w_net1_txd[5] }, o_net1_txd[1]);
-	ecpoddr	tx2(s_clk_125mhz, { w_net1_txd[2], w_net1_txd[6] }, o_net1_txd[2]);
-	ecpoddr	tx3(s_clk_125mhz, { w_net1_txd[3], w_net1_txd[7] }, o_net1_txd[3]);
-	ecpoddr	txc(s_clk_125mhz, { w_net1_txctl,  w_net1_txctl  }, o_net1_tx_ctl);
-	ecpoddr	txck(s_clk_125d,{w_net1_tx_clk[1],w_net1_tx_clk[0]},o_net1_tx_clk);
 
-	assign	o_net1_config = 1'b0;
-
-	// What I want ...
-	// assign	io_net1_mdio = (w_mdio1_we) ? w_mdio1_dat : 1'bz;
-	// assign	i_mdio1 = io_net1_mdio
 	//
-	// Trellis bi-directional I/O primitive: BB
-	BB mdio1dati(.I(w_mdio1_dat), .T(!w_mdio1_we),
-			.O(i_mdio1), .B(io_net1_mdio));
+	// The network interface requires that the incoming wires be delayed.
+	// The ecpnetdly controller is built around the DELAYF interface and
+	// offers a programmable delay capability to meet this need.
+	//
+	ecpnetdly #(.NP(5), .NBITS(16))
+	net1dlyi(s_clk, s_reset, w_net1dly_command, w_net1dly_delay,
+		{ i_net1_rxd, i_net1_rx_ctl },
+		{ w_net1dly_rxd, w_net1dly_rx_ctl });
+
+	assign	s_clk_125mhz = i_clk_125mhz;
+	assign	s_clk_125d   = i_clk_125mhz;
+
+	//
+	// Master clock input and reset
+	CLKDIVF	clock_divider(.CLKI(i_clk),
+		.RST(0), .ALIGNWD(1'b0), .CDIVX(s_clk));
+
+	initial	s_reset = 1;
+	always @(posedge s_clk)
+		s_reset <= 0;
 
 	//
 	//
@@ -248,26 +260,28 @@ module	toplevel(i_clk, i_clk_125mhz,
 		.T(qspi_bmod==2'b11), .B(io_qspi_dat[3]));
 
 
+	// What I want ...
+	// assign	io_net1_mdio = (w_mdio1_we) ? w_mdio1_dat : 1'bz;
+	// assign	i_mdio1 = io_net1_mdio
 	//
-	// Master clock input and reset
-	CLKDIVF	clock_divider(.CLKI(i_clk),
-		.RST(0), .ALIGNWD(1'b0), .CDIVX(s_clk));
+	// Trellis bi-directional I/O primitive: BB
+	BB mdio1dati(.I(w_mdio1_dat), .T(!w_mdio1_we),
+			.O(i_mdio1), .B(io_net1_mdio));
 
-	initial	s_reset = 1;
-	always @(posedge s_clk)
-		s_reset <= 0;
+	ecpiddr	rx0(i_net1_rx_clk, w_net1dly_rxd[0], { w_net1_rxd[4], w_net1_rxd[0] });
+	ecpiddr	rx1(i_net1_rx_clk, w_net1dly_rxd[1], { w_net1_rxd[5], w_net1_rxd[1] });
+	ecpiddr	rx2(i_net1_rx_clk, w_net1dly_rxd[2], { w_net1_rxd[6], w_net1_rxd[2] });
+	ecpiddr	rx3(i_net1_rx_clk, w_net1dly_rxd[3], { w_net1_rxd[7], w_net1_rxd[3] });
+	ecpiddr	rxc(i_net1_rx_clk, w_net1dly_rx_ctl, { w_net1_rxdv,   w_net1_rxerr });
 
-	assign	s_clk_125mhz = i_clk_125mhz;
-	assign	s_clk_125d   = i_clk_125mhz;
+	ecpoddr	tx0(s_clk_125mhz, { w_net1_txd[0], w_net1_txd[4] }, o_net1_txd[0]);
+	ecpoddr	tx1(s_clk_125mhz, { w_net1_txd[1], w_net1_txd[5] }, o_net1_txd[1]);
+	ecpoddr	tx2(s_clk_125mhz, { w_net1_txd[2], w_net1_txd[6] }, o_net1_txd[2]);
+	ecpoddr	tx3(s_clk_125mhz, { w_net1_txd[3], w_net1_txd[7] }, o_net1_txd[3]);
+	ecpoddr	txc(s_clk_125mhz, { w_net1_txctl,  w_net1_txctl  }, o_net1_tx_ctl);
+	ecpoddr	txck(s_clk_125d,{w_net1_tx_clk[1],w_net1_tx_clk[0]},o_net1_tx_clk);
 
-	assign	o_gpio_clk_reset_n= !w_gpio_clk_reset;
-	// assign	io_gpio_clk_scl = w_gpio_clk_scl ? 1'bz : 1'b0;
-	// assign	io_gpio_clk_sda = w_gpio_clk_sda ? 1'bz : 1'b0;
-	BB gpio_clk_scli(.I(1'b0), .T(w_gpio_clk_scl),
-		.O(io_gpio_clk_scl));
-	BB gpio_clk_sdai(.I(1'b0), .T(w_gpio_clk_sda),
-		.O(io_gpio_clk_sda));
-
+	assign	o_net1_config = 1'b0;
 
 
 

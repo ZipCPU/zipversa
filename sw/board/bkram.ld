@@ -67,9 +67,9 @@ _top_of_stack = ORIGIN(bkram) + LENGTH(bkram);
 __global_pointer$ = @$(GBLPOINTER);
 
 
-_uart = 4194304;
+_gpio = 6291480;
 
-_gpio = 6291468;
+_uart = 0x00400000;
 
 /* LD.SCRIPT from mem_bkram_only */
 SECTIONS

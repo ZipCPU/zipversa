@@ -249,7 +249,7 @@ bool	FLASHDRVR::erase_sector(const unsigned sector, const bool verify_erase) {
 			for(int j=0; j<SZPAGEW; j++)
 				if (page[j] != 0xffffffff) {
 					unsigned rdaddr = R_FLASH+flashaddr+i*SZPAGEB;
-					
+
 					if (m_debug)
 						printf("FLASH[%07x] = %08x, not 0xffffffff as desired (%06x + %d)\n",
 							R_FLASH+flashaddr+i*SZPAGEB+(j<<2),
@@ -314,7 +314,7 @@ bool	FLASHDRVR::page_program(const unsigned addr, const unsigned len,
 	m_fpga->writeio(R_FLASHCFG, CFG_USERMODE|((flashaddr    )&0x0ff));
 	// Write the page data itself
 	for(unsigned i=0; i<len; i++)
-		m_fpga->writeio(R_FLASHCFG, 
+		m_fpga->writeio(R_FLASHCFG,
 			CFG_USERMODE | CFG_WEDIR | (data[i] & 0x0ff));
 	m_fpga->writeio(R_FLASHCFG, F_END);
 
@@ -336,12 +336,14 @@ bool	FLASHDRVR::page_program(const unsigned addr, const unsigned len,
 		for(unsigned i=0; i<(len>>2); i++) {
 			if (buf[i] != bswapd[i]) {
 				printf("\nVERIFY FAILS[%d]: %08x\n", i, (i<<2)+addr);
-				printf("\t(Flash[%d]) %08x != %08x (Goal[%08x])\n", 
+				printf("\t(Flash[%d]) %08x != %08x (Goal[%08x])\n",
 					(i<<2), buf[i], bswapd[i], (i<<2)+addr);
 				return false;
 			}
 		} if (m_debug)
 			printf(" -- Successfully verified\n");
+		else
+			printf("\r");
 	} return true;
 #else
 	return false; // No flash present
@@ -417,15 +419,14 @@ bool	FLASHDRVR::write(const unsigned addr, const unsigned len,
 			base = (addr>s)?addr:s;
 			ln=((addr+len>s+SECTORSZB)?(s+SECTORSZB):(addr+len))-base;
 			m_fpga->readi(base, ln>>2, (uint32_t *)sbuf);
-			byteswapbuf(ln>>2, (uint32_t *)sbuf);
 
 			dp = &data[base-addr];
 			SETSCOPE;
 			for(unsigned i=0; i<ln; i++) {
-				if ((sbuf[i]&dp[i]) != dp[i]) {
+				if (((sbuf[i]&dp[i])&0x0ff) != (dp[i]&0x0ff)) {
 					if (m_debug) {
-						printf("\nNEED-ERASE @0x%08x ... %08x != %08x (Goal)\n", 
-							i+base-addr, sbuf[i], dp[i]);
+						printf("\nNeed sector erase, @0x%08x ... %02x != %02x (Goal)\n",
+							i+base-addr, (sbuf[i]&0x0ff), (dp[i]&0x0ff));
 					}
 					need_erase = true;
 					newv = (i&-4)+base;
@@ -440,9 +441,9 @@ bool	FLASHDRVR::write(const unsigned addr, const unsigned len,
 
 		// Erase the sector if necessary
 		if (!need_erase) {
-			if (m_debug) printf("NO ERASE NEEDED\n");
+			if (m_debug) printf("No erase required\n");
 		} else {
-			printf("ERASING SECTOR: %08x\n", s);
+			printf("Erasing sector: %08x\n", s);
 			if (!erase_sector(s, verify)) {
 				printf("SECTOR ERASE FAILED!\n");
 				return false;

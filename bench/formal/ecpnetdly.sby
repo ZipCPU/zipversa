@@ -1,0 +1,19 @@
+[tasks]
+prf
+cvr
+
+[options]
+prf: mode prove
+prf: depth 7
+cvr: mode cover
+cvr: depth 130
+
+[engines]
+smtbmc boolector
+
+[script]
+read -formal ecpnetdly.v
+prep -top ecpnetdly
+
+[files]
+../../rtl/ecpnetdly.v

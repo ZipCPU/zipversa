@@ -56,9 +56,9 @@ public:
 	uint64_t	m_time_ps;
 	// TBCLOCK is a clock support class, enabling multiclock simulation
 	// operation.
-	TBCLOCK	m_net1_rx_clk;
 	TBCLOCK	m_clk;
 	TBCLOCK	m_clk_125mhz;
+	TBCLOCK	m_net1_rx_clk;
 
 	TESTB(void) {
 		m_core = new VA;
@@ -67,9 +67,9 @@ public:
 		m_done     = false;
 		Verilated::traceEverOn(true);
 // Set the initial clock periods
-		m_net1_rx_clk.init(8000);	//  125.00 MHz
 		m_clk.init(20000);	//   50.00 MHz
 		m_clk_125mhz.init(8000);	//  125.00 MHz
+		m_net1_rx_clk.init(8000);	//  125.00 MHz
 	}
 	virtual ~TESTB(void) {
 		if (m_trace) m_trace->close();
@@ -104,13 +104,13 @@ public:
 	}
 
 	virtual	void	tick(void) {
-		unsigned	mintime = m_net1_rx_clk.time_to_edge();
-
-		if (m_clk.time_to_edge() < mintime)
-			mintime = m_clk.time_to_edge();
+		unsigned	mintime = m_clk.time_to_edge();
 
 		if (m_clk_125mhz.time_to_edge() < mintime)
 			mintime = m_clk_125mhz.time_to_edge();
+
+		if (m_net1_rx_clk.time_to_edge() < mintime)
+			mintime = m_net1_rx_clk.time_to_edge();
 
 		assert(mintime > 1);
 
@@ -121,9 +121,9 @@ public:
 		if (m_trace) m_trace->dump(m_time_ps+1);
 
 		// Advance each clock
-		m_core->i_net1_rx_clk = m_net1_rx_clk.advance(mintime);
 		m_core->i_clk = m_clk.advance(mintime);
 		m_core->i_clk_125mhz = m_clk_125mhz.advance(mintime);
+		m_core->i_net1_rx_clk = m_net1_rx_clk.advance(mintime);
 
 		m_time_ps += mintime;
 		eval();
@@ -134,10 +134,6 @@ public:
 			m_trace->flush();
 		}
 
-		if (m_net1_rx_clk.falling_edge()) {
-			m_changed = true;
-			sim_net1_rx_clk_tick();
-		}
 		if (m_clk.falling_edge()) {
 			m_changed = true;
 			sim_clk_tick();
@@ -146,15 +142,12 @@ public:
 			m_changed = true;
 			sim_clk_125mhz_tick();
 		}
+		if (m_net1_rx_clk.falling_edge()) {
+			m_changed = true;
+			sim_net1_rx_clk_tick();
+		}
 	}
 
-	virtual	void	sim_net1_rx_clk_tick(void) {
-		// AutoFPGA will override this method within main_tb.cpp if any
-		// @SIM.TICK key is present within a design component also
-		// containing a @SIM.CLOCK key identifying this clock.  That
-		// component must also set m_changed to true.
-		m_changed = false;
-	}
 	virtual	void	sim_clk_tick(void) {
 		// AutoFPGA will override this method within main_tb.cpp if any
 		// @SIM.TICK key is present within a design component also
@@ -163,6 +156,13 @@ public:
 		m_changed = false;
 	}
 	virtual	void	sim_clk_125mhz_tick(void) {
+		// AutoFPGA will override this method within main_tb.cpp if any
+		// @SIM.TICK key is present within a design component also
+		// containing a @SIM.CLOCK key identifying this clock.  That
+		// component must also set m_changed to true.
+		m_changed = false;
+	}
+	virtual	void	sim_net1_rx_clk_tick(void) {
 		// AutoFPGA will override this method within main_tb.cpp if any
 		// @SIM.TICK key is present within a design component also
 		// containing a @SIM.CLOCK key identifying this clock.  That
