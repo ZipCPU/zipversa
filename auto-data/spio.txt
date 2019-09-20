@@ -64,7 +64,7 @@
 
 	spio #(.NBTN(@$(NBTN)), .NLEDS(@$(NLED)), .NSW(@$(NSW))) @$(PREFIX)i(i_clk,
 		wb_cyc, (wb_stb)&&(@$(PREFIX)_sel), wb_we, wb_data, wb_sel,
-			@$(PREFIX)_ack, @$(PREFIX)_stall, @$(PREFIX)_data,
+			@$(PREFIX)_stall, @$(PREFIX)_ack, @$(PREFIX)_data,
 		i_sw, i_btn, w_led, @$(PREFIX)_int);
 
 	assign	o_led = w_led;

@@ -116,8 +116,15 @@ void	FLASHSIM::load(const unsigned addr, const char *fname) {
 		perror("O/S Err:");
 	}
 
-	for(unsigned i=nr; i<m_membytes; i++)
+	for(unsigned i=nr+addr; i<m_membytes; i++)
 		m_mem[i] = 0x0ff;
+
+	if (m_debug && addr == 0 && nr > 16) {
+		fprintf(stderr, "FLASH LOAD: ");
+		for(unsigned i=0; i<16; i++)
+			fprintf(stderr, "%02x ", m_mem[i]);
+		fprintf(stderr, "\n");
+	}
 }
 
 void	FLASHSIM::load(const uint32_t offset, const char *data,
@@ -546,6 +553,8 @@ int	FLASHSIM::operator()(const int csn, const int sck, const int dat) {
 			} else if (m_count == 32+8) {
 				m_mode_byte = (m_ireg) & 0x0ff;
 				if (m_debug) printf("QSPI: MODE BYTE = %02x\n", m_mode_byte);
+				if (NDUMMY == 2)
+					QOREG(m_mem[m_addr++]);
 			} else if ((m_count > 32+4*NDUMMY)&&(0 == (m_sreg&0x01))) {
 				QOREG(m_mem[m_addr++]);
 				// printf("QSPIF[%08x]/QR = %02x\n",
@@ -564,6 +573,10 @@ int	FLASHSIM::operator()(const int csn, const int sck, const int dat) {
 			if (m_count == 24+4*2) {
 				m_mode_byte = (m_ireg & 0x0ff);
 				if (m_debug) printf("QSPI/QR: MODE BYTE = %02x\n", m_mode_byte);
+				if (NDUMMY == 2) {
+					QOREG(m_mem[m_addr++]);
+					if (m_debug) printf("QSPIF[%08x]/QR = %02x\n", m_addr-1, m_oreg & 0x0ff);
+				}
 			} else if ((m_count >= 24+4*NDUMMY)&&(0 == (m_sreg&0x01))) {
 				QOREG(m_mem[m_addr++]);
 				if (m_debug) printf("QSPIF[%08x]/QR = %02x\n", m_addr-1, m_oreg & 0x0ff);
@@ -629,7 +642,7 @@ int	FLASHSIM::operator()(const int csn, const int sck, const int dat) {
 //
 int	FLASHSIM::simtick(const int csn, const int sck, const int dat,
 		const int mod) {
-	const bool	ODDR_IO = true;
+	const bool	ODDR_IO = false;
 	int	lclsck;
 
 	if ((CKDELAY > 0)&&(m_ckdelay == NULL)) {
@@ -654,6 +667,7 @@ int	FLASHSIM::simtick(const int csn, const int sck, const int dat,
 	if (ODDR_IO) {
 		r = (*this)(csn, (lclsck != 0)?0:1, dat);
 		r = (*this)(csn, 1, dat);
+printf("QSPI: CSN=%d, (CLK), DAT=%x, result=%d\n", csn, dat, r);
 	} else
 		r = (*this)(csn, lclsck, dat);
 

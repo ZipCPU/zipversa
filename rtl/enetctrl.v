@@ -43,7 +43,7 @@
 //
 module	enetctrl(i_clk, i_reset,
 		i_wb_cyc, i_wb_stb, i_wb_we, i_wb_addr, i_wb_data,
-			o_wb_ack, o_wb_stall, o_wb_data,
+			o_wb_stall, o_wb_ack, o_wb_data,
 		o_mdclk, o_mdio, i_mdio, o_mdwe,
 		o_debug);
 	parameter	CLKBITS=2; // = 3 for 200MHz source clock, 2 for 100 MHz
@@ -62,7 +62,7 @@ module	enetctrl(i_clk, i_reset,
 	input	wire		i_wb_cyc, i_wb_stb, i_wb_we;
 	input	wire	[4:0]	i_wb_addr;
 	input	wire	[15:0]	i_wb_data;
-	output	reg		o_wb_ack, o_wb_stall;
+	output	reg		o_wb_stall, o_wb_ack;
 	output	wire	[31:0]	o_wb_data;
 	//
 	input	wire		i_mdio;

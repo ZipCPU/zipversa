@@ -37,6 +37,7 @@
 //
 #include <stdint.h>
 #include "byteswap.h"
+#include "regdefs.h"
 
 uint32_t
 byteswap(uint32_t v) {
@@ -57,10 +58,17 @@ uint32_t
 buildword(const unsigned char *p) {
 	uint32_t	r = 0;
 
+#ifdef	LITTLEENDIAN_CPU
+	r  = (*p++);
+	r |= (*p++) <<  8;
+	r |= (*p++) << 16;
+	r |= (*p  ) << 24;
+#else
 	r  = (*p++); r <<= 8;
 	r |= (*p++); r <<= 8;
 	r |= (*p++); r <<= 8;
 	r |= (*p  );
+#endif
 
 	return r;
 }

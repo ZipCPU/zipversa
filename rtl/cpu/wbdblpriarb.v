@@ -72,12 +72,12 @@
 //
 module	wbdblpriarb(i_clk, i_reset,
 	// Bus A
-	i_a_cyc_a,i_a_cyc_b,i_a_stb_a,i_a_stb_b,i_a_we,i_a_adr, i_a_dat, i_a_sel, o_a_ack, o_a_stall, o_a_err,
+	i_a_cyc_a,i_a_cyc_b,i_a_stb_a,i_a_stb_b,i_a_we,i_a_adr, i_a_dat, i_a_sel, o_a_stall, o_a_ack, o_a_err,
 	// Bus B
-	i_b_cyc_a,i_b_cyc_b,i_b_stb_a,i_b_stb_b,i_b_we,i_b_adr, i_b_dat, i_b_sel, o_b_ack, o_b_stall, o_b_err,
+	i_b_cyc_a,i_b_cyc_b,i_b_stb_a,i_b_stb_b,i_b_we,i_b_adr, i_b_dat, i_b_sel, o_b_stall, o_b_ack, o_b_err,
 	// Both buses
 	o_cyc_a, o_cyc_b, o_stb_a, o_stb_b, o_we, o_adr, o_dat, o_sel,
-		i_ack, i_stall, i_err);
+		i_stall, i_ack, i_err);
 	parameter			DW=32, AW=32;
 	//
 	// ZERO_ON_IDLE uses more logic than the alternative.  It should be

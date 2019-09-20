@@ -37,7 +37,7 @@
 ##
 ##
 .PHONY: all
-PROGRAMS := wbregs netuart zipload zipstate zipdbg dumpflash readmdio netstat flashid
+PROGRAMS := wbregs netuart zipload zipstate zipdbg dumpflash readmdio netstat flashid testfft
 SCOPES := erxscope etxscope flashscope # cpuscope dcachescope mdioscope
 all: $(PROGRAMS) $(SCOPES)
 CXX := g++
@@ -46,11 +46,16 @@ BUSSRCS := ttybus.cpp llcomms.cpp regdefs.cpp byteswap.cpp
 SOURCES := wbregs.cpp netuart.cpp		\
 	dumpflash.cpp flashscope.cpp flashdrvr.cpp		\
 	scopecls.cpp erxscope.cpp etxscope.cpp netstat.cpp readmdio.cpp	\
-	zipload.cpp zipstate.cpp zipdbg.cpp $(BUSSRCS)
+	zipload.cpp zipstate.cpp zipdbg.cpp $(BUSSRCS)		\
+	testfft.cpp udpsocket.cpp
 	# netsetup.cpp cpuscope.cpp dcachescope.cpp \
 	# mdioscope.cpp manping.cpp $(BUSSRCS)
 	# ziprun.cpp cfgscope.cpp
-HEADERS := llcomms.h ttybus.h devbus.h
+HEADERS := llcomms.h ttybus.h devbus.h twoc.h	\
+	scopecls.h flashdrvr.h			\
+	udpsocket.h				\
+	flashdrvr.h				\
+	zipelf.h zopcodes.h
 OBJECTS := $(addprefix $(OBJDIR)/,$(subst .cpp,.o,$(SOURCES)))
 BUSOBJS := $(addprefix $(OBJDIR)/,$(subst .cpp,.o,$(BUSSRCS)))
 CFLAGS := -g -Wall -I. -I../../rtl
@@ -64,13 +69,6 @@ $(OBJDIR)/%.o: %.cpp
 $(OBJDIR)/%.o: %.c
 	$(mk-objdir)
 	$(CXX) $(CFLAGS) -c $< -o $@
-
-.PHONY: gps
-gps: $(BUSOBJS) $(OBJDIR)/scopecls.o
-	@bash -c "if [[ -e gps/Makefile ]]; then $(SUBMAKE) gps; fi"
-
-$(OBJDIR)/hsnetuart.o: netuart.cpp
-	$(CXX) $(CFLAGS) -c -DHIGH_SPEED $< -o $@
 
 .PHONY: clean
 clean:
@@ -87,8 +85,6 @@ $(OBJDIR)/readmdio.o:    readmdio.cpp    regdefs.h
 $(OBJDIR)/flashid.o:     flashid.cpp     regdefs.h
 
 netuart: $(OBJDIR)/netuart.o
-	$(CXX) $(CFLAGS) $^ -o $@
-hsnetuart: $(OBJDIR)/hsnetuart.o
 	$(CXX) $(CFLAGS) $^ -o $@
 #
 # Some simple programs that just depend upon the ability to talk to the FPGA,
@@ -110,6 +106,8 @@ flashid: $(OBJDIR)/flashid.o $(BUSOBJS) $(OBJDIR)/flashdrvr.o
 readmdio: $(OBJDIR)/readmdio.o $(BUSOBJS)
 	$(CXX) $(CFLAGS) $^ -o $@
 netstat: $(OBJDIR)/netstat.o $(BUSOBJS)
+	$(CXX) $(CFLAGS) $^ -o $@
+testfft: $(OBJDIR)/testfft.o $(OBJDIR)/udpsocket.o
 	$(CXX) $(CFLAGS) $^ -o $@
 #
 # Programs that depend upon not just the bus objects, but the flash driver

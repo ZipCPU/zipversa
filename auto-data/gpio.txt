@@ -41,10 +41,10 @@
 @ACCESS=@$(DEVID)_ACCESS
 @SLAVE.TYPE=SINGLE
 @SLAVE.BUS=wb
-@NUMOUTPUT=3
+@$NUMOUTPUT=5
 @NUMINPUT=2
 @INT.GPIO.WIRE=gpio_int
-@INT.GPIO.PIC=altpic
+@INT.GPIO.PIC=@$(SYSPIC)
 @TOP.PORTLIST=
 		// GPIO ports
 		// i_@$(PREFIX), o_@$(PREFIX)
@@ -67,7 +67,8 @@
 	inout	wire	io_@$(PREFIX)_clk_scl, io_@$(PREFIX)_clk_sda;
 @TOP.DEFNS=
 	wire	w_@$(PREFIX)_clk_reset;
-	wire	w_@$(PREFIX)_clk_scl, w_@$(PREFIX)_clk_sda;
+	wire	w_@$(PREFIX)_clk_scl, w_@$(PREFIX)_clk_sda,
+		w_@$(PREFIX)_halt_sim;
 @TOP.INSERT=
 	assign	o_@$(PREFIX)_clk_reset_n= !w_@$(PREFIX)_clk_reset;
 	// assign	io_@$(PREFIX)_clk_scl = w_@$(PREFIX)_clk_scl ? 1'bz : 1'b0;
@@ -81,8 +82,8 @@
 		// GPIO wires
 		// @$(NUMINPUT) Inputs first
 		{ io_@$(PREFIX)_clk_scl, io_@$(PREFIX)_clk_sda },
-		// Then the @$(NUMOUTPUT) outputs
-		{ w_@$(PREFIX)_clk_reset,
+		// Then the @$(NUMOUTPUT)-1 outputs
+		{ w_@$(PREFIX)_halt_sim, w_@$(PREFIX)_clk_reset,
 			w_@$(PREFIX)_clk_scl, w_@$(PREFIX)_clk_sda }
 @MAIN.PORTLIST=
 		// GPIO ports
@@ -91,7 +92,10 @@
 	localparam	NGPI = @$(NUMINPUT), NGPO=@$(NUMOUTPUT);
 	// @$(DEVID) ports
 	input		[(NGPI-1):0]	i_@$(PREFIX);
-	output	wire	[(NGPO-1):0]	o_@$(PREFIX);
+	output	wire	[(NGPO-2):0]	o_@$(PREFIX);
+@MAIN.DEFNS=
+	wire	[NGPO-1:0]	w_@$(PREFIX);
+	wire			cpu_reset;
 @MAIN.INSERT=
 	//
 	// @$(DEVID)
@@ -103,10 +107,13 @@
 	localparam	INITIAL_@$(DEVID) = @$(NUMOUTPUT)'h3;
 	wbgpio	#(NGPI, NGPO, INITIAL_@$(DEVID))
 		@$(PREFIX)i(i_clk, 1'b1, (wb_stb)&&(@$(PREFIX)_sel), wb_we,
-			wb_data, @$(PREFIX)_data, i_@$(PREFIX), o_@$(PREFIX),
+			wb_data, @$(PREFIX)_data, i_@$(PREFIX), w_@$(PREFIX),
 			@$(PREFIX)_int);
+	assign	o_@$(PREFIX) = w_@$(PREFIX)[NGPO-2:0];
+	assign	cpu_reset = w_@$(PREFIX)[NGPO-1];
 @REGS.N=1
 @REGS.0= 0 R_@$(DEVID) @$(DEVID) GPI GPO
+@$CPURESETMASK=1<<((@$(NUMOUTPUT))-1)
 @BDEF.DEFN=
 //
 // @$(DEVID) input wires
@@ -122,11 +129,21 @@
 #define GPIO_ICLK_SCL		2
 #define GPIO_ICLK_LOCKED	4
 #define GPIO_ICLK_RESET		4
+#define GPIO_HALT		8
+#define GPIO_SIMHALT		@$(DEVID)_SET(GPIO_HALT)
+#define GPIO_CPU_RESET		@$(CPURESETMASK)
 //
 //
-@BDEF.IONAME=	i_@$(PREFIX)
+@REGDEFS.H.DEFNS=@$(BDEF.DEFN)
+@BDEF.IONAME=	_@$(PREFIX)
 @BDEF.IOTYPE=	unsigned
 @BDEF.OSDEF=	_BOARD_HAS_@$(DEVID)
 @BDEF.OSVAL=	static volatile @$.BDEF.IOTYPE *const _@$(PREFIX) = ((@$.BDEF.IOTYPE *)@$REGBASE);
+@LD.DEFNS=
+_@$(PREFIX) = @$(REGBASE);
 @RTL.MAKE.FILES=wbgpio.v
 @RTL.MAKE.GROUP=@$(DEVID)
+@SIM.CLOCK=clk
+@SIM.TICK=
+	if (m_core->o_gpio & GPIO_HALT)
+		m_done = true;

@@ -4,9 +4,12 @@ xilinx
 obj_dir
 obj-pc
 obj-zip
+obj-rv32
 *.o
 *.a
 *.vcd
+*.fst
+*.vcd.hier
 .swp
 .*.swp
 .*.swo
@@ -29,3 +32,4 @@ core
 *.smt2
 lastbuild.v
 20*-zipversa.tjz
+videozip

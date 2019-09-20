@@ -73,10 +73,10 @@
 @INT.UARTTX.WIRE=uarttx_int
 @INT.UARTRXF.WIRE=uartrxf_int
 @INT.UARTTXF.WIRE=uarttxf_int
-@INT.UARTRX.PIC=altpic
-@INT.UARTTX.PIC=altpic
-@INT.UARTRXF.PIC=syspic
-@INT.UARTTXF.PIC=syspic
+@INT.UARTRX.PIC=
+@INT.UARTTX.PIC=
+@INT.UARTRXF.PIC=@$(SYSPIC)
+@INT.UARTTXF.PIC=@$(SYSPIC)
 @CTS=i_@$(PREFIX)_cts_n
 @RTS=o_@$(PREFIX)_rts_n
 @MAIN.PORTLIST=
@@ -90,7 +90,7 @@
  		@$(PREFIX)_uart(i_clk, 1'b0,
  			wb_cyc, (wb_stb)&&(@$(PREFIX)_sel), wb_we,
 				wb_addr[1:0], wb_data,
- 			@$(PREFIX)_ack, @$(PREFIX)_stall, @$(PREFIX)_data,
+ 			@$(PREFIX)_stall, @$(PREFIX)_ack, @$(PREFIX)_data,
  			i_@$(PREFIX)_rx, o_@$(PREFIX)_tx, @$CTS, @$RTS,
 			@$(PREFIX)rx_int, @$(PREFIX)tx_int,
 			@$(PREFIX)rxf_int, @$(PREFIX)txf_int);

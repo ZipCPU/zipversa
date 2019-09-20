@@ -35,9 +35,11 @@
 ################################################################################
 ##
 ##
+@SYSPIC=picorv
+@CPUBUS=cpu
+#
 @PREFIX=picorv
 @DEVID=RVCPU
-@NADDR=1
 @ACCESS=INCLUDE_PICORV
 @DBGBUS=wbu
 @MASTER.TYPE=CPU
@@ -45,56 +47,128 @@
 @BUS.NAME=cpu
 @BUS.WIDTH=32
 @BUS.CLOCK=clk
-@CPURESET=i_cpu_reset
-@$RESET_ADDRESS=@$(bkram.REGBASE)
+@CPURESET=i_reset | cpu_reset
+@$RESET_ADDRESS=@$(flash.REGBASE)
 @$STACK_ADDRESS=@$(bkram.REGBASE)+@$(bkram.NADDR)*4
-@INT.CPU.WIRE=cpu_int
-@INT.CPU.BUS=buspic
+# @INT.CPU.WIRE=@$(PREFIX)_trap
+# @INT.CPU.BUS=buspic
 @BUSN=@$(BUS.NAME)
+@TRAP=@$(PREFIX)_trap
 @MAIN.PARAM=
+	localparam	[31-1:0]	RESET_ADDRESS = @$(RESET_ADDRESS),
+				STACKADDR = @$(STACK_ADDRESS);
+	localparam [0:0]	OPT_BIGENDIAN = 1'b0;
 @MAIN.DEFNS=
-	reg	[31:0]	@$(PREFIX)_int_vector;
+	wire		@$(TRAP);
+	wire	[29:0]	@$(BUSN)_addr_wide;
+	wire	[31:0]	@$(PREFIX)_buserr_insn,
+			@$(PREFIX)_buserr_addr,
+			@$(PREFIX)_active_irq;
 @MAIN.INSERT=
 	wb_picorv32 #(.PROGADDR_RESET(@$(RESET_ADDRESS)),
+			.PROGADDR_IRQ(@$(RESET_ADDRESS)+16),
 			.STACKADDR(@$(STACK_ADDRESS)))
-		rvcpu(@$(PREFIX)_trap,
-			i_clk, cpu_reset,
+		@$(PREFIX)i(@$(TRAP),
+			i_clk, @$(CPURESET),
 			@$(BUSN)_cyc, @$(BUSN)_stb, @$(BUSN)_we,
-				@$(BUSN)_addr, @$(BUSN)_data, @$(BUSN)_sel,
-			@$(BUSN)_stall, @$(BUSN)_ack, @$(BUSN)_data,
+				@$(BUSN)_addr_wide, @$(BUSN)_data, @$(BUSN)_sel,
+			@$(BUSN)_stall, @$(BUSN)_ack, @$(BUSN)_idata,
 			@$(BUSN)_err,
-			@$(PREFIX)_int_vector);
+			@$(PREFIX)_int_vec,
+			@$(PREFIX)_buserr_insn,
+			@$(PREFIX)_buserr_addr,
+			@$(PREFIX)_active_irq);
 
+	assign	@$(BUSN)_addr = @$(BUSN)_addr_wide[@$(MASTER.BUS.AWID)-1:0];
+@ACCESS=@$(DEVID)_ACCESS
+@PIC.BUS=@$(PREFIX)_int_vec
+@PIC.MAX=32
+@RTL.MAKE.GROUP=@$(DEVID)
+@RTL.MAKE.SUBD=picorv
+@RTL.MAKE.FILES=picorv32.v wb_picorv32.v
+@REGDEFS.H.INSERT=
+#define	RESET_ADDRESS	@$(RESET_ADDRESS)
+#define	LITTLEENDIAN_CPU	1
+@SIM.INCLUDE=
+#include "zipelf.h"
 
+@SIM.DEFINES=
+@SIM.DEFNS=
+@SIM.INIT=
+@SIM.SETRESET=
+@SIM.METHODS=
+#ifdef	@$(ACCESS)
+	void	loadelf(const char *elfname) {
+		ELFSECTION	**secpp, *secp;
+		uint32_t	entry;
+
+		elfread(elfname, entry, secpp);
+
+		for(int s=0; secpp[s]->m_len; s++) {
+			bool	successful_load;
+			secp = secpp[s];
+
+			successful_load = load(secp->m_start,
+				secp->m_data, secp->m_len);
+
+			if (!successful_load) {
+				printf("Could not load section "
+					"from %08x to %08x--no such address\n",
+					secp->m_start,
+					secp->m_start+secp->m_len);
+			}
+		} free(secpp);
+	}
+#endif // @$(ACCESS)
+@SIM.CLOCK=clk
+@SIM.TICK=
+	m_core->i_reset = 0;
+@SIM.CLRRESET=
+	m_core->i_reset = 1;
+#
+#
+#
+@PREFIX=cpu_define
+@ACCESS=INCLUDE_CPU
+@DEPENDS=INCLUDE_PICORV
+##
+@PREFIX=cpu
+@$RESET_ADDRESS=@$(picorv.RESET_ADDRESS)
+@STARTSYM=_rvboot
+##
+@PREFIX=cpu_buserr_addr
+@ACCESS=INCLUDE_CPU_BUSERR_ADDR
+@DEPENDS=INCLUDE_PICORV
 @SLAVE.TYPE=SINGLE
 @SLAVE.BUS=wb
-@ACCESS=@$(DEVID)_ACCESS
-@INT.SPIO.WIRE=@$(PREFIX)_int
-@INT.SPIO.PIC=buspic
-@NLED=8
-@NBTN=1
-@NSW=8
-@MAIN.PORTLIST=
-		// SPIO interface
-		i_sw, i_btn, o_led
-@MAIN.IODECL=
-	// @$(DEVID) interface
-	input	wire	[@$(NSW)-1:0]	i_sw;
-	input	wire	[@$(NBTN)-1:0]	i_btn;
-	output	wire	[@$(NLED)-1:0]	o_led;
+@CPUPREFIX=picorv
+@NADDR=1
 @MAIN.INSERT=
-	spio #(.NBTN(@$(NBTN)), .NLEDS(@$(NLED)), .NSW(@$(NSW))) @$(PREFIX)i(i_clk,
-		wb_cyc, (wb_stb)&&(@$(PREFIX)_sel), wb_we, wb_data, wb_sel,
-			@$(PREFIX)_ack, @$(PREFIX)_stall, @$(PREFIX)_data,
-		i_sw, i_btn, o_led, @$(PREFIX)_int);
-@MAIN.ALT=
-	assign	o_led = 0;
+	assign	@$(PREFIX)_data = picorv_buserr_addr;
 @REGS.N=1
-@REGS.0= 0 R_@$(DEVID) @$(DEVID)
-@BDEF.DEFN=
-@BDEF.IONAME=_@$(PREFIX)
-@BDEF.IOTYPE=unsigned
-@BDEF.OSDEF= _BOARD_HAS_@$(DEVID)
-@BDEF.OSVAL= static volatile @$(BDEF.IOTYPE) *const @$(BDEF.IONAME) = ((@$(BDEF.IOTYPE) *)@$REGBASE);
-@RTL.MAKE.GROUP=SPIO
-@RTL.MAKE.FILES=spio.v debouncer.v ledbouncer.v
+@REGS.0=0 R_BUSERR_ADDR	CPUBUSERR
+##
+@PREFIX=cpu_buserr_insn
+@ACCESS=INCLUDE_CPU_BUSERR_INSN
+@DEPENDS=INCLUDE_PICORV
+@SLAVE.TYPE=SINGLE
+@SLAVE.BUS=wb
+@CPUPREFIX=picorv
+@NADDR=1
+@MAIN.INSERT=
+	assign	@$(PREFIX)_data = picorv_buserr_insn;
+@REGS.N=1
+@REGS.0=0 R_BUSERR_PC	CPUBUSERRPC
+##
+##
+@PREFIX=cpu_active_irq
+@ACCESS=INCLUDE_CPU_ACTIVE_IRQ
+@DEPENDS=INCLUDE_PICORV
+@SLAVE.TYPE=SINGLE
+@SLAVE.BUS=wb
+@CPUPREFIX=picorv
+@NADDR=1
+@MAIN.INSERT=
+	assign	@$(PREFIX)_data = @$(CPUPREFIX)_active_irq;
+@REGS.N=1
+@REGS.0=0 R_ACTIVEIRQ	CPUACTIVEIRQ

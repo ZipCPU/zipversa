@@ -59,6 +59,7 @@ void	closeup(int v) {
 	exit(0);
 }
 
+#ifdef	INCLUDE_ZIPCPU
 unsigned int	cmd_read(FPGA *fpga, int r) {
 	const unsigned int	MAXERR = 1000;
 	unsigned int	errcount = 0;
@@ -86,8 +87,13 @@ unsigned int	cmd_read(FPGA *fpga, int r) {
 void	usage(void) {
 	printf("USAGE: zipstate\n");
 }
+#endif
 
 int main(int argc, char **argv) {
+#ifndef	INCLUDE_ZIPCPU
+	fprintf(stderr, "This program needs the ZipCPU to be part of the design in order to work.\n");
+	exit(EXIT_FAILURE);
+#else
 	bool	long_state = false;
 	unsigned int	v;
 	int	skp;
@@ -140,5 +146,6 @@ int main(int argc, char **argv) {
 	}
 
 	delete	m_fpga;
+#endif	// INCLUDE_ZIPCPU
 }
 

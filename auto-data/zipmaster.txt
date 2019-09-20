@@ -42,14 +42,17 @@
 ## PIC know the name of the PIC we are using.  Note that this is a global.
 ##
 @SYSPIC= syspic
+@CPUBUS= cpu
+#
 @PREFIX=zip
 @ACCESS=INCLUDE_ZIPCPU
 @DBGBUS=wbu
 @MASTER.TYPE=CPU
-@MASTER.BUS=zip
-@BUS.NAME=zip
+@MASTER.BUS=@$(/CPUBUS)
+@BUS.NAME=@$(/CPUBUS)
 @BUS.WIDTH=32
 @BUS.CLOCK=clk
+@BUSN=@$(/CPUBUS)
 @SCOPE.TRIGGER=zip_trigger
 @SCOPE.DATA=zip_debug
 @CPURESET=i_cpu_reset
@@ -93,6 +96,9 @@
 	// Number of ZipCPU interrupts
 	localparam	ZIP_INTS = 16;
 	//
+	// The ZipCPU is big endian
+	localparam [0:0]	OPT_BIGENDIAN = 1'b1;
+	//
 	// ZIP_START_HALTED
 	//
 	// A boolean, indicating whether or not the ZipCPU be halted on startup?
@@ -114,13 +120,13 @@
 			ZIP_START_HALTED,ZIP_INTS)
 		swic(i_clk, (i_reset)||(@$(CPURESET)),
 			// Zippys wishbone interface
-			zip_cyc, zip_stb, zip_we, zip_addr, zip_data, zip_sel,
-					zip_ack, zip_stall, zip_idata, zip_err,
+			@$(BUSN)_cyc, @$(BUSN)_stb, @$(BUSN)_we, @$(BUSN)_addr, @$(BUSN)_data, @$(BUSN)_sel,
+					@$(BUSN)_ack, @$(BUSN)_stall, @$(BUSN)_idata, @$(BUSN)_err,
 			zip_int_vector, zip_cpu_int,
 			// Debug wishbone interface
 			(@$(DBGBUS)_cyc), ((@$(DBGBUS)_stb)&&(zip_dbg_sel)),@$(DBGBUS)_we,
 			@$(DBGBUS)_addr[0],
-			@$(DBGBUS)_data, zip_dbg_ack, zip_dbg_stall, zip_dbg_data,
+			@$(DBGBUS)_data, zip_dbg_stall, zip_dbg_stall, zip_dbg_data,
 			zip_debug);
 	assign	zip_trigger = zip_debug[31];
 @BDEF.INCLUDE=
@@ -511,3 +517,13 @@
 @SLAVE.BUS=wbu
 @SLAVE.ORDER=1000000
 @NADDR=2
+#
+#
+@PREFIX=cpu_define
+@ACCESS=INCLUDE_CPU
+@DEPENDS=INCLUDE_ZIPCPU
+#
+#
+@PREFIX=cpu
+@RESET_ADDRESS=@$(zip.RESET_ADDRESS)
+@STARTSYM=_zipboot

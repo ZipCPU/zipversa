@@ -71,6 +71,8 @@
 #define	KEY_RETURN	10
 #define	CTRL(X)		((X)&0x01f)
 
+#ifdef	INCLUDE_ZIPCPU
+
 class	SPARSEMEM {
 public:
 	bool	m_valid;
@@ -715,3 +717,8 @@ int	main(int argc, char **argv) {
 
 }
 
+#else
+int main(int argc, char **argv) {
+	fprintf(stderr, "ZipLoad only works for the ZipCPU.  This design was not built with a ZipCPU within it.\n");
+}
+#endif

@@ -81,7 +81,7 @@ $(VOBJ)/V$(BASE)__ALL.a: $(VOBJ)/V$(BASE).h
 $(VOBJ)/V$(BASE).mk:  $(VOBJ)/V$(BASE).cpp
 $(VOBJ)/V$(BASE).cpp: $(VOBJ)/V$(BASE).h
 $(VOBJ)/V$(BASE).h: $(VFLIST)
-	$(VERILATOR) $(VFLAGS) $(BASE).v
+	$(VERILATOR) $(VFLAGS) $(BASE).v --top-module main
 
 # $(VOBJ)/Venetctrl.h $(VOBJ)/Venetctrl.cpp $(VOBJ)/Venetctrl.mk: enetctrl.v
 $(VOBJ)/V%.h: $(FBDIR)/%.v
@@ -90,6 +90,40 @@ $(VOBJ)/V%.h: $(FBDIR)/%.v
 $(VOBJ)/V%.cpp: $(VOBJ)/V%.h
 $(VOBJ)/V%.mk:  $(VOBJ)/V%.h
 $(VOBJ)/V%.h: $(FBDIR)/%.v
+
+.PHONY: hex
+
+hex: cmem_8.hex
+hex: cmem_16.hex
+hex: cmem_32.hex
+hex: cmem_64.hex
+hex: cmem_128.hex
+hex: cmem_256.hex
+hex: cmem_512.hex
+hex: cmem_1024.hex
+hex: cmem_2048.hex
+hex: cmem_4096.hex
+
+cmem_8.hex:
+	ln -s fft/cmem_8.hex .
+cmem_16.hex:
+	ln -s fft/cmem_16.hex .
+cmem_32.hex:
+	ln -s fft/cmem_32.hex .
+cmem_64.hex:
+	ln -s fft/cmem_64.hex .
+cmem_128.hex:
+	ln -s fft/cmem_128.hex .
+cmem_256.hex:
+	ln -s fft/cmem_256.hex .
+cmem_512.hex:
+	ln -s fft/cmem_512.hex .
+cmem_1024.hex:
+	ln -s fft/cmem_1024.hex .
+cmem_2048.hex:
+	ln -s fft/cmem_2048.hex .
+cmem_4096.hex:
+	ln -s fft/cmem_4096.hex .
 
 .PHONY: yosys
 yosys: $(JSON)
@@ -102,6 +136,7 @@ CLOCKS := --freq 50 --pre-pack clocks.py
 $(TEXTCFG): $(JSON) $(CONSTRAINTS) clocks.py
 	$(NEXTPNR) -q --json $(JSON) $(CHIP) --lpf $(CONSTRAINTS) $(CLOCKS) --textcfg $(TEXTCFG) -l $(PNRLOG)
 nextpnr: $(TEXTCFG)
+pnr: $(TEXTCFG)
 
 .PHONY: bin
 $(SVFILE): $(TEXTCFG)

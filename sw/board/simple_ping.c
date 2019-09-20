@@ -2,7 +2,7 @@
 //
 // Filename: 	simple-ping.c
 //
-// Project:	VideoZip, a ZipCPU SoC supporting video functionality
+// Project:	ZipVersa, Versa Brd implementation using ZipCPU infrastructure
 //
 // Purpose:	To exercise the network port by ...
 //
@@ -50,10 +50,10 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2015-2019, Gisselquist Technology, LLC
+// Copyright (C) 2019, Gisselquist Technology, LLC
 //
 // This program is free software (firmware): you can redistribute it and/or
-// modify it under the terms of  the GNU General Public License as published
+// modify it under the terms of the GNU General Public License as published
 // by the Free Software Foundation, either version 3 of the License, or (at
 // your option) any later version.
 //
@@ -155,9 +155,9 @@ unsigned	pkt_id = 0;
 #define	LED_FAULT	0xffff
 
 //
-// We'll give our user 64kW of global variables
+// We'll give our user 512B of global variables
 //
-#define	USER_STACK_SIZE	4096
+#define	USER_STACK_SIZE	512
 int	user_stack[USER_STACK_SIZE];
 const int *user_sp = &user_stack[USER_STACK_SIZE];
 

@@ -49,6 +49,7 @@
 #include <string.h>
 
 #include "zipelf.h"
+#include "design.h"
 
 bool
 iself(const char *fname)
@@ -112,8 +113,9 @@ void	elfread(const char *fname, unsigned &entry, ELFSECTION **&sections)
 	} if ((id = elf_getident(e, NULL)) == NULL) {
 		fprintf(stderr, "getident() failed: %s\n", elf_errmsg(-1));
 		exit(EXIT_FAILURE);
-	} if (i != ELFCLASS32) {
-		fprintf(stderr, "This is a 64-bit ELF file, ZipCPU ELF files are all 32-bit\n");
+	}
+	if (i != ELFCLASS32) {
+		fprintf(stderr, "This is a 32-bit ELF file.  This loader only supports 32-bits.\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -133,11 +135,21 @@ void	elfread(const char *fname, unsigned &entry, ELFSECTION **&sections)
 	}
 
 
+#ifdef	INCLUDE_ZIPCPU
 	// Check whether or not this is an ELF file for the ZipCPU ...
 	if (ehdr.e_machine != 0x0dad1) {
 		fprintf(stderr, "This is not a ZipCPU/8 ELF file\n");
 		exit(EXIT_FAILURE);
 	}
+#elif	defined(INCLUDE_PICORV)
+	// ... or perhaps a Risc-V ELF file
+	if (ehdr.e_machine != 0x0f3) {
+		fprintf(stderr, "This is not a RISC-V ELF file\n");
+		exit(EXIT_FAILURE);
+	}
+#else
+	fprintf(stderr, "Machine Type: %08x\n", ehdr.e_machine);
+#endif
 
 	// Get our entry address
 	entry = ehdr.e_entry;
@@ -244,8 +256,13 @@ assert(n != 0);
 		*/
 
 /*
+		// Only turn this on if you need to, otherwise it creates
+		// way too much debugging output--one line per char in the
+		// design
 		if (dbg) for(unsigned j=0; j<r[i]->m_len; j++)
-			fprintf(stderr, "ADR[%04x] = %02x\n", r[i]->m_start+j,
+			fprintf(stderr, "ADR[%04x -> %04x] = %02x\n",
+				r[i]->m_start+j,
+				(unsigned)(phdr.p_vaddr+j),
 				r[i]->m_data[j] & 0x0ff);
 */
 	}

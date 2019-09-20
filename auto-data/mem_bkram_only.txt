@@ -41,15 +41,18 @@
 ##
 @PREFIX=mem_bkram_only
 @MASTER.TYPE=CPU
-@MASTER.BUS=zip
+@MASTER.BUS=@$(CPUBUS)
 @LD.FILE=bkram.ld
+@$GBLPOINTER=@$(REGBASE)+@$(bkram.NADDR)/8
 @LD.DEFNS=
 /* LD.DEFNS from @$(PREFIX) */
 _kram  = 0; /* No high-speed kernel RAM */
 _ram   = ORIGIN(bkram);
 _rom   = 0;
 _top_of_stack = ORIGIN(bkram) + LENGTH(bkram);
+__global_pointer$ = @$(GBLPOINTER);
 
+@LD.ENTRY=@$(cpu.STARTSYM)
 @LD.SCRIPT=
 /* LD.SCRIPT from @$(PREFIX) */
 SECTIONS
@@ -62,9 +65,18 @@ SECTIONS
                *(.start) *(.boot)
                *(.kernel)
                *(.text.startup)
+               *(.srocode*)
                *(.text*)
+               *(.ramcode*)
+               *(.irq*)
+               *(.eh_frame*)
+               *(.init_array*)
+               *(.fini_array*)
+               *(.srodata*)
                *(.rodata*) *(.strings)
+               *(.sdata)
                *(.data) *(COMMON)
+		. = ALIGN(4);
                }> bkram
        _ram_image_end = . ;
        .bss : ALIGN_WITH_INPUT {

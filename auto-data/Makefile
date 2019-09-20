@@ -48,20 +48,17 @@ all:	data
 # main project files.
 #
 BASE    := global.txt dlyarbiter.txt
-AUX     := version.txt buserr.txt pic.txt pwrcount.txt # wbfft.txt
+AUX     := version.txt buserr.txt pwrcount.txt bustimer.txt wbfft.txt
 IO      := spio.txt gpio.txt
-RTC     := rtclight.txt # rtcdate.txt
+RTC     := # rtclight.txt # rtcdate.txt
 DBGBUS  := wbuconsole.txt
 MEMORY  := bkram.txt flash.txt # sdram.txt wbhyperram.txt
-CPU     := zipmaster.txt
-NETWORK := netclockctr.txt mdio1.txt enet.txt
-GPS     := # gps.txt
-SDCARD  := # sdspi.txt
-GFX     := # wboledrgb.txt
+CPU     := picorv.txt pic.txt # zipmaster.txt
+NETWORK := mdio1.txt enet.txt # netclockctr.txt
 SCOPES  := enetscope.txt flashscope.txt # mdioscope.txt cpuscope.txt
 LDSCRIPT:= mem_flash_bkram.txt mem_bkram_only.txt # mem_sdram_bkram.txt
-DATA := allclocks.txt $(BASE) $(AUX) $(IO) $(RTC)			\
-	$(DBGBUS) $(MEMORY) $(CPU) $(NETWORK) $(GPS) $(SDCARD) $(GFX)	\
+DATA := allclocks.txt $(BASE) $(AUX) $(IO) $(RTC)		\
+	$(DBGBUS) $(MEMORY) $(CPU) $(NETWORK)			\
 	$(SCOPES) $(LDSCRIPT)
 
 AUTOFPGA := autofpga

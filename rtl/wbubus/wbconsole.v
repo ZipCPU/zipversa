@@ -47,7 +47,7 @@
 module	wbconsole(i_clk, i_rst,
 		//
 		i_wb_cyc, i_wb_stb, i_wb_we, i_wb_addr, i_wb_data,
-			o_wb_ack, o_wb_stall, o_wb_data,
+			o_wb_stall, o_wb_ack, o_wb_data,
 		//
 		o_uart_stb, o_uart_data, i_uart_busy,
 		i_uart_stb, i_uart_data,

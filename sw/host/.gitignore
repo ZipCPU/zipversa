@@ -1,12 +1,14 @@
 dumpflash
 erxscope
 etxscope
+fftresult.bin
 flashid
 flashscope
 netstat
 netuart
 rdclocks
 readmdio
+testfft
 wbregs
 zipdbg
 zipload

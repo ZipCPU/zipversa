@@ -79,13 +79,13 @@
 `default_nettype	none
 //
 module	icontrol(i_clk, i_reset, i_wb_stb, i_wb_we, i_wb_data,
-		o_wb_ack, o_wb_stall, o_wb_data,
+		o_wb_stall, o_wb_ack, o_wb_data,
 		i_brd_ints, o_interrupt);
 	parameter	IUSED = 12, DW=32;
 	input	wire			i_clk, i_reset;
 	input	wire			i_wb_stb, i_wb_we;
 	input	wire	[DW-1:0]	i_wb_data;
-	output	wire			o_wb_ack, o_wb_stall;
+	output	wire			o_wb_stall, o_wb_ack;
 	output	reg	[DW-1:0]	o_wb_data;
 	input	wire	[(IUSED-1):0]	i_brd_ints;
 	output	reg			o_interrupt;

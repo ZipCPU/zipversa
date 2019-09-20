@@ -106,7 +106,7 @@ main_tb: $(OBJDIR)/main_tb.o $(OBJDIR)/zipelf.o $(SIMOBJS) $(VMAIN) $(VOBJS)
 #
 .PHONY: clean
 clean:
-	rm -f *.vcd
+	rm -f *.vcd *.fst *.vcd.hier
 	rm -f $(PROGRAMS)
 	rm -rf $(OBJDIR)/
 

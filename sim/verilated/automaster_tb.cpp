@@ -46,7 +46,9 @@
 
 #include "verilated.h"
 #include "design.h"
+#ifdef	INCLUDE_ZIPCPU
 #include "cpudefs.h"
+#endif
 
 #include "testb.h"
 // #include "twoc.h"
@@ -62,12 +64,6 @@ void	usage(void) {
 // -p # command port
 // -s # serial port
 // -f # profile file
-#ifdef	SDSPI_ACCESS
-"\t-c <img-file>\n"
-"\t\tSpecifies a memory image which will be used to make the SD-card\n"
-"\t\tmore realistic.  Reads from the SD-card will be directed to\n"
-"\t\t\"sectors\" within this image.\n\n"
-#endif
 "\t-d\tSets the debugging flag\n"
 "\t-t <filename>\n"
 "\t\tTurns on tracing, sends the trace to <filename>--assumed to\n"
@@ -79,9 +75,6 @@ int	main(int argc, char **argv) {
 	Verilated::commandArgs(argc, argv);
 
 	const	char *elfload = NULL,
-#ifdef	SDSPI_ACCESS
-			*sdimage_file = NULL,
-#endif
 			*profile_file = NULL,
 			*trace_file = NULL; // "trace.vcd";
 	bool	debug_flag = false, willexit = false;
@@ -93,9 +86,6 @@ int	main(int argc, char **argv) {
 		if (argv[argn][0] == '-') for(int j=1;
 					(j<512)&&(argv[argn][j]);j++) {
 			switch(tolower(argv[argn][j])) {
-#ifdef	SDSPI_ACCESS
-			case 'c': sdimage_file = argv[++argn]; j = 1000; break;
-#endif
 			case 'd': debug_flag = true;
 				if (trace_file == NULL)
 					trace_file = "trace.vcd";
@@ -111,10 +101,6 @@ int	main(int argc, char **argv) {
 			}
 		} else if (iself(argv[argn])) {
 			elfload = argv[argn];
-#ifdef	SDSPI_ACCESS
-		} else if (0 == access(argv[argn], R_OK)) {
-			sdimage_file = argv[argn];
-#endif
 		} else {
 			fprintf(stderr, "ERR: Cannot read %s\n", argv[argn]);
 			perror("O/S Err:");
@@ -135,7 +121,9 @@ int	main(int argc, char **argv) {
 		tb->opentrace(trace_file);
 
 	if (profile_file) {
-#ifndef	INCLUDE_ZIPCPU
+#ifdef	INCLUDE_ZIPCPU
+#elif defined(INCLUDE_PICORV)
+#else
 		fprintf(stderr, "ERR: Design has no ZipCPU\n");
 		exit(EXIT_FAILURE);
 #endif
@@ -155,10 +143,12 @@ int	main(int argc, char **argv) {
 #endif
 
 	if (elfload) {
-#ifndef	INCLUDE_ZIPCPU
+#ifdef	INCLUDE_ZIPCPU
+#elif	defined(INCLUDE_PICORV)
+#else // No CPU
 		fprintf(stderr, "ERR: Design has no ZipCPU\n");
 		exit(EXIT_FAILURE);
-#endif
+#endif // No CPU
 		tb->loadelf(elfload);
 
 		ELFSECTION	**secpp;
@@ -167,6 +157,7 @@ int	main(int argc, char **argv) {
 		elfread(elfload, entry, secpp);
 		free(secpp);
 
+#ifdef	INCLUDE_ZIPCPU
 		printf("Attempting to start from 0x%08x\n", entry);
 		tb->m_core->cpu_ipc = entry;
 
@@ -189,8 +180,10 @@ int	main(int argc, char **argv) {
 		tb->tick();
 		tb->m_core->cpu_cmd_halt = 0;
 		tb->m_core->VVAR(_swic__DOT__cmd_reset) = 0;
+#endif
 	}
 
+#ifdef	INCLUDE_ZIPCPU
 	if (profile_fp) {
 		unsigned long	last_instruction_tick = 0, now = 0;
 		while((!willexit)||(!tb->done())) {
@@ -212,7 +205,9 @@ int	main(int argc, char **argv) {
 				last_instruction_tick = now;
 			}
 		}
-	} else if (willexit) {
+	} else
+#endif
+	if (willexit) {
 		while(!tb->done())
 			tb->tick();
 	} else

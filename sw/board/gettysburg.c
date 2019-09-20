@@ -5,7 +5,7 @@
 // Project:	ZipVersa, Versa Brd implementation using ZipCPU infrastructure
 //
 // Purpose:	The classical "Hello, world!\r\n" program.  This one, however,
-//		runs on the Arty using the PModUSBUART
+//		runs on the Versa board over the FTDI interface
 //
 // Creator:	Dan Gisselquist, Ph.D.
 //		Gisselquist Technology, LLC
