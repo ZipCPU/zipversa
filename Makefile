@@ -163,6 +163,9 @@ sim: rtl check-gpp
 #
 .PHONY: sw
 sw: sw-host sw-zlib sw-rv32
+.PHONY: rv sw-rv
+rv: sw-rv32
+sw-rv: sw-rv32
 
 #
 #
@@ -192,7 +195,7 @@ sw-board: check-zip-gcc sw-zlib
 
 # sw/rv32 contains the software when using the picoRV32
 .PHONY: sw-rv32
-swrv32:
+sw-rv32:
 	+@$(SUBMAKE) sw/rv32
 
 #
