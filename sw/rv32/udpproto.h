@@ -42,7 +42,7 @@
 #include "pkt.h"
 
 extern	NET_PACKET *new_udppkt(unsigned len);
-extern	void	tx_udp(NET_PACKET *pkt, unsigned src, unsigned dest, unsigned sport, unsigned dport);
+extern	void	tx_udp(NET_PACKET *pkt, unsigned dest, unsigned sport, unsigned dport);
 extern	void	rx_udp(NET_PACKET *pkt);
 extern	void	dump_udppkt(NET_PACKET *pkt);
 extern unsigned	udp_sport(NET_PACKET *pkt);

@@ -1,13 +1,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Filename: 	builddate.v
+// Filename: 	fftsimtest.c
 //
 // Project:	ZipVersa, Versa Brd implementation using ZipCPU infrastructure
 //
-// Purpose:	This file records the date of the last build.  Running "make"
-//		in the main directory will create this file.  The `define found
-//	within it then creates a version stamp that can be used to tell which
-//	configuration is within an FPGA and so forth.
+// Purpose:	Check the FFTs function apart from using the network, to make
+//		sure we can get the results we expect.  This primarily tests
+//	the WB to FFT wrapper, wbfft.v.  It also does it from within simulation
+//	so we can have the confidence that it work or if not the ability to
+//	dig into the core and see what is going right or wrong.
 //
 // Creator:	Dan Gisselquist, Ph.D.
 //		Gisselquist Technology, LLC
@@ -38,8 +39,50 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 //
-`ifndef	DATESTAMP
-`define DATESTAMP 32'h20190920
-`define BUILDTIME 32'h00115435
-`endif
-//
+#include <stdio.h>
+#include <stdlib.h>
+#include "board.h"
+#include "pkt.h"
+
+#define	FFT_SIZE	FFT_LENGTH
+
+void	reset_fft(void) {
+	*_wbfft_ctrl = 0;
+}
+
+void	tx_busy(NET_PACKET *txpkt) {
+	free_pkt(txpkt);
+}
+
+int	main(int argc, char **argv) {
+
+	for(int dly=0; dly<5; dly++) {
+		printf("FFT Test #1: impulse at %d\n", dly);
+
+		reset_fft();
+		*_buspic = BUSPIC_FFT;
+
+		for(unsigned k=0; k<dly; k++)
+			_wbfft_data[k] = 0;
+
+		_wbfft_data[dly] = 0x7f00;
+
+		for(unsigned k=dly+1; k<FFT_SIZE-1; k++)
+			_wbfft_data[k] = 0;
+
+		if ((*_buspic & BUSPIC_FFT)!=0) {
+			printf("BUS PIC FFT responded too early ??\n");
+			exit(-1);
+		}
+
+		_wbfft_data[FFT_SIZE-1] = 0;
+
+		while((*_buspic & BUSPIC_FFT)==0)
+			;
+
+		printf( "  Result(s)\n"
+			"  ------------\n");
+		for(unsigned k=0; k<FFT_SIZE; k++)
+			printf("   [%4d]: 0x%08x\n", k, _wbfft_data[k]);
+	}
+}

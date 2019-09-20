@@ -138,7 +138,7 @@ int	main(int argc, char **argv) {
 			case ETHERTYPE_ARP:
 				printf("RXPKT - ARP\n");
 				rx_ethpkt(rcvd);
-				rx_arp(rcvd);
+				rx_arp(rcvd); // Frees the packet
 				break;
 			case ETHERTYPE_IP: {
 				unsigned	subproto;
@@ -157,12 +157,16 @@ int	main(int argc, char **argv) {
 						if (rcvd->p_user[0] == ICMP_PING)							icmp_reply(ipsrc, rcvd);
 						else
 							printf("RX PING <<------ SUCCESS!!!\n");
+						// Free the packet
+						free_pkt(rcvd);
 						break;
 					default:
 						printf("UNKNOWN-IP -----\n");
 						pkt_reset(rcvd);
 						dump_ethpkt(rcvd);
 						printf("\n");
+						// Free the packet
+						free_pkt(rcvd);
 						break;
 				}}}
 				break;
@@ -173,6 +177,8 @@ int	main(int argc, char **argv) {
 				pkt_reset(rcvd);
 				dump_ethpkt(rcvd);
 				printf("\n");
+				// Free the packet
+				free_pkt(rcvd);
 				break;
 			}
 

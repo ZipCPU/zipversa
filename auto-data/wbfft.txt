@@ -43,8 +43,8 @@
 @$DATA=@$(NADDR)/2
 @SLAVE.TYPE=OTHER
 @SLAVE.BUS=wb
-@MAIN.DEFNS=
-	wire		@$(PREFIX)_int;
+@INT.FFT.WIRE=@$(PREFIX)_int
+@INT.FFT.PIC=buspic
 @MAIN.INSERT=
 	wbfft fft(i_clk, i_reset, wb_cyc, (wb_stb)&&(@$(PREFIX)_sel), wb_we,
 			wb_addr[@$LGFFT:0], wb_data, @$(PREFIX)_stall,
@@ -54,8 +54,12 @@
 //
 @REGS.0= 0 R_@$(DEVID) @$(DEVID)
 @REGS.1= @$(DATA) R_@$(DEVID) @$(DEVID)
+@BDEF.DEFN=
+#define	FFT_LENGTH	(1 << @$(LGFFT))
 @BDEF.OSDEF=_BOARD_HAS_@$(DEVID)
-@BDEF.OSVAL=extern int _@$(PREFIX)[1];
+@BDEF.OSVAL=
+static volatile unsigned *const _@$(PREFIX)_ctrl = ((unsigned *)@$[0x%08x](REGBASE));
+static volatile unsigned *const _@$(PREFIX)_data = (unsigned *)&_@$(PREFIX)_ctrl[FFT_LENGTH];;
 ##
 @RTL.MAKE.GROUP= FFT
 @RTL.MAKE.SUBD=  fft

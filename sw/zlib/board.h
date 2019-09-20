@@ -67,6 +67,9 @@
 //
 
 
+#define	FFT_LENGTH	(1 << 10)
+
+
 #define BUSPIC(X) (1<<X)
 
 
@@ -207,7 +210,8 @@ static volatile unsigned *const _buserr = ((unsigned *)6291460);
 static volatile unsigned *const _net1dly = ((unsigned *)0x0060001c);
 #ifdef	WBFFT_ACCESS
 #define	_BOARD_HAS_WBFFT
-extern int _wbfft[1];
+static volatile unsigned *const _wbfft_ctrl = ((unsigned *)0x00900000);
+static volatile unsigned *const _wbfft_data = (unsigned *)&_wbfft_ctrl[FFT_LENGTH];;
 #endif	// WBFFT_ACCESS
 #ifdef	PWRCOUNT_ACCESS
 static volatile unsigned *const _pwrcount = ((unsigned *)0x00600020);
@@ -268,12 +272,13 @@ static volatile WBSCOPE *const _flashdbg = ((WBSCOPE *)0x00300000);
 #define	PICORV_NETTX	PICORV(4)
 #define	PICORV_NETRX	PICORV(5)
 // PIC: buspic
-#define	BUSPIC_TIMER	BUSPIC(0)
-#define	BUSPIC_SPIO	BUSPIC(1)
-#define	BUSPIC_UARTTXF	BUSPIC(2)
-#define	BUSPIC_UARTRXF	BUSPIC(3)
-#define	BUSPIC_ENETSCOPE	BUSPIC(4)
-#define	BUSPIC_NETTX	BUSPIC(5)
-#define	BUSPIC_NETRX	BUSPIC(6)
-#define	BUSPIC_FLASHDBG	BUSPIC(7)
+#define	BUSPIC_FFT	BUSPIC(0)
+#define	BUSPIC_TIMER	BUSPIC(1)
+#define	BUSPIC_SPIO	BUSPIC(2)
+#define	BUSPIC_UARTTXF	BUSPIC(3)
+#define	BUSPIC_UARTRXF	BUSPIC(4)
+#define	BUSPIC_ENETSCOPE	BUSPIC(5)
+#define	BUSPIC_NETTX	BUSPIC(6)
+#define	BUSPIC_NETRX	BUSPIC(7)
+#define	BUSPIC_FLASHDBG	BUSPIC(8)
 #endif	// BOARD_H

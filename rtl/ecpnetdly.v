@@ -44,7 +44,7 @@ module	ecpnetdly(i_clk, i_reset, i_commanded_delay, o_current_delay,
 		i_pin, o_pin);
 	parameter	NP = 4;
 	parameter	NBITS= 16;
-	parameter	CKDIV= 2;
+	parameter	CKDIV= 3;
 	//
 	localparam	DOWN = 1'b1;
 	localparam	UP   = 1'b0;
@@ -63,9 +63,18 @@ module	ecpnetdly(i_clk, i_reset, i_commanded_delay, o_current_delay,
 	reg			maxed_out;
 	genvar			gk;
 
-	initial	r_syncd = 0;
+	reg	r_initial_reset;
+
+	initial	r_initial_reset <= 1;
 	always @(posedge i_clk)
 	if (i_reset)
+		r_initial_reset <= 1;
+	else if (r_initial_reset && !ck_stb && !dly_move)
+		r_initial_reset <= 0;
+
+	initial	r_syncd = 0;
+	always @(posedge i_clk)
+	if (i_reset || r_initial_reset)
 		r_syncd <= 0;
 	else if ((dly_direction == DOWN)&&(dly_move)&&(&dly_cflag))
 		r_syncd <= 1;
@@ -88,12 +97,15 @@ module	ecpnetdly(i_clk, i_reset, i_commanded_delay, o_current_delay,
 	begin
 		if (dly_direction == DOWN)
 			current_delay <= (current_delay != 0) ? current_delay - 1 : 0;
-		else
-			current_delay <= current_delay + ((dly_cflag == 0) ? 1:0);
+		else if ((dly_cflag == 0) && !(&current_delay))
+			current_delay <= current_delay + 1;
 	end
 
 	assign	o_current_delay = current_delay;
 
+	reg	same_delay;
+
+	initial	same_delay = 1;
 	initial	dly_direction = DOWN;
 	always @(posedge i_clk)
 	if (!ck_stb && !dly_move)
@@ -102,6 +114,7 @@ module	ecpnetdly(i_clk, i_reset, i_commanded_delay, o_current_delay,
 			dly_direction <= DOWN;
 		else
 			dly_direction <= (current_delay > i_commanded_delay) ? DOWN:UP;
+		same_delay <= (current_delay == i_commanded_delay);
 	end
 
 	initial	dly_move = 0;
@@ -112,6 +125,8 @@ module	ecpnetdly(i_clk, i_reset, i_commanded_delay, o_current_delay,
 			dly_move <= 0;
 		else if (!r_syncd)
 			dly_move <= 1;
+		else if (same_delay)
+			dly_move <= 0;
 		else if (dly_direction == DOWN && ((current_delay != 0) || !(&dly_cflag)))
 			dly_move <= 1;
 		else if (dly_direction == UP && (dly_cflag == 0) && !maxed_out)
@@ -131,7 +146,7 @@ module	ecpnetdly(i_clk, i_reset, i_commanded_delay, o_current_delay,
 `ifdef	YOSYS_NOT_FORMAL
 
 		DELAYF
-		delayi(.LOADN(1'b1), .MOVE(dly_move), .DIRECTION(dly_direction),
+		delayi(.LOADN(!r_initial_reset), .MOVE(dly_move), .DIRECTION(dly_direction),
 			.A(i_pin[gk]), .Z(o_pin[gk]), .CFLAG(dly_cflag[gk]));
 
 `else

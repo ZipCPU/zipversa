@@ -37,7 +37,7 @@
 ##
 ##
 .PHONY: all
-PROGRAMS := gettysburg job pingtest
+PROGRAMS := gettysburg job pingtest fftsimtest fftmain
 all:	$(PROGRAMS)
 #
 #
@@ -55,7 +55,7 @@ BAREMETAL:= -ffreestanding -nostdlib
 #
 NETPROTO:= pkt.c ethproto.c arp.c ipproto.c ipcksum.c icmp.c udpproto.c
 NETLIB  := $(addprefix $(OBJDIR)/,$(subst .c,.o,$(NETPROTO)))
-SOURCES := gettysburg.c txfns.c pingtest.c $(NETPROTO)
+SOURCES := gettysburg.c txfns.c pingtest.c fftsimtest.c fftmain.c $(NETPROTO)
 HEADERS := $(foreach hdr,$(subst .c,.o,$(SOURCES)),$(wildcard $(hdr))) board.h
 INCS    := -I../../rtl -I.
 LFLAGS  := -T board.ld
@@ -107,6 +107,14 @@ job: $(OBJDIR)/job.o $(RVLIB)
 pingtest: $(OBJDIR)/pingtest.o $(RVLIB)
 pingtest: $(NETLIB)
 	$(CC) $(CFLAGS) $(LFLAGS) -Wl,-Map=$(OBJDIR)/pingtest.map $^ -o $@
+
+fftsimtest: $(OBJDIR)/fftsimtest.o $(RVLIB)
+fftsimtest: $(NETLIB)
+	$(CC) $(CFLAGS) $(LFLAGS) -Wl,-Map=$(OBJDIR)/fftsimtest.map $^ -o $@
+
+fftmain: $(OBJDIR)/fftmain.o $(RVLIB)
+fftmain: $(NETLIB)
+	$(CC) $(CFLAGS) $(LFLAGS) -Wl,-Map=$(OBJDIR)/fftmain.map $^ -o $@
 
 define	mk-objdir
 	@bash -c "if [ ! -e $(OBJDIR) ]; then mkdir -p $(OBJDIR)/; fi"

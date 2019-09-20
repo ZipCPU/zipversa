@@ -1,13 +1,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Filename: 	builddate.v
+// Filename:	sw/host/udpsocket.h
 //
 // Project:	ZipVersa, Versa Brd implementation using ZipCPU infrastructure
 //
-// Purpose:	This file records the date of the last build.  Running "make"
-//		in the main directory will create this file.  The `define found
-//	within it then creates a version stamp that can be used to tell which
-//	configuration is within an FPGA and so forth.
+// Purpose:	To encapsulate the writing to and reading-from a UDP network
+//		port (socket).
 //
 // Creator:	Dan Gisselquist, Ph.D.
 //		Gisselquist Technology, LLC
@@ -38,8 +36,33 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 //
-`ifndef	DATESTAMP
-`define DATESTAMP 32'h20190920
-`define BUILDTIME 32'h00115435
-`endif
-//
+#ifndef	UDPSOCKET_H
+#define	UDPSOCKET_H
+
+#include <unistd.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+
+class	UDPSOCKET {
+private:
+	int			m_skt;
+	struct	sockaddr_in	m_addr;
+public:
+	UDPSOCKET(const char *ipaddr, bool verbose = false);
+	~UDPSOCKET(void) {
+		close(m_skt);
+	}
+	void	bind(void);
+	ssize_t	read(void *buf, size_t count, unsigned timeout_ms = 0);
+	ssize_t	write(const void *buf, size_t count);
+	bool	operator!(void) {
+		return (m_skt < 0);
+	}
+	operator bool(void) {
+		return (m_skt >= 0);
+	}
+};
+
+extern	const	int	DEF_REQEST_PORT, DEF_REPLY_PORT;
+
+#endif

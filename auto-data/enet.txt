@@ -311,7 +311,7 @@ set_max_delay -datapath_only -from [get_cells -hier -filter {NAME=~ *o_sys_reset
 @MAIN.INSERT=
 	initial	o_@$(PREFIX)_data = 0;
 	always @(posedge i_clk)
-	if (wb_stb && @$(PREFIX)_sel)
+	if (wb_stb && wb_we && @$(PREFIX)_sel)
 	begin
 		if (wb_sel[0])
 			o_@$(PREFIX)_data[7:0] <= wb_data[7:0];

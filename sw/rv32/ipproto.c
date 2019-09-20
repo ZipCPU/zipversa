@@ -73,8 +73,8 @@ void	ip_set(NET_PACKET *pkt, unsigned subproto, unsigned src,
 
 	pkt->p_user[0] = 0x45;
 	pkt->p_user[1] = 0x00;
-	pkt->p_user[2] = 0x00;
-	pkt->p_user[3] = 0x1c;
+	pkt->p_user[2] = (pkt->p_length >> 8)&0x0ff;
+	pkt->p_user[3] = (pkt->p_length     )&0x0ff;
 	//
 	ip_pktid += BIG_PRIME; // A BIG prime number
 	pkt->p_user[4] = (ip_pktid >> 8) & 0x0ff;

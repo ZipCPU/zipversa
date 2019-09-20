@@ -99,6 +99,7 @@ void	tx_pkt(NET_PACKET *pkt) {
 		txcmd = ENET_TXGO | pkt->p_length;
 		txcmd |= ENET_NOHWIPCHK;
 		_net1->n_txcmd = txcmd;
+		// dump_raw(pkt);
 		// dump_ethpkt(pkt);
 		free_pkt(pkt);
 	}

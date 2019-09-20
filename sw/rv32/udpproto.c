@@ -39,8 +39,11 @@
 #include <stdio.h>
 #include <string.h>
 #include "pkt.h"
+#include "etcnet.h"
+#include "protoconst.h"
 #include "ipproto.h"
 #include "ipcksum.h"
+#include "udpproto.h"
 
 unsigned	udp_headersize(void) {
 	return 8;
@@ -54,7 +57,36 @@ NET_PACKET *new_udppkt(unsigned len) {
 	pkt->p_length -= udp_headersize();
 }
 
-extern	void	tx_udp(NET_PACKET *pkt, unsigned src, unsigned dest, unsigned sport, unsigned dport);
+void	tx_udp(NET_PACKET *pkt, unsigned dest,
+				unsigned sport, unsigned dport) {
+	unsigned	cksum;
+
+	pkt->p_user   -= udp_headersize();
+	pkt->p_length += udp_headersize();
+
+	pkt->p_user[0] = (sport >> 8) & 0x0ff;
+	pkt->p_user[1] = (sport     ) & 0x0ff;
+	pkt->p_user[2] = (dport >> 8) & 0x0ff;
+	pkt->p_user[3] = (dport     ) & 0x0ff;
+	pkt->p_user[4] = (pkt->p_length >> 8) & 0x0ff;
+	pkt->p_user[5] = (pkt->p_length     ) & 0x0ff;
+	pkt->p_user[6] = 0;
+	pkt->p_user[7] = 0;
+
+//	cksum = ipcksum(pkt->p_length, pkt->p_user);
+//
+//	pkt->p_user[6] = (cksum >> 8) & 0x0ff;
+//	pkt->p_user[7] = (cksum     ) & 0x0ff;
+
+printf("TX UDP: length=%4d, %02x:%02x,%02x:%02x,%02x:%02x (%02x,%02x)\n",
+pkt->p_length,
+pkt->p_user[0]&0x0ff, pkt->p_user[1]&0x0ff,
+pkt->p_user[2]&0x0ff, pkt->p_user[3]&0x0ff,
+pkt->p_user[4]&0x0ff, pkt->p_user[5]&0x0ff,
+pkt->p_user[6]&0x0ff, pkt->p_user[7]&0x0ff);
+
+	tx_ippkt(pkt, IPPROTO_UDP, my_ip_addr, dest);
+}
 
 void	rx_udp(NET_PACKET *pkt) {
 	unsigned ln = ((pkt->p_user[4] & 0x0ff) << 8)

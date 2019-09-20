@@ -195,6 +195,7 @@ module	main(i_clk, i_reset,
 	// given under the @INT.<interrupt name>.WIRE key.
 	//
 	wire	gpio_int;	// gpio.INT.GPIO.WIRE
+	wire	wbfft_int;	// wbfft.INT.FFT.WIRE
 	wire	systimer_int;	// systimer.INT.TIMER.WIRE
 	wire	spio_int;	// spio.INT.SPIO.WIRE
 	wire	uarttxf_int;	// uart.INT.UARTTXF.WIRE
@@ -248,7 +249,6 @@ module	main(i_clk, i_reset,
 `endif
 	reg	[23-1:0]	r_buserr_addr;
 	wire	i_net_tx_clk;
-	wire		wbfft_int;
 	reg	[31:0]	r_pwrcount_data;
 	wire	w_bus_int;
 // BUILDTIME doesnt need to include builddate.v a second time
@@ -759,7 +759,6 @@ module	main(i_clk, i_reset,
 		1'b0,
 		1'b0,
 		1'b0,
-		1'b0,
 		flashdbg_int,
 		net1rx_int,
 		net1tx_int,
@@ -767,7 +766,8 @@ module	main(i_clk, i_reset,
 		uartrxf_int,
 		uarttxf_int,
 		spio_int,
-		systimer_int
+		systimer_int,
+		wbfft_int
 	};
 
 
@@ -929,7 +929,7 @@ module	main(i_clk, i_reset,
 
 	initial	o_net1dly_data = 0;
 	always @(posedge i_clk)
-	if (wb_stb && net1dly_sel)
+	if (wb_stb && wb_we && net1dly_sel)
 	begin
 		if (wb_sel[0])
 			o_net1dly_data[7:0] <= wb_data[7:0];
@@ -950,6 +950,7 @@ module	main(i_clk, i_reset,
 	assign	wbfft_data  = 0;
 	assign	wbfft_ack   = (wb_stb) && (wbfft_sel);
 
+	assign	wbfft_int = 1'b0;	// wbfft.INT.FFT.WIRE
 `endif	// WBFFT_ACCESS
 
 `ifdef	PWRCOUNT_ACCESS
