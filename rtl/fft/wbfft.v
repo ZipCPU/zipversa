@@ -1,3 +1,83 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+// Filename: 	wbfft.v
+//
+// Project:	ZipVersa, Versa Brd implementation using ZipCPU infrastructure
+//
+// Purpose:	This file creates a Wishbone interface for the pipelined FFT.
+//		Using this interface, a bus master can write data to the FFT.
+//	Once one FFT's worth of data has been received, the FFT will start
+//	processing and clocking data through its pipeline in earnest.  Between
+//	this time and any subsequent reset, all writes will be ignored.  Once
+//	complete, the results will be placed into a local/internal buffer.  Once
+//	that buffer has a full FFT's worth of data within it, the core will
+//	raise an interrupt.  FFT data may then be read from the bus in any order
+//	desired with natural bus-address order providing FFT outputs one per
+//	sample.
+//
+// Registers:
+//	Control, write only:
+//		While this register is really only one register, it occupies
+//		every address from 0 to the FFT length.  Writes to this
+//		register will reset the FFT and its pipeline.
+//	Data write:
+//		Addresses above the FFT length are data addresses.  Following
+//		reset, writes to these addresses provide data to the FFT.
+//	Interrupt:
+//		Once the FFT has finished it's processing, an interrupt flag
+//		will be set.  It will remain set until the FFT is cleared.
+//		This can be used to determine the state of the FFT.
+//	Data read:
+//		Once the FFT has completed it's task, data may be read from the
+//		FFT in normal (not-bit-reversed) order.  (Yes, it's stored
+//		locally in bit-reversed order, but read out in natural order.)
+//
+//		Although this core provides 2*(FFT_length) words of addressing,
+//		and although control writes may only be done to the first half
+//		of this address space, and data writes may only be done on the
+//		second half, data reads can be made from anywhere--the top
+//		address bit is ignored.
+//
+//	Data format:
+//		Data is formatted into bus words of 32-bits in length, in MSB
+//		(bus) order.  Word-length writes should have this order
+//		naturally.  The top 16-bits contain the real component, and the
+//		bottom 16 bits contains the imaginary component of the complex
+//		input (or output) value.
+//
+//		The core does not support sub-word addressing.  All bus requests
+//		must therefore be 32-bit requests.
+//
+//
+// Creator:	Dan Gisselquist, Ph.D.
+//		Gisselquist Technology, LLC
+//
+////////////////////////////////////////////////////////////////////////////////
+//
+// Copyright (C) 2019, Gisselquist Technology, LLC
+//
+// This program is free software (firmware): you can redistribute it and/or
+// modify it under the terms of the GNU General Public License as published
+// by the Free Software Foundation, either version 3 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTIBILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+// for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program.  (It's in the $(ROOT)/doc directory.  Run make with no
+// target there if the PDF file isn't present.)  If not, see
+// <http://www.gnu.org/licenses/> for a copy.
+//
+// License:	GPL, v3, as defined and found on www.gnu.org,
+//		http://www.gnu.org/licenses/gpl.html
+//
+//
+////////////////////////////////////////////////////////////////////////////////
+//
+//
 `default_nettype none
 //
 module wbfft(i_clk, i_reset, i_wb_cyc, i_wb_stb, i_wb_we, i_wb_addr, i_wb_data,
@@ -30,9 +110,11 @@ module wbfft(i_clk, i_reset, i_wb_cyc, i_wb_stb, i_wb_we, i_wb_addr, i_wb_data,
 	reg	[31:0]	mem	[0:(1<<LGFFT)-1];
 
 	always @(*)
-		ctrl_write = (i_wb_stb)&&(i_wb_we)&&(!i_wb_addr[LGFFT]) && !o_wb_stall;
+		ctrl_write = (i_wb_stb)&&(i_wb_we)&&(!i_wb_addr[LGFFT])
+					&& !o_wb_stall;
 	always @(*)
-		data_write = (i_wb_stb)&&(i_wb_we)&&(i_wb_addr[LGFFT]) && !o_wb_stall && (fsm_state == INPUT);
+		data_write = (i_wb_stb)&&(i_wb_we)&&(i_wb_addr[LGFFT])
+					&& !o_wb_stall && (fsm_state == INPUT);
 
 	initial	fft_reset = 1;
 	always @(posedge i_clk)
@@ -90,7 +172,7 @@ module wbfft(i_clk, i_reset, i_wb_cyc, i_wb_stb, i_wb_we, i_wb_addr, i_wb_data,
 				fft_ce_count <= fft_ce_count - 1;
 			else if (fft_ce)
 				fft_ce_count <= CKPCE-2;
-	
+
 			always @(*)
 				fft_ce_delay = (fft_ce_count > 0);
 		end else begin

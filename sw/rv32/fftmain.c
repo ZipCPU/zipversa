@@ -152,7 +152,7 @@ int	main(int argc, char **argv) {
 
 			if ((now - lasthello) >= 3000) {
 				// Every five minutes, pause to say hello
-				printf("\n\nHello, World! Ticks since startup = 0x%08x\n\n", *_pwrcount);
+				printf("\n\nHello, World!\n\n", *_pwrcount);
 				lasthello = now;
 			}
 
@@ -172,14 +172,14 @@ int	main(int argc, char **argv) {
 
 			switch(ethpkt_ethtype(rcvd)) {
 			case ETHERTYPE_ARP:
-				printf("RXPKT - ARP\n");
+				// printf("RXPKT - ARP\n");
 				rx_ethpkt(rcvd);
 				rx_arp(rcvd); // Frees the packet
 				break;
 			case ETHERTYPE_IP: {
 				unsigned	subproto;
 
-				printf("RXPKT - IP\n");
+				// printf("RXPKT - IP\n");
 				rx_ethpkt(rcvd);
 
 				ipsrc = ippkt_src(rcvd);
@@ -240,7 +240,7 @@ int	main(int argc, char **argv) {
 			// See if another's waiting, and then transmit that.a
 			if (waiting_pkt != NULL) {
 				NET_PACKET	*pkt = waiting_pkt;
-txstr("Re-transmitting the busy packet\n");
+// txstr("Re-transmitting the busy packet\n");
 				waiting_pkt = NULL;
 				tx_pkt(pkt);
 				*_buspic = BUSPIC_NETTX;
@@ -254,7 +254,7 @@ void	tx_busy(NET_PACKET *txpkt) {
 		// printf("TX-BUSY\n");
 		waiting_pkt = txpkt;
 	} else if (txpkt != waiting_pkt) {
-txstr("Busy collision--deleting waiting packet\n");
+// txstr("Busy collision--deleting waiting packet\n");
 		free_pkt(waiting_pkt);
 		waiting_pkt = txpkt;
 	}
@@ -329,6 +329,7 @@ void	fftpacket(NET_PACKET *pkt) {
 	pkt_id   = pkt_uint16(pkt, 0);
 	pkt_posn = pkt_uint16(pkt, 2);
 
+	/*
 	printf("FFT PACKET %s: src=%3d.%3d.%3d.%3d:%d FFT ID #%d, posn:%4d\n",
 			(fft_state == FFT_INPUT) ? "(IN )"
 			: ((fft_state == FFT_OUTPUT) ? "(OUT)"
@@ -338,6 +339,7 @@ void	fftpacket(NET_PACKET *pkt) {
 			(srcip >>  8)&0x0ff,
 			(srcip      )&0x0ff,
 			sport, pkt_id, pkt_posn);
+	*/
 	switch(fft_state) {
 	case FFT_INPUT: {
 		if ((pkt_id == fft_id) && (srcip == fft_srcip)
@@ -357,7 +359,6 @@ void	fftpacket(NET_PACKET *pkt) {
 			txpkt->p_user[2] = (fft_posn >> 8)&0x0ff;
 			txpkt->p_user[3] = (fft_posn     )&0x0ff;
 
-printf("Rcvd FFT data, FFT posn = %d\n", fft_posn);
 			tx_udp(txpkt, fft_srcip, FFTPORT, fft_port);
 
 			if (fft_posn == FFT_SIZE)
@@ -379,12 +380,6 @@ printf("Rcvd FFT data, FFT posn = %d\n", fft_posn);
 			txpkt->p_user[2] = 0;
 			txpkt->p_user[3] = 0;
 
-printf("FFT: Rcvd from unknown source, %3d.%3d.%3d.%3d:%d!=%d, #%d!=#%d\n",
-(srcip>>24)&0x0ff, (srcip>>16)&0x0ff, (srcip>>8)&0x0ff, srcip&0x0ff,
-sport, fft_port, pkt_id, fft_id);
-
-		if ((pkt_id == fft_id) && (srcip == fft_srcip)
-	);
 			tx_udp(txpkt, fft_srcip, FFTPORT, fft_port);
 		} else {
 			// ACK where we are at now in our current state
@@ -473,7 +468,7 @@ void	ffttimeout(void) {
 		txpkt->p_user[2] = (fft_posn >> 8)&0x0ff;
 		txpkt->p_user[3] = (fft_posn     )&0x0ff;
 
-printf("FFT: TX INPUT IDLE, posn = %d\n", fft_posn);
+// printf("FFT: TX INPUT IDLE, posn = %d\n", fft_posn);
 		tx_udp(txpkt, fft_srcip, FFTPORT, fft_port);
 		} break;
 	case FFT_OUTPUT: {

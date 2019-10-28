@@ -56,7 +56,7 @@ const char	address[] =
 "|                                                                              |\r\n"
 "| Now we are engaged in a great civil war, testing whether that nation, or any |\r\n"
 "| nation so conceived and so dedicated, can long endure.  We are met on a      |\r\n"
-"| great battle-field of that war. We have come to dedicate a portion of that   |\r\n"
+"| great battle-field of that war.  We have come to dedicate a portion of that  |\r\n"
 "| field, as a final resting place for those who here gave their lives that     |\r\n"
 "| that nation might live.  It is altogether fitting and proper that we should  |\r\n"
 "| do this.                                                                     |\r\n"

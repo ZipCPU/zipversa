@@ -147,7 +147,6 @@ void	UDPSOCKET::bind(void) {
 	hints.ai_protocol = 0; // Any protocol can be returned
 	getaddrinfo("192.168.15.1", portstr, &hints, &res);
 
-// printf("Cannonname = %s\n", (hints.ai_cannoname) ? hints.ai_cannonname : "(NULL)");
 	if (::bind(m_skt, res->ai_addr, res->ai_addrlen) < 0) {
 		perror("Bind O/S Err:");
 		exit(EXIT_FAILURE);
@@ -169,13 +168,11 @@ ssize_t	UDPSOCKET::read(void *buf, size_t len, unsigned timeout_ms) {
 		nr = ::poll(&pollfds, 1, timeout_ms);
 
 		if (nr == 0) {
-printf("Timeout, revents = pollfds[0].revents = %d\n", pollfds.revents);
-assert(pollfds.revents == 0);
 			return 0;
 		} else if (nr < 0) {
-fprintf(stderr, "Poll error\n");
-perror("O/S Err\n");
-exit(EXIT_FAILURE);
+			fprintf(stderr, "Poll error\n");
+			perror("O/S Err\n");
+			exit(EXIT_FAILURE);
 		}
 	}
 

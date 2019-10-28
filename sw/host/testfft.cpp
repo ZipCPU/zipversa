@@ -45,7 +45,9 @@
 
 const unsigned	FFT_SIZE = 1024;
 const unsigned	MAXLN = 128;
-const unsigned	TIMEOUT = 1000;
+const unsigned	TIMEOUT = 50;
+
+unsigned	ffts_completed = 0;
 
 uint16_t net_rd16t(char *pkt, int loc) {
 	unsigned	v = 0;
@@ -70,8 +72,6 @@ uint32_t net_rd32t(char *pkt, int loc) {
 	v = ((pkt[loc+2]) & 0x0ff) | (v << 8);
 	v = ((pkt[loc+3]) & 0x0ff) | (v << 8);
 
-printf("RD32 %02x:%02x:%02x:%02x --> %08x (%8d)\n",
-pkt[loc]&0x0ff, pkt[loc+1]&0x0ff, pkt[loc+2]&0x0ff, pkt[loc+3]&0x0ff, v, v);
 	return 	v;
 }
 
@@ -105,14 +105,12 @@ int	runfft_test(UDPSOCKET *skt, int *data) {
 		skt->write(bufp, bufln);
 
 		nr = skt->read(bufp, bufln, TIMEOUT);
-printf("RX PKT, len = %d\n", nr);
+
 		if (nr >= 4) {
 			unsigned	pkt_id, pkt_posn;
 			pkt_id   = net_rd16t(bufp, 0);
 			pkt_posn = net_rd16t(bufp, 2);
 
-printf("RX PKT, len=%d, ID=%4d, posn=%4d, nr = %d\n", nr, pkt_id, pkt_posn, nr);
-fflush(stdout); // Create a touch of a delay
 			if (pkt_id != fft_id)
 				fpga_posn = 0;
 			else if (pkt_posn > fpga_posn) {
@@ -127,8 +125,6 @@ fflush(stdout); // Create a touch of a delay
 		}
 	}
 
-printf("PACKET SENT, switching to receive data mode\n");
-
 	assert(fpga_posn == FFT_SIZE);
 
 	//
@@ -140,7 +136,6 @@ printf("PACKET SENT, switching to receive data mode\n");
 
 		skt->write(bufp, 4);
 
-printf("Looking for a packet\n");
 		if (nr < 4)
 			nr = skt->read(bufp, bufln, TIMEOUT);
 		if (nr >= 4) {
@@ -149,15 +144,10 @@ printf("Looking for a packet\n");
 			pkt_id   = net_rd16t(bufp, 0);
 			pkt_posn = net_rd16t(bufp, 2);
 
-printf("RCVD Packet: ID %d, posn %d\n", pkt_id, pkt_posn);
-
 			if (pkt_id != fft_id)
 				assert(0);
 			else if ((nr > 4)&&(pkt_posn == fpga_posn)) {
 				int *dat = &data[fpga_posn-FFT_SIZE];
-
-printf("Receiving data from %d to %d\n", fpga_posn-FFT_SIZE,
-		(fpga_posn-FFT_SIZE) + (nr-4)/4);
 
 				for(int k=0; k<(nr-4)/4; k++)
 					*dat++ = net_rd32t(bufp,k*4+4);
@@ -177,6 +167,8 @@ printf("Receiving data from %d to %d\n", fpga_posn-FFT_SIZE,
 	}
 
 	free(bufp);
+
+	ffts_completed++;
 
 	return 0;
 }
@@ -228,6 +220,8 @@ int main(int argc, char **argv) {
 	impulse_test(skt, 0x7f00, 1, fp);
 	impulse_test(skt, 0x7f00, 2, fp);
 	impulse_test(skt, 0x7f00, 3, fp);
+
+	printf("%d FFTs completed\n", ffts_completed);
 
 	delete	skt;
 	fclose(fp);

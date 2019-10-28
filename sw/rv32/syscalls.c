@@ -357,9 +357,9 @@ void *
 _sbrk_r(struct _reent *reent, int sz) {
 	int	*prev = heap;
 
-txstr("SBRK: Allocating "); txdecimal(sz); txstr(" bytes\n");
-txstr("SBRK: Previous heap: "); txhex((unsigned)heap); txstr("\n");
-txstr("SBRK: Already allocated: "); txhex(sizeof(int)*(heap-_top_of_heap)); txstr(" bytes\n");
+// txstr("SBRK: Allocating "); txdecimal(sz); txstr(" bytes\n");
+// txstr("SBRK: Previous heap: "); txhex((unsigned)heap); txstr("\n");
+// txstr("SBRK: Already allocated: "); txhex(sizeof(int)*(heap-_top_of_heap)); txstr(" bytes\n");
 	if ((NULL != _end_of_heap)
 			&& (heap + ((sz+sizeof(int)-1)/sizeof(int)) > _end_of_heap)) {
 		txstr("SBRK: OUT-OF-MEMORY!!\n");

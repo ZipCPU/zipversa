@@ -384,7 +384,7 @@ int main(int argc, char **argv) {
 		m_fpga->writeio(R_GPIO, (GPIO_CPU_RESET << 16));
 #endif
 	} catch(BUSERR a) {
-		fprintf(stderr, "ARTY-BUS error: %08x\n", a.addr);
+		fprintf(stderr, "VERSA-BUS error: %08x\n", a.addr);
 		exit(-2);
 	}
 

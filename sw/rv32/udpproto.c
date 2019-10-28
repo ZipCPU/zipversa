@@ -78,12 +78,12 @@ void	tx_udp(NET_PACKET *pkt, unsigned dest,
 //	pkt->p_user[6] = (cksum >> 8) & 0x0ff;
 //	pkt->p_user[7] = (cksum     ) & 0x0ff;
 
-printf("TX UDP: length=%4d, %02x:%02x,%02x:%02x,%02x:%02x (%02x,%02x)\n",
-pkt->p_length,
-pkt->p_user[0]&0x0ff, pkt->p_user[1]&0x0ff,
-pkt->p_user[2]&0x0ff, pkt->p_user[3]&0x0ff,
-pkt->p_user[4]&0x0ff, pkt->p_user[5]&0x0ff,
-pkt->p_user[6]&0x0ff, pkt->p_user[7]&0x0ff);
+// printf("TX UDP: length=%4d, %02x:%02x,%02x:%02x,%02x:%02x (%02x,%02x)\n",
+// pkt->p_length,
+// pkt->p_user[0]&0x0ff, pkt->p_user[1]&0x0ff,
+// pkt->p_user[2]&0x0ff, pkt->p_user[3]&0x0ff,
+// pkt->p_user[4]&0x0ff, pkt->p_user[5]&0x0ff,
+// pkt->p_user[6]&0x0ff, pkt->p_user[7]&0x0ff);
 
 	tx_ippkt(pkt, IPPROTO_UDP, my_ip_addr, dest);
 }

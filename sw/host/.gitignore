@@ -8,6 +8,7 @@ netstat
 netuart
 rdclocks
 readmdio
+startnet.sh
 testfft
 wbregs
 zipdbg
