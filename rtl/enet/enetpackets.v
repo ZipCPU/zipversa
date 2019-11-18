@@ -796,21 +796,21 @@ module	enetpackets(i_wb_clk, i_reset,
 
 	initial	counter_rx_miss = 0;
 	always @(posedge i_wb_clk)
-	if (o_net_reset_n)
+	if (!o_net_reset_n)
 		counter_rx_miss <= 32'h0;
 	else if (rx_miss_stb)
 		counter_rx_miss <= counter_rx_miss + 32'h1;
 
 	initial	counter_rx_err = 0;
 	always @(posedge i_wb_clk)
-	if (o_net_reset_n)
+	if (!o_net_reset_n)
 		counter_rx_err <= 32'h0;
 	else if (rx_err_stb)
 		counter_rx_err <= counter_rx_err + 32'h1;
 
 	initial	counter_rx_crc = 0;
 	always @(posedge i_wb_clk)
-	if (o_net_reset_n)
+	if (!o_net_reset_n)
 		counter_rx_crc <= 32'h0;
 	else if (rx_crc_stb)
 		counter_rx_crc <= counter_rx_crc + 32'h1;
