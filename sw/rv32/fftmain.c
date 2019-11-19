@@ -102,6 +102,8 @@ int	main(int argc, char **argv) {
 
 	// Clear the network reset
 	_net1->n_txcmd = 0;
+	// Set a network delay
+	*_net1dly = 0x40; // Seems to work well
 	{ // Set the MAC address
 		char *macp = (char *)&_net1->n_mac;
 

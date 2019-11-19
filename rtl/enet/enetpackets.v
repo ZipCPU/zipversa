@@ -718,7 +718,7 @@ module	enetpackets(i_wb_clk, i_reset,
 
 		last_rxwr <= w_rxwr;
 
-		n_rx_busy <= (!n_rx_net_err)&&((i_net_rx_dv)||(w_npre)||(w_rxmin)
+		n_rx_busy <=(!n_rx_net_err)&&((i_net_rx_dv)||(w_npre)||(w_rxmin)
 			||(w_rxcrc)||(w_rxmac)||(w_rxwr));
 
 		// Oops ... we missed a packet
