@@ -152,6 +152,7 @@ module	toplevel(i_clk, i_clk_125mhz,
 	wire			w_net1_rxdv, w_net1_rxerr,
 				w_net1_txctl;
 	wire	[1:0]		w_net1_tx_clk;
+	wire			i_gpio_clk_scl, i_gpio_clk_sda;
 
 
 	//
@@ -172,7 +173,7 @@ module	toplevel(i_clk, i_clk_125mhz,
 	main	thedesign(s_clk, s_reset,
 		// GPIO wires
 		// 2 Inputs first
-		{ io_gpio_clk_scl, io_gpio_clk_sda },
+		{ i_gpio_clk_scl, i_gpio_clk_sda },
 		// Then the 5-1 outputs
 		{ w_gpio_halt_sim, w_gpio_clk_reset,
 			w_gpio_clk_scl, w_gpio_clk_sda },
@@ -203,9 +204,11 @@ module	toplevel(i_clk, i_clk_125mhz,
 	// assign	io_gpio_clk_scl = w_gpio_clk_scl ? 1'bz : 1'b0;
 	// assign	io_gpio_clk_sda = w_gpio_clk_sda ? 1'bz : 1'b0;
 	BB gpio_clk_scli(.I(1'b0), .T(w_gpio_clk_scl),
-		.O(io_gpio_clk_scl));
+		.B(io_gpio_clk_scl),
+		.O(i_gpio_clk_scl));
 	BB gpio_clk_sdai(.I(1'b0), .T(w_gpio_clk_sda),
-		.O(io_gpio_clk_sda));
+		.B(io_gpio_clk_sda),
+		.O(i_gpio_clk_sda));
 
 
 	//
